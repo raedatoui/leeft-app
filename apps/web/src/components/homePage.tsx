@@ -1,14 +1,12 @@
 'use client';
 
-import { Calendar, ChevronLeft, ChevronRight, Columns, Eye } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import { Calendar } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import PageHeader from '@/components/pageHeader';
 import PageTemplate from '@/components/pageTemplate';
-import WorkoutSlider from '@/components/slider2';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
+import WorkoutSlider from '@/components/slider';
+import SliderControls from '@/components/sliderControls';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { useWorkouts } from '@/lib/contexts';
 
 export default function HomePage() {
@@ -28,7 +26,7 @@ export default function HomePage() {
     }, [workouts]);
 
     // Detect responsive breakpoints
-    React.useEffect(() => {
+    useEffect(() => {
         const updateColumns = () => {
             const width = window.innerWidth;
             let newColumns = 4;
@@ -87,89 +85,41 @@ export default function HomePage() {
     return (
         <PageTemplate>
             <div className="flex flex-col gap-4">
-                <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-                    <h2 className="text-2xl sm:text-4xl font-bold text-primary text-center md:text-left w-full lg:w-auto">Workouts Log</h2>
-                    <Card className="w-full lg:w-auto">
-                        <CardContent className="py-2 px-3 sm:px-4">
-                            <div className="flex items-center gap-3 sm:gap-4">
-                                {/* Navigation and Toggle Row */}
-                                <div className="flex items-center gap-3 sm:gap-4 w-full lg:w-auto justify-between lg:justify-start">
-                                    {/* Left Navigation Button */}
-                                    <Button onClick={slideLeft} disabled={currentIndex === 0} size="icon" variant="default" className="rounded-full">
-                                        <ChevronLeft className="h-5 w-5" />
-                                    </Button>
-
-                                    {/* View Mode Toggle */}
-                                    <div className="flex items-center gap-2 text-xs">
-                                        <Label htmlFor="mini-mode" className="cursor-pointer">
-                                            <Eye className="h-4 w-4 text-muted-foreground" />
-                                        </Label>
-                                        <Switch id="mini-mode" checked={!miniMode} onCheckedChange={(checked) => setMiniMode(!checked)} />
-                                    </div>
-
-                                    {/* Year Selector */}
-                                    {availableYears.length > 0 && (
-                                        <div className="flex items-center gap-2 text-xs">
-                                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                                            <Select onValueChange={jumpToYear}>
-                                                <SelectTrigger className="w-[80px] h-7 text-xs">
-                                                    <SelectValue placeholder="Year" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {availableYears.map((year) => (
-                                                        <SelectItem key={year} value={year.toString()}>
-                                                            {year}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                    )}
-
-                                    {/* Slides Per Page Control - Hidden below xl breakpoint */}
-                                    {responsiveColumns === slidesToShow && (
-                                        <div className="flex items-center gap-2 text-xs">
-                                            <Columns className="h-4 w-4 text-muted-foreground" />
-                                            <Select
-                                                value={slidesToShow.toString()}
-                                                onValueChange={(value) => {
-                                                    setSlidesToShow(Number(value));
-                                                    setCurrentIndex(0);
-                                                }}
-                                            >
-                                                <SelectTrigger className="w-[60px] h-7 text-xs">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {[3, 4, 5, 6, 7, 8].map((num) => (
-                                                        <SelectItem key={num} value={num.toString()}>
-                                                            {num}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                    )}
-
-                                    {/* Slide Counter */}
-                                    <div className="text-xs text-muted-foreground">
-                                        {currentIndex + 1}/{slideCount}
-                                    </div>
-
-                                    {/* Right Navigation Button */}
-                                    <Button
-                                        onClick={slideRight}
-                                        disabled={currentIndex === slideCount - 1}
-                                        size="icon"
-                                        variant="default"
-                                        className="rounded-full"
-                                    >
-                                        <ChevronRight className="h-5 w-5" />
-                                    </Button>
-                                </div>
+                <PageHeader title="Workouts Log" />
+                <div className="flex justify-start w-full lg:w-auto">
+                    <SliderControls
+                        currentIndex={currentIndex}
+                        slideCount={slideCount}
+                        miniMode={miniMode}
+                        onMiniModeChange={(checked) => setMiniMode(!checked)}
+                        slidesToShow={slidesToShow}
+                        onSlidesToShowChange={(val) => {
+                            setSlidesToShow(val);
+                            setCurrentIndex(0);
+                        }}
+                        responsiveColumns={responsiveColumns}
+                        onPrev={slideLeft}
+                        onNext={slideRight}
+                    >
+                        {/* Year Selector */}
+                        {availableYears.length > 0 && (
+                            <div className="flex items-center gap-2.5 text-xs font-bold uppercase tracking-tighter">
+                                <Calendar className="h-4 w-4 text-muted-foreground" />
+                                <Select onValueChange={jumpToYear}>
+                                    <SelectTrigger className="w-[80px] h-9 text-xs border-none bg-muted/60 font-bold">
+                                        <SelectValue placeholder="Year" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {availableYears.map((year) => (
+                                            <SelectItem key={year} value={year.toString()}>
+                                                {year}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
-                        </CardContent>
-                    </Card>
+                        )}
+                    </SliderControls>
                 </div>
                 <WorkoutSlider
                     workouts={workouts}

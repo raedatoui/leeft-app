@@ -2,14 +2,15 @@
 
 import { BicepsFlexed, Dumbbell, Layers, List } from 'lucide-react';
 import Link from 'next/link';
+import PageHeader from '@/components/pageHeader';
 import PageTemplate from '@/components/pageTemplate';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function ExercisesPage() {
     return (
         <PageTemplate>
-            <h1 className="text-3xl font-bold mb-6">Exercises</h1>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <PageHeader title="Exercises" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                 <Link href="/exercises/all" className="no-underline">
                     <Card className="hover:bg-accent transition-colors h-full">
                         <CardHeader>

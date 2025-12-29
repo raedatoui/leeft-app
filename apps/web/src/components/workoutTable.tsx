@@ -123,7 +123,7 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({
                         const isFocused = selectedExercise?.id === exercise.exerciseId;
 
                         return (
-                            <div key={exercise.order} className={cn('p-3', isFocused && 'bg-primary/10')}>
+                            <div key={exercise.exerciseId} className={cn('p-3', isFocused && 'bg-primary/10')}>
                                 {/* Exercise Name */}
                                 <div className={cn('flex items-start justify-between gap-2', miniMode ? 'flex-col' : 'flex-row mb-2 pb-2 border-b')}>
                                     <Link

@@ -1,11 +1,14 @@
 'use client';
 
 import Link from 'next/link';
+import PageHeader from '@/components/pageHeader';
 import PageTemplate from '@/components/pageTemplate';
 import { Card, CardContent } from '@/components/ui/card';
 import { useWorkouts } from '@/lib/contexts';
 import { computeStats } from '@/lib/utils';
 import type { ExerciseMap, Workout } from '@/types';
+
+// ... (existing helper functions: groupByMonth, formatMonthYear, MonthlyStats) ...
 
 const groupByMonth = (workouts: Workout[]) => {
     return workouts.reduce(
@@ -95,40 +98,36 @@ export default function WorkoutAnalysis() {
     return (
         <PageTemplate>
             <div className="flex flex-col gap-4">
-                {/* Header Section */}
-                <div className="flex flex-col lg:flex-row items-start lg:items-start justify-between gap-4">
-                    <div className="w-full lg:w-auto">
-                        <h2 className="text-2xl sm:text-4xl font-bold text-primary text-center md:text-left">Monthly Analysis</h2>
-                    </div>
-                    <Card className="w-full lg:w-auto">
-                        <CardContent className="py-2 px-3 sm:px-4">
-                            <div className="grid grid-cols-2 lg:flex lg:items-center gap-3 sm:gap-6">
-                                <div className="text-center">
-                                    <div className="text-xl sm:text-2xl font-bold text-primary">{workouts.length}</div>
-                                    <div className="text-xs text-muted-foreground">Total Workouts</div>
+                <PageHeader title="Monthly Analysis" />
+
+                <Card className="lg:w-auto">
+                    <CardContent className="py-2 px-3 sm:px-4">
+                        <div className="grid grid-cols-2 lg:flex lg:items-center gap-3 sm:gap-6">
+                            <div className="text-center">
+                                <div className="text-xl sm:text-2xl font-bold text-primary">{workouts.length}</div>
+                                <div className="text-xs text-muted-foreground">Total Workouts</div>
+                            </div>
+                            <div className="text-center">
+                                <div className="text-xl sm:text-2xl font-bold text-primary">
+                                    {totalVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                 </div>
-                                <div className="text-center">
-                                    <div className="text-xl sm:text-2xl font-bold text-primary">
-                                        {totalVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                <div className="text-xs text-muted-foreground">Total Volume</div>
+                            </div>
+                            <div className="text-center col-span-2 lg:col-span-1">
+                                <div className="text-xs sm:text-sm font-medium text-primary">
+                                    <div className="hidden sm:block">
+                                        {dateRange.start.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} -{' '}
+                                        {dateRange.end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                     </div>
-                                    <div className="text-xs text-muted-foreground">Total Volume</div>
-                                </div>
-                                <div className="text-center col-span-2 lg:col-span-1">
-                                    <div className="text-xs sm:text-sm font-medium text-primary">
-                                        <div className="hidden sm:block">
-                                            {dateRange.start.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} -{' '}
-                                            {dateRange.end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                        </div>
-                                        <div className="sm:hidden">
-                                            {dateRange.start.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} -{' '}
-                                            {dateRange.end.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                                        </div>
+                                    <div className="sm:hidden">
+                                        {dateRange.start.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} -{' '}
+                                        {dateRange.end.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                                     </div>
                                 </div>
                             </div>
-                        </CardContent>
-                    </Card>
-                </div>
+                        </div>
+                    </CardContent>
+                </Card>
 
                 {/* Monthly Breakdown */}
                 <div className="flex flex-col items-center gap-4">

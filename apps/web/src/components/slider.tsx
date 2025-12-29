@@ -11,6 +11,7 @@ interface WorkoutSliderProps {
     setCurrentIndex: (index: number) => void;
     slidesToShow: number;
     cycleId?: string;
+    reverse?: boolean;
 }
 
 const VirtualizedWorkoutSlider: FC<WorkoutSliderProps> = ({
@@ -21,13 +22,14 @@ const VirtualizedWorkoutSlider: FC<WorkoutSliderProps> = ({
     setCurrentIndex: _setCurrentIndex,
     slidesToShow,
     cycleId,
+    reverse = true,
 }) => {
-    // Reverse the workouts order
-    const reversedWorkouts = [...workouts].reverse();
+    // Reverse the workouts order if requested
+    const processedWorkouts = reverse ? [...workouts].reverse() : workouts;
 
     // Group workouts into slides (each slide contains slidesToShow workouts)
-    const slideCount = Math.ceil(reversedWorkouts.length / slidesToShow);
-    const slides = Array.from({ length: slideCount }, (_, i) => reversedWorkouts.slice(i * slidesToShow, (i + 1) * slidesToShow));
+    const slideCount = Math.ceil(processedWorkouts.length / slidesToShow);
+    const slides = Array.from({ length: slideCount }, (_, i) => processedWorkouts.slice(i * slidesToShow, (i + 1) * slidesToShow));
 
     const containerRef = useRef<HTMLDivElement>(null);
     const listRef = useRef<List>(null);
