@@ -1,0 +1,9 @@
+{
+    "hosting": {
+        "site": "leeft-log",
+        "public": "out",
+        "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+        "cleanUrls": true,
+        "trailingSlash": false
+    }
+}

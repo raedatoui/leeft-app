@@ -1,0 +1,46 @@
+{
+    "$schema": "https://biomejs.dev/schemas/2.3.10/schema.json",
+    "vcs": {
+        "enabled": true,
+        "clientKind": "git",
+        "useIgnoreFile": false
+    },
+    "files": {
+        "ignoreUnknown": false,
+        "includes": ["**", "!dist", "!node_modules", "!data/embeddings/anthropic-embeddings.json", "!data/embeddings/json-embeddings.json"],
+        "maxSize": 26214400
+    },
+    "formatter": {
+        "enabled": true,
+        "indentStyle": "space",
+        "indentWidth": 4,
+        "lineWidth": 150
+    },
+    "assist": { "actions": { "source": { "organizeImports": "on" } } },
+    "linter": {
+        "enabled": true,
+        "rules": {
+            "recommended": true,
+            "suspicious": {
+                "noExplicitAny": "off"
+            },
+            "style": {
+                "noNonNullAssertion": "off"
+            }
+        }
+    },
+    "javascript": {
+        "formatter": {
+            "quoteStyle": "single",
+            "semicolons": "always",
+            "trailingCommas": "es5"
+        }
+    },
+    "json": {
+        "formatter": {
+            "enabled": true,
+            "indentStyle": "space",
+            "indentWidth": 4
+        }
+    }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "@leeft/types",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "lint": "echo 'No linting for types yet'",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^4.2.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

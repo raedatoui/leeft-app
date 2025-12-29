@@ -1,0 +1,19 @@
+{
+  "name": "leeft-monorepo",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm -r dev",
+    "dev:web": "pnpm --filter @leeft/web dev",
+    "dev:data": "pnpm --filter @leeft/data dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "format": "pnpm -r format",
+    "check": "pnpm -r check",
+    "deploy:web": "pnpm --filter @leeft/web build && cd apps/web && firebase deploy",
+    "upload:data": "./scripts/upload.sh"
+  }
+}

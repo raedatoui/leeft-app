@@ -1,0 +1,8 @@
+node_modules
+.idea
+creds.json
+token.json
+.DS_Store
+.env
+data/
+.claude
