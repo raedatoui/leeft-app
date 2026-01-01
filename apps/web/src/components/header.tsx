@@ -1,8 +1,8 @@
 'use client';
 
-import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
 interface HeaderProps {
@@ -19,7 +19,7 @@ export default function Header({ title, children }: HeaderProps) {
     };
 
     return (
-        <div className="border-b border-border">
+        <div className="border-border">
             <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-1 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0 relative min-h-[50px]">
                 <div className="flex-1 flex w-full sm:w-auto justify-center sm:justify-start">
                     <Link href="/" className="text-primary hover:text-primary/90 no-underline">

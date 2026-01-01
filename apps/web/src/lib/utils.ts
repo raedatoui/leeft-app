@@ -104,8 +104,9 @@ export const computeStats = (workouts: Workout[] = []) => {
     return { workoutCount, avgExercises, topExercises };
 };
 
-export function formatExerciseSets(exercise: Exercise): string {
-    const reps = exercise.sets.map((set) => set.reps ?? 0).join(',');
-    const weights = exercise.sets.map((set) => Math.round(set.weight)).join(',');
+export function formatExerciseSets(exercise: Exercise, includeWarmup = true): string {
+    const sets = includeWarmup ? exercise.sets : exercise.sets.filter((set) => set.isWorkSet);
+    const reps = sets.map((set) => set.reps ?? 0).join(',');
+    const weights = sets.map((set) => Math.round(set.weight)).join(',');
     return `${reps} @ ${weights}`;
 }

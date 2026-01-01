@@ -1,7 +1,7 @@
-import { ChevronLeft, ChevronRight, Columns, Eye } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Columns, Dumbbell, Eye } from 'lucide-react';
 import type React from 'react';
-import { Button } from '@/components/ui/button';
 import { ControlCard } from '@/components/controlCard';
+import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
@@ -16,6 +16,8 @@ interface SliderControlsProps {
     responsiveColumns: number;
     onPrev: () => void;
     onNext: () => void;
+    includeWarmup: boolean;
+    onIncludeWarmupChange: (checked: boolean) => void;
     children?: React.ReactNode;
 }
 
@@ -29,6 +31,8 @@ export default function SliderControls({
     responsiveColumns,
     onPrev,
     onNext,
+    includeWarmup,
+    onIncludeWarmupChange,
     children,
 }: SliderControlsProps) {
     return (
@@ -46,6 +50,18 @@ export default function SliderControls({
                             <Eye className="h-4 w-4 text-muted-foreground" />
                         </Label>
                         <Switch id="mini-mode" checked={!miniMode} onCheckedChange={onMiniModeChange} className="scale-90" />
+                    </div>
+
+                    <div className="flex items-center gap-2.5 text-xs font-bold uppercase tracking-tighter">
+                        <Label htmlFor="warmup-mode" className="cursor-pointer">
+                            <Dumbbell className="h-4 w-4 text-muted-foreground" />
+                        </Label>
+                        <Switch
+                            id="warmup-mode"
+                            checked={!includeWarmup}
+                            onCheckedChange={(checked) => onIncludeWarmupChange(!checked)}
+                            className="scale-90"
+                        />
                     </div>
 
                     {/* Extra controls (e.g. Year Selector) */}

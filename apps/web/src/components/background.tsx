@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, useReducedMotion } from 'framer-motion';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 const dataPoints = ['225 lbs', '405 lbs', '315 lbs', '5x5', '3x10', '1RM', 'RPE 7', 'RPE 8', 'RPE 9', '90%', '85%', '75%', 'PR', 'VOL', 'INT'];
 
@@ -20,7 +20,7 @@ export default function Background() {
             text: dataPoints[Math.floor(Math.random() * dataPoints.length)],
             x: Math.random() * 100,
             y: Math.random() * 100,
-            duration: 20 + Math.random() * 40,
+            duration: 4 + Math.random() * 6,
             delay: Math.random() * -20,
             scale: 0.5 + Math.random() * 0.5,
             opacity: 0.1 + Math.random() * 0.2,
@@ -56,7 +56,7 @@ export default function Background() {
                         }}
                         animate={{
                             // OPTIMIZATION 2: varied movement range based on duration for more natural flow
-                            y: [`${item.y}vh`, `${item.y - 30}vh`],
+                            y: [`${item.y}vh`, `${item.y - 60}vh`],
                             opacity: [0, item.opacity, 0],
                         }}
                         transition={{

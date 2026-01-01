@@ -14,6 +14,7 @@ export default function HomePage() {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [slidesToShow, setSlidesToShow] = useState(4);
     const [responsiveColumns, setResponsiveColumns] = useState(4);
+    const [includeWarmup, setIncludeWarmup] = useState(true);
 
     // Extract available years from workouts
     const availableYears = useMemo(() => {
@@ -99,6 +100,8 @@ export default function HomePage() {
                         responsiveColumns={responsiveColumns}
                         onPrev={slideLeft}
                         onNext={slideRight}
+                        includeWarmup={includeWarmup}
+                        onIncludeWarmupChange={setIncludeWarmup}
                     >
                         {/* Year Selector */}
                         {availableYears.length > 0 && (
@@ -130,6 +133,7 @@ export default function HomePage() {
                     currentIndex={currentIndex}
                     setCurrentIndex={setCurrentIndex}
                     slidesToShow={effectiveSlidesToShow}
+                    includeWarmup={includeWarmup}
                 />
             </div>
         </PageTemplate>

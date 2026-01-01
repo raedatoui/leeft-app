@@ -33,7 +33,7 @@ export const EffortSchema = z.object({
 
 // Cardio workout schema for Fitbit activities
 export const CardioWorkoutSchema = z.object({
-    uuid: z.string().uuid(),
+    uuid: z.uuid(),
     date: z.date(),
     type: z.enum(['Run', 'Swim', 'Treadmill run', 'HIIT', 'Aerobic Workout', 'Outdoor Bike', 'Rowing machine', 'Elliptical', 'Bike']),
     durationMs: z.number(),

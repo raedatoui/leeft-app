@@ -1,18 +1,20 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Exercise, SetDetail, Workout } from './types';
 import { logger } from '../utils/logger';
+import type { Exercise, SetDetail, Workout } from './types';
 
 interface ClassifiedSet extends SetDetail {
     isWorkSet: boolean;
 }
 
-interface ClassifiedExercise extends Omit<Exercise, 'sets'> {
+interface ClassifiedExercise extends Omit<Exercise, 'sets' | 'workVolume'> {
     sets: ClassifiedSet[];
+    workVolume: number;
 }
 
-interface ClassifiedWorkout extends Omit<Workout, 'exercises'> {
+interface ClassifiedWorkout extends Omit<Workout, 'exercises' | 'workVolume'> {
     exercises: ClassifiedExercise[];
+    workVolume: number;
 }
 
 interface ClassifyOptions {
@@ -101,12 +103,20 @@ function classifyExerciseSets(sets: SetDetail[], options: ClassifyOptions): Clas
 }
 
 function classifyWorkout(workout: Workout, options: ClassifyOptions): ClassifiedWorkout {
+    const classifiedExercises = workout.exercises.map((exercise) => {
+        const classifiedSets = classifyExerciseSets(exercise.sets, options);
+        const workVolume = classifiedSets.filter((set) => set.isWorkSet).reduce((total, set) => total + (set.reps || 0) * set.weight, 0);
+        return {
+            ...exercise,
+            sets: classifiedSets,
+            workVolume,
+        };
+    });
+
     return {
         ...workout,
-        exercises: workout.exercises.map((exercise) => ({
-            ...exercise,
-            sets: classifyExerciseSets(exercise.sets, options),
-        })),
+        exercises: classifiedExercises,
+        workVolume: classifiedExercises.reduce((total, ex) => total + ex.workVolume, 0),
     };
 }
 

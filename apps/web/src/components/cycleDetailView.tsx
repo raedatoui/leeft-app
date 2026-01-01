@@ -3,6 +3,7 @@
 import { Calendar, MapPin, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import ExerciseView from '@/components/exercise';
+import MuscleGroupVolumeChart from '@/components/muscleGroupVolumeChart';
 import WorkoutSlider from '@/components/slider';
 import SliderControls from '@/components/sliderControls';
 import { Badge } from '@/components/ui/badge';
@@ -16,11 +17,13 @@ interface CycleDetailViewProps {
 }
 
 export default function CycleDetailView({ cycle, exerciseMap }: CycleDetailViewProps) {
-    const [miniMode, setMiniMode] = useState(true);
+    const [miniMode, setMiniMode] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [slidesToShow, setSlidesToShow] = useState(4);
     const [responsiveColumns, setResponsiveColumns] = useState(4);
     const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
+    const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<string | null>(null);
+    const [includeWarmup, setIncludeWarmup] = useState(true);
 
     // Detect responsive breakpoints
     useEffect(() => {
@@ -82,7 +85,7 @@ export default function CycleDetailView({ cycle, exerciseMap }: CycleDetailViewP
     const cycleColorClass = getCycleColor(cycle.type);
 
     const muscleGroupStats = useMemo(() => {
-        const stats: Record<string, number> = {};
+        const stats: Record<string, { sets: number; workouts: Set<string> }> = {};
 
         if (!cycle.workouts) return [];
 
@@ -92,12 +95,18 @@ export default function CycleDetailView({ cycle, exerciseMap }: CycleDetailViewP
                 if (metadata?.primaryMuscleGroup) {
                     const group = metadata.primaryMuscleGroup;
                     const workSetCount = exercise.sets.filter((s) => s.isWorkSet).length;
-                    stats[group] = (stats[group] || 0) + workSetCount;
+                    if (!stats[group]) {
+                        stats[group] = { sets: 0, workouts: new Set() };
+                    }
+                    stats[group].sets += workSetCount;
+                    stats[group].workouts.add(workout.uuid);
                 }
             }
         }
 
-        return Object.entries(stats).sort((a, b) => b[1] - a[1]);
+        return Object.entries(stats)
+            .map(([group, data]) => ({ group, sets: data.sets, workouts: data.workouts.size }))
+            .sort((a, b) => b.sets - a.sets);
     }, [cycle.workouts, exerciseMap]);
 
     const selectedExercise = selectedExerciseId ? exerciseMap.get(selectedExerciseId) : null;
@@ -141,12 +150,25 @@ export default function CycleDetailView({ cycle, exerciseMap }: CycleDetailViewP
             {/* Muscle Group Stats */}
             {muscleGroupStats.length > 0 && (
                 <div className="flex flex-wrap gap-3">
-                    {muscleGroupStats.map(([group, count]) => (
-                        <Badge key={group} variant="secondary" className="text-sm py-2 px-5 capitalize font-bold tracking-tight">
-                            {group} <span className="text-primary ml-2 opacity-70">{count} sets</span>
+                    {muscleGroupStats.map(({ group, sets, workouts }) => (
+                        <Badge
+                            key={group}
+                            variant={selectedMuscleGroup === group ? 'default' : 'secondary'}
+                            className="text-sm py-2 px-5 capitalize font-bold tracking-tight cursor-pointer transition-colors"
+                            onClick={() => setSelectedMuscleGroup(selectedMuscleGroup === group ? null : group)}
+                        >
+                            {group}{' '}
+                            <span className={cn('ml-2', selectedMuscleGroup === group ? 'opacity-90' : 'text-primary opacity-70')}>
+                                {workouts} wkts / {sets} sets
+                            </span>
                         </Badge>
                     ))}
                 </div>
+            )}
+
+            {/* Muscle Group Volume Chart */}
+            {selectedMuscleGroup && cycle.workouts && (
+                <MuscleGroupVolumeChart workouts={cycle.workouts} muscleGroup={selectedMuscleGroup} exerciseMap={exerciseMap} />
             )}
 
             {/* Inline Exercise View */}
@@ -190,6 +212,8 @@ export default function CycleDetailView({ cycle, exerciseMap }: CycleDetailViewP
                                 responsiveColumns={responsiveColumns}
                                 onPrev={slideLeft}
                                 onNext={slideRight}
+                                includeWarmup={includeWarmup}
+                                onIncludeWarmupChange={setIncludeWarmup}
                             />
                         </div>
                     )}
@@ -206,6 +230,8 @@ export default function CycleDetailView({ cycle, exerciseMap }: CycleDetailViewP
                             cycleId={cycle.uuid}
                             reverse={false}
                             onExerciseClick={(id) => setSelectedExerciseId(id)}
+                            muscleGroupFilter={selectedMuscleGroup}
+                            includeWarmup={includeWarmup}
                         />
                     ) : (
                         <div className="flex items-center justify-center h-64 border-2 border-dashed rounded-2xl bg-muted/5 text-muted-foreground font-medium">

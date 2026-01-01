@@ -13,6 +13,8 @@ interface WorkoutSliderProps {
     cycleId?: string;
     reverse?: boolean;
     onExerciseClick?: (id: string) => void;
+    muscleGroupFilter?: string | null;
+    includeWarmup?: boolean;
 }
 
 const VirtualizedWorkoutSlider: FC<WorkoutSliderProps> = ({
@@ -25,9 +27,21 @@ const VirtualizedWorkoutSlider: FC<WorkoutSliderProps> = ({
     cycleId,
     reverse = true,
     onExerciseClick,
+    muscleGroupFilter,
+    includeWarmup = true,
 }) => {
     // Reverse the workouts order if requested
-    const processedWorkouts = reverse ? [...workouts].reverse() : workouts;
+    const reversedWorkouts = reverse ? [...workouts].reverse() : workouts;
+
+    // Filter workouts by muscle group if filter is active
+    const processedWorkouts = muscleGroupFilter
+        ? reversedWorkouts.filter((workout) =>
+              workout.exercises.some((e) => {
+                  const metadata = exerciseMap.get(e.exerciseId.toString());
+                  return metadata?.primaryMuscleGroup === muscleGroupFilter;
+              })
+          )
+        : reversedWorkouts;
 
     // Group workouts into slides (each slide contains slidesToShow workouts)
     const slideCount = Math.ceil(processedWorkouts.length / slidesToShow);
@@ -112,6 +126,8 @@ const VirtualizedWorkoutSlider: FC<WorkoutSliderProps> = ({
                                                 miniMode={miniMode}
                                                 cycleId={cycleId}
                                                 onExerciseClick={onExerciseClick}
+                                                muscleGroupFilter={muscleGroupFilter}
+                                                includeWarmup={includeWarmup}
                                             />
                                         ))}
                                     </div>

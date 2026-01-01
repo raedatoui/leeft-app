@@ -17,6 +17,8 @@ interface WorkoutTableProps {
     maxHeight?: string;
     cycleId?: string;
     onExerciseClick?: (id: string) => void;
+    muscleGroupFilter?: string | null;
+    includeWarmup?: boolean;
 }
 
 const formatExerciseName = (name: string) => {
@@ -50,7 +52,7 @@ const formatExerciseName = (name: string) => {
     );
 };
 
-const findMaxWeightSet = (sets: SetDetail[]) => {
+const _findMaxWeightSet = (sets: SetDetail[]) => {
     return Math.max(...sets.map((set) => set.weight || 0));
 };
 
@@ -64,6 +66,8 @@ const WorkoutTable: FC<WorkoutTableProps> = ({
     maxHeight = '700px',
     cycleId,
     onExerciseClick,
+    muscleGroupFilter,
+    includeWarmup = true,
 }) => {
     const [isMobile, setIsMobile] = useState(false);
 
@@ -84,7 +88,20 @@ const WorkoutTable: FC<WorkoutTableProps> = ({
     }
 
     // Determine which exercises to show
-    const exercisesToShow = showFullWorkout ? workout.exercises : focusedExercise ? [focusedExercise] : workout.exercises;
+    const baseExercises = showFullWorkout ? workout.exercises : focusedExercise ? [focusedExercise] : workout.exercises;
+
+    // Apply muscle group filter if present
+    const exercisesToShow = muscleGroupFilter
+        ? baseExercises.filter((e) => {
+              const metadata = exerciseMap.get(e.exerciseId.toString());
+              return metadata?.primaryMuscleGroup === muscleGroupFilter;
+          })
+        : baseExercises;
+
+    // If filtering resulted in no exercises, don't render the card
+    if (exercisesToShow.length === 0) {
+        return null;
+    }
 
     // On mobile, don't apply maxHeight - let it grow organically
     const cardStyle = isMobile ? {} : { maxHeight };
@@ -102,10 +119,15 @@ const WorkoutTable: FC<WorkoutTableProps> = ({
                     })}
                 </h2>
 
-                <div className="flex gap-2 text-sm text-muted-foreground justify-center">
-                    <span>Vol: {Math.round(workout.volume).toLocaleString()} |</span>
-                    <span>Dur: {workout.duration}m |</span>
-                    {workout.rpe && <span>RPE: {workout.rpe}</span>}
+                <div className="flex gap-2 text-sm text-muted-foreground flex-wrap justify-center">
+                    <span>
+                        <span>Blocks: {workout.exercises.length}&nbsp;|&nbsp;</span>
+                        <span>Vol: {Math.round(includeWarmup ? workout.volume : workout.workVolume).toLocaleString()}&nbsp;|&nbsp;</span>
+                    </span>
+                    <span>
+                        <span>Dur: {workout.duration}m&nbsp;</span>
+                        {workout.rpe && <span>|&nbsp;RPE: {workout.rpe}</span>}
+                    </span>
                 </div>
             </CardHeader>
 
@@ -150,13 +172,17 @@ const WorkoutTable: FC<WorkoutTableProps> = ({
                                             {formatExerciseName(metadata?.name ?? `Exercise ${exercise.exerciseId}`)}
                                         </Link>
                                     )}
-                                    {miniMode && <div className="text-sm text-muted-foreground">{formatExerciseSets(exercise)}</div>}
+                                    {miniMode && <div className="text-sm text-muted-foreground">{formatExerciseSets(exercise, includeWarmup)}</div>}
                                     {!miniMode && metadata?.primaryMuscleGroup && (
                                         <Badge variant={isFocused ? 'default' : 'secondary'} className="shrink-0">
                                             {metadata.primaryMuscleGroup}
                                         </Badge>
                                     )}
-                                    {!miniMode && <div className="text-sm text-muted-foreground">{exercise.volume.toLocaleString()}</div>}
+                                    {!miniMode && (
+                                        <div className="text-sm text-muted-foreground">
+                                            {(includeWarmup ? exercise.volume : exercise.workVolume).toLocaleString()}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Sets Table */}
@@ -176,23 +202,25 @@ const WorkoutTable: FC<WorkoutTableProps> = ({
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {exercise.sets.map((set, index) => {
-                                                    return (
-                                                        <tr
-                                                            key={set.order}
-                                                            className={cn(
-                                                                'border-b py-0.5',
-                                                                set.isWorkSet
-                                                                    ? cn('font-bold', isFocused ? 'text-primary' : 'text-primary/80')
-                                                                    : 'text-foreground/80'
-                                                            )}
-                                                        >
-                                                            <td className="w-1/3 py-0.5 text-center">{`#${index + 1}`}</td>
-                                                            <td className="w-1/3 py-0.5 text-center">{set.reps}</td>
-                                                            <td className="w-1/3 py-0.5 text-center">{Math.round(set.weight)}</td>
-                                                        </tr>
-                                                    );
-                                                })}
+                                                {exercise.sets
+                                                    .filter((set) => includeWarmup || set.isWorkSet)
+                                                    .map((set, index) => {
+                                                        return (
+                                                            <tr
+                                                                key={set.order}
+                                                                className={cn(
+                                                                    'border-b py-0.5',
+                                                                    set.isWorkSet
+                                                                        ? cn('font-bold', isFocused ? 'text-primary' : 'text-primary/80')
+                                                                        : 'text-foreground/80'
+                                                                )}
+                                                            >
+                                                                <td className="w-1/3 py-0.5 text-center">{`#${index + 1}`}</td>
+                                                                <td className="w-1/3 py-0.5 text-center">{set.reps}</td>
+                                                                <td className="w-1/3 py-0.5 text-center">{Math.round(set.weight)}</td>
+                                                            </tr>
+                                                        );
+                                                    })}
                                             </tbody>
                                         </table>
                                     </div>

@@ -47,16 +47,18 @@ export const ExerciseSchema = z.object({
     order: z.number(),
     sets: z.array(SetSchema),
     volume: z.number(),
+    workVolume: z.number(),
 });
 
 export const WorkoutSchema = z.object({
-    uuid: z.string().uuid(),
+    uuid: z.uuid(),
     date: z.date(),
     title: z.string(),
     duration: z.number(),
     rpe: z.number().nullable(),
     exercises: z.array(ExerciseSchema),
     volume: z.number(),
+    workVolume: z.number(),
 });
 
 export const MappedWorkoutSchema = WorkoutSchema.extend({
@@ -71,11 +73,11 @@ export type RepRange = {
 
 export const CycleSchema = z.object({
     type: z.enum(['strength', 'break', 'hypertrophy', 'maintenance']),
-    uuid: z.string().uuid(),
+    uuid: z.uuid(),
     name: z.string(),
     location: z.string().optional(),
     dates: z.array(z.preprocess((val) => new Date(val as string), z.date())).length(2),
-    workouts: z.array(z.string().uuid()).optional(),
+    workouts: z.array(z.uuid()).optional(),
     note: z.string().optional(),
 });
 

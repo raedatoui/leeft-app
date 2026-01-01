@@ -3,6 +3,7 @@
 import { ChevronLeft, ChevronRight, FileText, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import { type FC, useMemo, useState } from 'react';
+import { ControlCard } from '@/components/controlCard';
 import CycleDetailView from '@/components/cycleDetailView';
 import PageTemplate from '@/components/pageTemplate';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { ControlCard } from '@/components/controlCard';
 import { useWorkouts } from '@/lib/contexts';
 import { cn, computeStats, formatDate } from '@/lib/utils';
 import type { ExerciseMap, MappedCycle, Workout } from '@/types';

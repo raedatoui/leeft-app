@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import ExerciseView from '@/components/exercise';
 import PageTemplate from '@/components/pageTemplate';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useWorkouts } from '@/lib/contexts';
-import { Badge } from '@/components/ui/badge';
 
 export default function ExercisePage() {
     const params = useParams();

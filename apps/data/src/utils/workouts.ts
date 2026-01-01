@@ -6,7 +6,7 @@ import { logger } from './logger';
 
 export function loadLiftingWorkouts(): Workout[] {
     logger.loading('Loading lifting workouts...');
-    const workoutsLog = join(__dirname, '../../data/out/lifting-log.json');
+    const workoutsLog = join(__dirname, '../../data/out/lifting-log-sets.json');
     const workoutsJson = JSON.parse(readFileSync(workoutsLog, 'utf8'));
     const workouts = z
         .object({ workouts: z.array(z.any()) })

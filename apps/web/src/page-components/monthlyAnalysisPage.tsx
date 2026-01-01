@@ -1,9 +1,13 @@
 'use client';
 
+import { Dumbbell } from 'lucide-react';
 import Link from 'next/link';
+import { useState } from 'react';
 import { ControlCard } from '@/components/controlCard';
 import PageTemplate from '@/components/pageTemplate';
 import { Card, CardContent } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { useWorkouts } from '@/lib/contexts';
 import { computeStats } from '@/lib/utils';
 import type { ExerciseMap, Workout } from '@/types';
@@ -28,9 +32,14 @@ const formatMonthYear = (yearMonth: string) => {
     return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 };
 
-const MonthlyStats = ({ yearMonth, workouts, exerciseMap }: { yearMonth: string; workouts: Workout[]; exerciseMap: ExerciseMap }) => {
+const MonthlyStats = ({
+    yearMonth,
+    workouts,
+    exerciseMap,
+    includeWarmup,
+}: { yearMonth: string; workouts: Workout[]; exerciseMap: ExerciseMap; includeWarmup: boolean }) => {
     const { workoutCount, avgExercises, topExercises } = computeStats(workouts);
-    const totalVolume = workouts.reduce((sum, w) => sum + (w.volume || 0), 0);
+    const totalVolume = workouts.reduce((sum, w) => sum + (includeWarmup ? w.volume : w.workVolume) || 0, 0);
     const avgVolume = totalVolume / workoutCount;
 
     return (
@@ -92,6 +101,7 @@ const MonthlyStats = ({ yearMonth, workouts, exerciseMap }: { yearMonth: string;
 
 export default function WorkoutAnalysis() {
     const { workouts, exerciseMap, isLoading, error } = useWorkouts();
+    const [includeWarmup, setIncludeWarmup] = useState(true);
 
     if (isLoading) return <div>Loading...</div>;
 
@@ -101,7 +111,7 @@ export default function WorkoutAnalysis() {
 
     const sortedMonths = Object.keys(groupedWorkouts).sort();
 
-    const totalVolume = workouts.reduce((sum, w) => sum + (w.volume || 0), 0);
+    const totalVolume = workouts.reduce((sum, w) => sum + (includeWarmup ? w.volume : w.workVolume) || 0, 0);
 
     const dateRange = {
         start: new Date(Math.min(...workouts.map((w) => w.date.getTime()))),
@@ -116,7 +126,7 @@ export default function WorkoutAnalysis() {
                 <div className="flex flex-col gap-4">
                     {/* Controls */}
                     <ControlCard className="w-full">
-                        <div className="grid grid-cols-2 lg:flex lg:items-center gap-3 sm:gap-6">
+                        <div className="grid grid-cols-2 lg:flex lg:items-center lg:justify-center gap-3 sm:gap-6">
                             <div className="text-center">
                                 <div className="text-xl sm:text-2xl font-bold text-primary">{workouts.length}</div>
                                 <div className="text-xs text-muted-foreground">Total Workouts</div>
@@ -127,6 +137,18 @@ export default function WorkoutAnalysis() {
                                     {totalVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                 </div>
                                 <div className="text-xs text-muted-foreground">Total Volume</div>
+                            </div>
+
+                            <div className="flex items-center justify-center gap-2.5 text-xs font-bold uppercase tracking-tighter">
+                                <Label htmlFor="warmup-mode" className="cursor-pointer">
+                                    <Dumbbell className="h-4 w-4 text-muted-foreground" />
+                                </Label>
+                                <Switch
+                                    id="warmup-mode"
+                                    checked={!includeWarmup}
+                                    onCheckedChange={(checked) => setIncludeWarmup(!checked)}
+                                    className="scale-90"
+                                />
                             </div>
 
                             <div className="text-center col-span-2 lg:col-span-1">
@@ -151,7 +173,13 @@ export default function WorkoutAnalysis() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
                 {sortedMonths.reverse().map((yearMonth) => (
-                    <MonthlyStats key={yearMonth} yearMonth={yearMonth} workouts={groupedWorkouts[yearMonth]} exerciseMap={exerciseMap} />
+                    <MonthlyStats
+                        key={yearMonth}
+                        yearMonth={yearMonth}
+                        workouts={groupedWorkouts[yearMonth]}
+                        exerciseMap={exerciseMap}
+                        includeWarmup={includeWarmup}
+                    />
                 ))}
             </div>
         </PageTemplate>
