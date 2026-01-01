@@ -177,13 +177,12 @@ const WorkoutTable: FC<WorkoutTableProps> = ({
                                             </thead>
                                             <tbody>
                                                 {exercise.sets.map((set, index) => {
-                                                    const maxWeight = findMaxWeightSet(exercise.sets);
                                                     return (
                                                         <tr
                                                             key={set.order}
                                                             className={cn(
                                                                 'border-b py-0.5',
-                                                                set.weight === maxWeight
+                                                                set.isWorkSet
                                                                     ? cn('font-bold', isFocused ? 'text-primary' : 'text-primary/80')
                                                                     : 'text-foreground/80'
                                                             )}

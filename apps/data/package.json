@@ -24,6 +24,7 @@
         "compile:cardio": "bun src/compile/index.ts compile-cardio",
         "compile:google": "bun src/google/index.ts",
         "compile:lifting": "bun src/compile/index.ts compile-lifting",
+        "compile:lifting:sets": "bun src/compile/index.ts classify-sets",
         "compile:test": "bun src/compile/index.ts test",
         "compile:test-abr": "bun src/compile/index.ts test-abr",
         "compile:test-day": "bun src/compile/index.ts test-day",

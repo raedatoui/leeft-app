@@ -39,6 +39,7 @@ export const SetSchema = z.object({
     time: z.string().optional(),
     weight: z.number(),
     order: z.number(),
+    isWorkSet: z.boolean(),
 });
 
 export const ExerciseSchema = z.object({

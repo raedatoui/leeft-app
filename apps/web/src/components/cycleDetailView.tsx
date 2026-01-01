@@ -91,7 +91,8 @@ export default function CycleDetailView({ cycle, exerciseMap }: CycleDetailViewP
                 const metadata = exerciseMap.get(exercise.exerciseId.toString());
                 if (metadata?.primaryMuscleGroup) {
                     const group = metadata.primaryMuscleGroup;
-                    stats[group] = (stats[group] || 0) + exercise.sets.length;
+                    const workSetCount = exercise.sets.filter((s) => s.isWorkSet).length;
+                    stats[group] = (stats[group] || 0) + workSetCount;
                 }
             }
         }
@@ -124,6 +125,9 @@ export default function CycleDetailView({ cycle, exerciseMap }: CycleDetailViewP
                     )}
                     <div className="px-2 py-0.5 rounded bg-secondary text-secondary-foreground text-xs font-bold">
                         {cycle.workouts?.length || 0} Workouts
+                    </div>
+                    <div className="px-2 py-0.5 rounded bg-secondary text-secondary-foreground text-xs font-bold">
+                        {Math.ceil((new Date(cycle.dates[1]).getTime() - new Date(cycle.dates[0]).getTime()) / (1000 * 60 * 60 * 24)) + 1} Days
                     </div>
                 </div>
 
