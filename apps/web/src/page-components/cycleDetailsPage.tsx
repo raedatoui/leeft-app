@@ -19,8 +19,10 @@ export default function CycleDetailsPage({ id }: CycleDetailsPageProps) {
     if (!cycle) return <div>Cycle not found</div>;
 
     return (
-        <PageTemplate>
-            <CycleDetailView cycle={cycle} exerciseMap={exerciseMap} />
+        <PageTemplate title="Training Cycles">
+            <div className="mt-6">
+                <CycleDetailView cycle={cycle} exerciseMap={exerciseMap} />
+            </div>
         </PageTemplate>
     );
 }

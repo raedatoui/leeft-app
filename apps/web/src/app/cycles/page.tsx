@@ -1,5 +1,5 @@
-import CyclesPage from '@/components/cyclesPage';
+import CyclesPage from '@/page-components/cyclesPage';
 
-export default function Home() {
+export default function Page() {
     return <CyclesPage />;
 }

@@ -1,30 +1,59 @@
-import Link from 'next/link';
+'use client';
 
-export default function Header() {
+import type { ReactNode } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
+
+interface HeaderProps {
+    title: string;
+    children?: ReactNode;
+}
+
+export default function Header({ title, children }: HeaderProps) {
+    const pathname = usePathname();
+
+    const getLinkClassName = (href: string) => {
+        const isActive = href === '/' ? pathname === '/' : pathname?.startsWith(href);
+        return cn('transition-colors hover:text-foreground', isActive ? 'text-yellow-500 font-medium' : 'text-muted-foreground');
+    };
+
     return (
         <div className="border-b border-border">
-            <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-1 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
-                <Link href="/" className="text-primary hover:text-primary/90 no-underline">
-                    <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-1">
-                        <span>🏋️</span>
-                        <span>LEEFT</span>
-                        <span className="inline-block scale-x-[-1]">🏋️</span>
-                    </h1>
-                </Link>
-                <nav className="flex items-center gap-3 sm:gap-4 text-sm">
-                    <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">
-                        Workouts
+            <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-1 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0 relative min-h-[50px]">
+                <div className="flex-1 flex w-full sm:w-auto justify-center sm:justify-start">
+                    <Link href="/" className="text-primary hover:text-primary/90 no-underline">
+                        <span className="text-xl sm:text-2xl font-bold flex items-center gap-1">
+                            <span>🏋️</span>
+                            <span>LEEFT</span>
+                            <span className="inline-block scale-x-[-1]">🏋️</span>
+                        </span>
                     </Link>
-                    <Link href="/cycles" className="text-muted-foreground hover:text-foreground transition-colors">
-                        Cycles
-                    </Link>
-                    <Link href="/exercises" className="text-muted-foreground hover:text-foreground transition-colors">
-                        Exercises
-                    </Link>
-                    <Link href="/analysis" className="text-muted-foreground hover:text-foreground transition-colors">
-                        Monthly
-                    </Link>
-                </nav>
+                </div>
+
+                {title && (
+                    <div className="sm:absolute sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 flex justify-center">
+                        <h1 className="text-xl sm:text-4xl font-black tracking-tighter uppercase text-primary leading-none text-center">{title}</h1>
+                        {children}
+                    </div>
+                )}
+
+                <div className="flex-1 flex w-full sm:w-auto justify-center sm:justify-end">
+                    <nav className="flex items-center gap-3 sm:gap-4 text-sm">
+                        <Link href="/" className={getLinkClassName('/')}>
+                            Workouts
+                        </Link>
+                        <Link href="/cycles" className={getLinkClassName('/cycles')}>
+                            Cycles
+                        </Link>
+                        <Link href="/exercises" className={getLinkClassName('/exercises')}>
+                            Exercises
+                        </Link>
+                        <Link href="/analysis" className={getLinkClassName('/analysis')}>
+                            Monthly
+                        </Link>
+                    </nav>
+                </div>
             </div>
         </div>
     );

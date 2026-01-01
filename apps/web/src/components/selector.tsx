@@ -30,7 +30,7 @@ export default function ExerciseSearch({ exerciseMap }: ExerciseSearchProps) {
         : exercises;
 
     const handleSelect = (exerciseId: string) => {
-        router.push(`/exercise/${exerciseId}`);
+        router.push(`/exercises/${exerciseId}`);
         setOpen(false);
         setSearchValue('');
     };

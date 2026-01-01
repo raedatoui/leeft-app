@@ -1,9 +1,7 @@
 import Highcharts, { type Options, type Point, type PointClickEventObject } from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
-import Link from 'next/link';
 import { useState } from 'react';
 import ExerciseSelector from '@/components/selector';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -17,6 +15,8 @@ interface Props {
     exercise: ExerciseMetadata;
     exerciseMap: Map<string, ExerciseMetadata>;
     cycleId?: string;
+    hideSelector?: boolean;
+    hideTitle?: boolean;
 }
 
 // Theme colors - using CSS variables for consistency with shadcn
@@ -182,7 +182,7 @@ const workoutDate = (w: Workout): string =>
         timeZone: 'EST',
     });
 
-export default function ExerciseView({ workouts, exercise, exerciseMap, cycleId }: Props) {
+export default function ExerciseView({ workouts, exercise, exerciseMap, cycleId, hideSelector = false }: Props) {
     const [selectedMethod, setSelectedMethod] = useState(maxCalculators[0]);
     const [selectedWorkout, setSelectedWorkout] = useState<MappedWorkout | null>(null);
     const [isExpanded, setIsExpanded] = useState(false);
@@ -299,46 +299,6 @@ export default function ExerciseView({ workouts, exercise, exerciseMap, cycleId 
 
     return (
         <div className="flex flex-col gap-4">
-            {/* Header Section */}
-            <div className="flex flex-col lg:flex-row items-center lg:items-start justify-between gap-4">
-                <div className="flex flex-col gap-3 w-full lg:w-auto">
-                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center sm:items-center">
-                        <h2 className="text-2xl sm:text-4xl font-bold text-primary text-center sm:text-left">{exercise.name}</h2>
-                        <div className="flex flex-wrap gap-2 justify-center sm:justify-start mt-0 sm:mt-[8px]">
-                            {exercise.equipment.map((item) => (
-                                <Link key={item} href={`/exercises/equipment/${encodeURIComponent(item)}`} className="no-underline">
-                                    <Badge
-                                        variant="secondary"
-                                        className="h-fit hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
-                                    >
-                                        {item}
-                                    </Badge>
-                                </Link>
-                            ))}
-                            <Link href={`/exercises/muscle/${encodeURIComponent(exercise.primaryMuscleGroup)}`} className="no-underline">
-                                <Badge
-                                    variant="secondary"
-                                    className="h-fit hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
-                                >
-                                    {exercise.primaryMuscleGroup}
-                                </Badge>
-                            </Link>
-                            <Link href={`/exercises/category/${encodeURIComponent(exercise.category)}`} className="no-underline">
-                                <Badge
-                                    variant="secondary"
-                                    className="h-fit hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
-                                >
-                                    {exercise.category}
-                                </Badge>
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-                <div className="w-full lg:w-auto flex justify-center lg:justify-end">
-                    <ExerciseSelector exerciseMap={exerciseMap} />
-                </div>
-            </div>
-
             {/* Filters Section */}
             <Card>
                 <CardContent className="py-3 px-3 sm:px-4">
@@ -389,6 +349,12 @@ export default function ExerciseView({ workouts, exercise, exerciseMap, cycleId 
                                 </SelectContent>
                             </Select>
                         </div>
+
+                        {!hideSelector && (
+                            <div className="w-full lg:w-auto flex justify-center lg:justify-end">
+                                <ExerciseSelector exerciseMap={exerciseMap} />
+                            </div>
+                        )}
                     </div>
                 </CardContent>
             </Card>

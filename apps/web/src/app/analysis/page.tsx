@@ -1,5 +1,5 @@
-import MonthlyAnalysisPage from '@/components/monthlyAnalysisPage';
+import MonthlyAnalysisPage from '@/page-components/monthlyAnalysisPage';
 
-export default function Home() {
+export default function Page() {
     return <MonthlyAnalysisPage />;
 }

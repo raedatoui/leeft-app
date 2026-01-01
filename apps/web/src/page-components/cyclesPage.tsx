@@ -2,15 +2,15 @@
 
 import { ChevronLeft, ChevronRight, FileText, MapPin } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { type FC, useMemo, useState } from 'react';
 import CycleDetailView from '@/components/cycleDetailView';
-import PageHeader from '@/components/pageHeader';
 import PageTemplate from '@/components/pageTemplate';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { ControlCard } from '@/components/controlCard';
 import { useWorkouts } from '@/lib/contexts';
 import { cn, computeStats, formatDate } from '@/lib/utils';
 import type { ExerciseMap, MappedCycle, Workout } from '@/types';
@@ -33,7 +33,7 @@ interface CycleProps {
     onSelect?: () => void;
 }
 
-const CycleCard: React.FC<CycleProps> = ({
+const CycleCard: FC<CycleProps> = ({
     uuid,
     name,
     location,
@@ -75,13 +75,11 @@ const CycleCard: React.FC<CycleProps> = ({
             }}
             className={cn(
                 'bg-black relative overflow-hidden group transition-all duration-300 cursor-pointer',
-                'hover:shadow-2xl hover:scale-[1.02]',
+                'hover:shadow-none hover:scale-[1.02]',
                 className
             )}
             style={transform}
         >
-            {/* Colored accent bar on the left */}
-
             {/* Subtle gradient overlay */}
             <div className={cn('absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity duration-300', gradientColor)} />
 
@@ -148,7 +146,7 @@ const CycleCard: React.FC<CycleProps> = ({
                                         <li key={ex.id} className="flex items-start gap-2 text-sm">
                                             <span className="text-muted-foreground mt-0.5">→</span>
                                             <div className="flex-1">
-                                                <Link href={`/exercise/${ex.id}`} className="font-semibold hover:text-primary transition-colors">
+                                                <Link href={`/exercises/${ex.id}`} className="font-semibold hover:text-primary transition-colors">
                                                     {exerciseMap.get(ex.id.toString())?.name}
                                                 </Link>
                                                 <div className="text-xs text-muted-foreground">
@@ -277,7 +275,7 @@ export default function TrainingTimeline() {
                     accent: 'bg-red-500',
                     badgeBorder: 'border-red-500',
                     gradient: 'bg-gradient-to-br from-red-500/10 to-transparent',
-                    shadow: 'hover:shadow-red-500/20',
+                    shadow: 'hover:shadow-none',
                 };
             case 'break':
                 return {
@@ -287,7 +285,7 @@ export default function TrainingTimeline() {
                     accent: 'bg-blue-500',
                     badgeBorder: 'border-blue-500',
                     gradient: 'bg-gradient-to-br from-blue-500/10 to-transparent',
-                    shadow: 'hover:shadow-blue-500/20',
+                    shadow: 'hover:shadow-none',
                 };
             case 'maintenance':
                 return {
@@ -297,7 +295,7 @@ export default function TrainingTimeline() {
                     accent: 'bg-yellow-500',
                     badgeBorder: 'border-yellow-500',
                     gradient: 'bg-gradient-to-br from-yellow-500/10 to-transparent',
-                    shadow: 'hover:shadow-yellow-500/20',
+                    shadow: 'hover:shadow-none',
                 };
             case 'strength':
                 return {
@@ -307,7 +305,7 @@ export default function TrainingTimeline() {
                     accent: 'bg-green-500',
                     badgeBorder: 'border-green-500',
                     gradient: 'bg-gradient-to-br from-green-500/10 to-transparent',
-                    shadow: 'hover:shadow-green-500/20',
+                    shadow: 'hover:shadow-none',
                 };
             default:
                 return {
@@ -317,7 +315,7 @@ export default function TrainingTimeline() {
                     accent: 'bg-yellow-500',
                     badgeBorder: 'border-yellow-500',
                     gradient: 'bg-gradient-to-br from-yellow-500/10 to-transparent',
-                    shadow: 'hover:shadow-yellow-500/20',
+                    shadow: 'hover:shadow-none',
                 };
         }
     };
@@ -365,202 +363,201 @@ export default function TrainingTimeline() {
     const selectedCycle = selectedCycleUuid ? rawCycles.find((c) => c.uuid === selectedCycleUuid) : null;
 
     return (
-        <PageTemplate>
-            <div className="flex flex-col gap-4">
-                <PageHeader title="Training Cycles" />
-
-                {/* Controls & Summary Row */}
-                <Card className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 p-4">
-                    <div className="flex flex-col gap-2 w-full md:w-auto">
-                        <div className="flex items-center gap-3">
-                            <h2 className="text-3xl font-black tracking-tight text-primary">{visibleYear}</h2>
-                            <div className="h-6 w-px bg-border mx-2" />
+        <PageTemplate
+            title="Training Cycles"
+            stickyHeader={
+                <div className="flex flex-col gap-4">
+                    {/* Controls & Summary Row */}
+                    <ControlCard className="w-full">
+                        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                             <div className="flex items-center gap-3">
-                                <Button
-                                    onClick={() => {
-                                        setVisibleYear((prev) => Math.max(...years.filter((y) => y < prev)));
-                                        setSelectedCycleUuid(null);
-                                    }}
-                                    disabled={visibleYear === Math.min(...years)}
-                                    size="icon"
-                                    variant="outline"
-                                    className="h-8 w-8 rounded-full"
-                                >
-                                    <ChevronLeft className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                    onClick={() => {
-                                        setVisibleYear((prev) => Math.min(...years.filter((y) => y > prev)));
-                                        setSelectedCycleUuid(null);
-                                    }}
-                                    disabled={visibleYear === Math.max(...years)}
-                                    size="icon"
-                                    variant="outline"
-                                    className="h-8 w-8 rounded-full"
-                                >
-                                    <ChevronRight className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-medium">
-                            {legendItems.map((item) => (
-                                <div key={item.type} className="flex items-center gap-1.5">
-                                    <div className={cn('w-2 h-2 rounded-full', item.bg)} />
-                                    <span className="text-muted-foreground capitalize">{item.label}:</span>
-                                    <span className="font-bold">{yearStats.typeCounts[item.type] || 0}</span>
-                                </div>
-                            ))}
-                            <div className="h-3 w-px bg-border mx-1 hidden sm:block" />
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-muted-foreground">Workouts:</span>
-                                <span className="font-bold text-primary">{totalWorkouts}</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-muted-foreground">Break Days:</span>
-                                <span className="font-bold text-blue-500">{totalBreakDays}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full lg:w-auto">
-                        {/* Direction toggle */}
-                        <Button onClick={() => setIsReversed((r) => !r)} variant="outline" size="sm" className="h-8 text-xs">
-                            {isReversed ? 'Timeline: R→L' : 'Timeline: L→R'}
-                        </Button>
-
-                        {/* Details toggle - only relevant for list view */}
-                        {!selectedCycleUuid && (
-                            <div className="flex items-center gap-2 text-xs bg-background border rounded-md px-3 py-1.5 h-8">
-                                <Label htmlFor="show-details" className="cursor-pointer font-medium">
-                                    Details
-                                </Label>
-                                <Switch id="show-details" checked={showDetails} onCheckedChange={setShowDetails} className="scale-75 origin-right" />
-                            </div>
-                        )}
-
-                        {/* Legend filters */}
-                        <div className="flex items-center gap-2 text-xs flex-wrap">
-                            <Button
-                                onClick={() => {
-                                    setActiveType(null);
-                                    setSelectedCycleUuid(null);
-                                }}
-                                variant={activeType === null ? 'default' : 'outline'}
-                                size="sm"
-                                className="h-7"
-                            >
-                                All
-                            </Button>
-                            {legendItems.map((item) => {
-                                const isActive = activeType === item.type;
-                                return (
+                                <h2 className="text-3xl font-black tracking-tight text-primary">{visibleYear}</h2>
+                                <div className="h-6 w-px bg-border mx-2" />
+                                <div className="flex items-center gap-3">
                                     <Button
-                                        key={item.type}
                                         onClick={() => {
-                                            setActiveType(isActive ? null : item.type);
+                                            setVisibleYear((prev) => Math.max(...years.filter((y) => y < prev)));
                                             setSelectedCycleUuid(null);
                                         }}
-                                        variant={isActive ? 'default' : 'outline'}
-                                        size="sm"
-                                        className={cn('gap-2 h-7')}
+                                        disabled={visibleYear === Math.min(...years)}
+                                        size="icon"
+                                        variant="outline"
+                                        className="h-8 w-8 rounded-full"
                                     >
-                                        <div className={cn('w-2 h-2 rounded-full', item.bg)} />
-                                        <span className="hidden sm:inline">{item.label}</span>
+                                        <ChevronLeft className="h-4 w-4" />
                                     </Button>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </Card>
-
-                <Card className="p-4">
-                    {/* Month markers */}
-                    <div className="hidden sm:block">
-                        <div className="flex justify-between mb-1">
-                            {months.map((m, idx) => (
-                                <div
-                                    key={m.label}
-                                    className={cn('text-xs text-muted-foreground text-center w-8', idx % 2 !== 0 && 'hidden md:block')}
-                                >
-                                    {m.label}
+                                    <Button
+                                        onClick={() => {
+                                            setVisibleYear((prev) => Math.min(...years.filter((y) => y > prev)));
+                                            setSelectedCycleUuid(null);
+                                        }}
+                                        disabled={visibleYear === Math.max(...years)}
+                                        size="icon"
+                                        variant="outline"
+                                        className="h-8 w-8 rounded-full"
+                                    >
+                                        <ChevronRight className="h-4 w-4" />
+                                    </Button>
                                 </div>
-                            ))}
-                        </div>
+                            </div>
 
-                        {/* Timeline base + ticks */}
-                        <div className="relative h-1 bg-primary mb-2">
-                            <div className="absolute inset-0 flex justify-between">
-                                {months.map((m, idx) => (
-                                    <div key={m.label} className={cn('w-px h-3 bg-muted-foreground', idx % 2 !== 0 && 'hidden md:block')} />
-                                ))}
+                            {/* Combined stats & filters */}
+                            <div className="flex items-center gap-2 text-xs flex-wrap">
+                                <Button
+                                    onClick={() => {
+                                        setActiveType(null);
+                                        setSelectedCycleUuid(null);
+                                    }}
+                                    variant={activeType === null ? 'default' : 'outline'}
+                                    size="sm"
+                                    className="h-8 gap-2"
+                                >
+                                    <span>All</span>
+                                    <span className="font-bold">{visibleCycles.length}</span>
+                                </Button>
+                                {legendItems.map((item) => {
+                                    const isActive = activeType === item.type;
+                                    const count = yearStats.typeCounts[item.type] || 0;
+                                    return (
+                                        <Button
+                                            key={item.type}
+                                            onClick={() => {
+                                                setActiveType(isActive ? null : item.type);
+                                                setSelectedCycleUuid(null);
+                                            }}
+                                            variant={isActive ? 'default' : 'outline'}
+                                            size="sm"
+                                            className="h-8 gap-2"
+                                        >
+                                            <div className={cn('w-2 h-2 rounded-full', item.bg)} />
+                                            <span className="hidden sm:inline">{item.label}</span>
+                                            <span className="font-bold">{count}</span>
+                                        </Button>
+                                    );
+                                })}
+                                <div className="h-4 w-px bg-border mx-1" />
+                                <div className="flex items-center gap-1.5 px-2 py-1 bg-muted/50 rounded-md">
+                                    <span className="text-muted-foreground">Workouts</span>
+                                    <span className="font-bold text-primary">{totalWorkouts}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5 px-2 py-1 bg-muted/50 rounded-md">
+                                    <span className="text-muted-foreground">Rest days</span>
+                                    <span className="font-bold text-blue-500">{totalBreakDays}</span>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                                {/* Direction toggle */}
+                                <Button onClick={() => setIsReversed((r) => !r)} variant="outline" size="sm" className="h-8 text-xs">
+                                    {isReversed ? 'R→L' : 'L→R'}
+                                </Button>
+
+                                {/* Details toggle - only relevant for list view */}
+                                {!selectedCycleUuid && (
+                                    <div className="flex items-center gap-2 text-xs bg-background border rounded-md px-3 py-1.5 h-8">
+                                        <Label htmlFor="show-details" className="cursor-pointer font-medium">
+                                            Details
+                                        </Label>
+                                        <Switch
+                                            id="show-details"
+                                            checked={showDetails}
+                                            onCheckedChange={setShowDetails}
+                                            className="scale-75 origin-right"
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </div>
-                    </div>
+                    </ControlCard>
 
-                    {/* Cycles grid */}
-                    <div className="space-y-4 p-2 mb-4">
-                        <div className="relative flex-1 h-full">
-                            {visibleCycles.map((cycle) => {
-                                const styles = getCycleStyles(cycle.type);
-                                const { left, width } = getCyclePosition(cycle);
-                                const isSelected = selectedCycleUuid === cycle.uuid;
-                                const isTypeMismatch = activeType !== null && cycle.type !== activeType;
-                                const isDimmed = (selectedCycleUuid !== null && !isSelected) || isTypeMismatch;
-
-                                return (
-                                    // biome-ignore lint/a11y/useKeyWithClickEvents: selection logic
-                                    // biome-ignore lint/a11y/noStaticElementInteractions: selection logic
+                    {/* Month markers */}
+                    <ControlCard className="w-full">
+                        <div className="hidden sm:block">
+                            <div className="flex justify-between mb-1">
+                                {months.map((m, idx) => (
                                     <div
-                                        key={cycle.uuid}
-                                        onClick={() => {
-                                            handleBarClick(cycle.uuid);
-                                        }}
-                                        className={cn(
-                                            'absolute h-3 top-0 rounded-full -translate-y-1/2 cursor-pointer transition-all duration-300',
-                                            styles.timeline,
-                                            'hover:h-4 hover:shadow-lg',
-                                            isDimmed && 'opacity-20',
-                                            isSelected && 'ring-2 ring-white h-4'
-                                        )}
-                                        style={{ left, width }}
-                                    />
-                                );
-                            })}
-                        </div>
-                    </div>
-                </Card>
+                                        key={m.label}
+                                        className={cn('text-xs text-muted-foreground text-center w-8', idx % 2 !== 0 && 'hidden md:block')}
+                                    >
+                                        {m.label}
+                                    </div>
+                                ))}
+                            </div>
 
-                <div className="min-h-[400px] sm:min-h-[600px]">
-                    {selectedCycle && selectedCycleUuid ? (
-                        <CycleDetailView cycle={selectedCycle} exerciseMap={exerciseMap} />
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {displayCycles.map((cycle) => {
-                                const styles = getCycleStyles(cycle.type);
-
-                                return (
-                                    <CycleCard
-                                        key={cycle.uuid}
-                                        uuid={cycle.uuid}
-                                        name={cycle.name}
-                                        location={cycle.location}
-                                        dates={[cycle.dates[0], cycle.dates[1]]}
-                                        note={cycle.note}
-                                        workouts={cycle.workouts}
-                                        exerciseMap={exerciseMap}
-                                        className={cn('w-full border-3', styles.border, styles.shadow)}
-                                        accentColor={styles.accent}
-                                        badgeBorder={styles.badgeBorder}
-                                        gradientColor={styles.gradient}
-                                        showDetails={showDetails}
-                                        onSelect={() => handleBarClick(cycle.uuid)}
-                                    />
-                                );
-                            })}
+                            {/* Timeline base + ticks */}
+                            <div className="relative h-1 bg-primary mb-2">
+                                <div className="absolute inset-0 flex justify-between">
+                                    {months.map((m, idx) => (
+                                        <div key={m.label} className={cn('w-px h-3 bg-muted-foreground', idx % 2 !== 0 && 'hidden md:block')} />
+                                    ))}
+                                </div>
+                            </div>
                         </div>
-                    )}
+
+                        {/* Cycles grid */}
+                        <div className="space-y-4 p-2 mb-4">
+                            <div className="relative flex-1 h-full">
+                                {visibleCycles.map((cycle) => {
+                                    const styles = getCycleStyles(cycle.type);
+                                    const { left, width } = getCyclePosition(cycle);
+                                    const isSelected = selectedCycleUuid === cycle.uuid;
+                                    const isTypeMismatch = activeType !== null && cycle.type !== activeType;
+                                    const isDimmed = (selectedCycleUuid !== null && !isSelected) || isTypeMismatch;
+
+                                    return (
+                                        // biome-ignore lint/a11y/useKeyWithClickEvents: selection logic
+                                        // biome-ignore lint/a11y/noStaticElementInteractions: selection logic
+                                        <div
+                                            key={cycle.uuid}
+                                            onClick={() => {
+                                                handleBarClick(cycle.uuid);
+                                            }}
+                                            className={cn(
+                                                'absolute h-3 top-0 rounded-full -translate-y-1/2 cursor-pointer transition-all duration-300',
+                                                styles.timeline,
+                                                'hover:h-4 hover:shadow-lg',
+                                                isDimmed && 'opacity-20',
+                                                isSelected && 'ring-2 ring-white h-4'
+                                            )}
+                                            style={{ left, width }}
+                                        />
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </ControlCard>
                 </div>
+            }
+        >
+            <div className="min-h-[400px] sm:min-h-[600px] mt-4">
+                {selectedCycle && selectedCycleUuid ? (
+                    <CycleDetailView cycle={selectedCycle} exerciseMap={exerciseMap} />
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {displayCycles.map((cycle) => {
+                            const styles = getCycleStyles(cycle.type);
+
+                            return (
+                                <CycleCard
+                                    key={cycle.uuid}
+                                    uuid={cycle.uuid}
+                                    name={cycle.name}
+                                    location={cycle.location}
+                                    dates={[cycle.dates[0], cycle.dates[1]]}
+                                    note={cycle.note}
+                                    workouts={cycle.workouts}
+                                    exerciseMap={exerciseMap}
+                                    className={cn('w-full border-3', styles.border, styles.shadow)}
+                                    accentColor={styles.accent}
+                                    badgeBorder={styles.badgeBorder}
+                                    gradientColor={styles.gradient}
+                                    showDetails={showDetails}
+                                    onSelect={() => handleBarClick(cycle.uuid)}
+                                />
+                            );
+                        })}
+                    </div>
+                )}
             </div>
         </PageTemplate>
     );

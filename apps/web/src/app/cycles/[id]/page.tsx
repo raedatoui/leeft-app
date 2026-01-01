@@ -1,4 +1,4 @@
-import CycleDetailsPage from '@/components/cycleDetailsPage';
+import CycleDetailsPage from '@/page-components/cycleDetailsPage';
 import { fetchCycles } from '@/lib/fetchData';
 
 export async function generateStaticParams() {

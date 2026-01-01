@@ -2,7 +2,6 @@
 
 import { Calendar } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import PageHeader from '@/components/pageHeader';
 import PageTemplate from '@/components/pageTemplate';
 import WorkoutSlider from '@/components/slider';
 import SliderControls from '@/components/sliderControls';
@@ -83,10 +82,10 @@ export default function HomePage() {
     if (error) return <div>Error: {error.message}</div>;
 
     return (
-        <PageTemplate>
-            <div className="flex flex-col gap-4">
-                <PageHeader title="Workouts Log" />
-                <div className="flex justify-start w-full lg:w-auto">
+        <PageTemplate
+            title="Workouts Log"
+            stickyHeader={
+                <div className="flex justify-center w-full">
                     <SliderControls
                         currentIndex={currentIndex}
                         slideCount={slideCount}
@@ -121,6 +120,9 @@ export default function HomePage() {
                         )}
                     </SliderControls>
                 </div>
+            }
+        >
+            <div className="flex flex-col gap-4 pt-4">
                 <WorkoutSlider
                     workouts={workouts}
                     exerciseMap={exerciseMap}

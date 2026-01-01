@@ -12,6 +12,7 @@ interface WorkoutSliderProps {
     slidesToShow: number;
     cycleId?: string;
     reverse?: boolean;
+    onExerciseClick?: (id: string) => void;
 }
 
 const VirtualizedWorkoutSlider: FC<WorkoutSliderProps> = ({
@@ -23,6 +24,7 @@ const VirtualizedWorkoutSlider: FC<WorkoutSliderProps> = ({
     slidesToShow,
     cycleId,
     reverse = true,
+    onExerciseClick,
 }) => {
     // Reverse the workouts order if requested
     const processedWorkouts = reverse ? [...workouts].reverse() : workouts;
@@ -109,6 +111,7 @@ const VirtualizedWorkoutSlider: FC<WorkoutSliderProps> = ({
                                                 exerciseMap={exerciseMap}
                                                 miniMode={miniMode}
                                                 cycleId={cycleId}
+                                                onExerciseClick={onExerciseClick}
                                             />
                                         ))}
                                     </div>

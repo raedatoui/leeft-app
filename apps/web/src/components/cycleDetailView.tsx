@@ -1,10 +1,12 @@
 'use client';
 
-import { Calendar, MapPin } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Calendar, MapPin, X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import ExerciseView from '@/components/exercise';
 import WorkoutSlider from '@/components/slider';
 import SliderControls from '@/components/sliderControls';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { cn, formatDate } from '@/lib/utils';
 import type { ExerciseMap, MappedCycle } from '@/types';
 
@@ -18,9 +20,10 @@ export default function CycleDetailView({ cycle, exerciseMap }: CycleDetailViewP
     const [currentIndex, setCurrentIndex] = useState(0);
     const [slidesToShow, setSlidesToShow] = useState(4);
     const [responsiveColumns, setResponsiveColumns] = useState(4);
+    const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
 
     // Detect responsive breakpoints
-    React.useEffect(() => {
+    useEffect(() => {
         const updateColumns = () => {
             const width = window.innerWidth;
             let newColumns = 4;
@@ -96,44 +99,39 @@ export default function CycleDetailView({ cycle, exerciseMap }: CycleDetailViewP
         return Object.entries(stats).sort((a, b) => b[1] - a[1]);
     }, [cycle.workouts, exerciseMap]);
 
+    const selectedExercise = selectedExerciseId ? exerciseMap.get(selectedExerciseId) : null;
+
     return (
-        <div className="flex flex-col gap-10">
+        <div className="flex flex-col gap-6">
             {/* Header Section */}
-            <div className="flex flex-col gap-6">
-                {/* Title */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 pt-2">
-                    <h1 className="text-5xl sm:text-5xl font-black tracking-tighter uppercase leading-none">{cycle.name}</h1>
-                    <Badge variant="outline" className={cn('capitalize text-xl px-5 py-2 font-black border-2 w-fit h-fit', cycleColorClass)}>
-                        {cycle.type}
-                    </Badge>
-                </div>
-
-                {/* Meta Information */}
-                <div className="space-y-4">
-                    <div className="flex flex-wrap items-center gap-x-8 gap-y-3 text-muted-foreground text-sm font-semibold tracking-widest">
-                        <div className="flex items-center gap-2.5">
-                            <Calendar size={18} className="text-primary/60" />
-                            <span>
-                                {formatDate(cycle.dates[0])} — {formatDate(cycle.dates[1])}
-                            </span>
-                        </div>
-                        {cycle.location && (
-                            <div className="flex items-center gap-2.5">
-                                <MapPin size={18} className="text-primary/60" />
-                                <span>{cycle.location}</span>
-                            </div>
-                        )}
-                        <div className="px-2.5 py-1 rounded bg-secondary text-secondary-foreground text-xs font-bold">
-                            {cycle.workouts?.length || 0} Workouts
-                        </div>
+            <div className="flex flex-col gap-2">
+                {/* Name + Type + Meta - all horizontal */}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                    <h2 className={cn('text-xl sm:text-2xl font-bold tracking-tight uppercase leading-none', cycleColorClass.split(' ')[0])}>
+                        {cycle.name}
+                    </h2>
+                    <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
+                        <Calendar size={14} className="text-primary/60" />
+                        <span>
+                            {formatDate(cycle.dates[0])} — {formatDate(cycle.dates[1])}
+                        </span>
                     </div>
-
-                    {cycle.note && (
-                        <div className="text-muted-foreground max-w-4xl text-lg leading-relaxed border-l-4 border-primary/10 pl-6 py-2 italic bg-muted/30 rounded-r-lg">
-                            {cycle.note}
+                    {cycle.location && (
+                        <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
+                            <MapPin size={14} className="text-primary/60" />
+                            <span>{cycle.location}</span>
                         </div>
                     )}
+                    <div className="px-2 py-0.5 rounded bg-secondary text-secondary-foreground text-xs font-bold">
+                        {cycle.workouts?.length || 0} Workouts
+                    </div>
                 </div>
+
+                {cycle.note && (
+                    <div className="text-muted-foreground max-w-4xl text-sm leading-relaxed border-l-2 border-primary/20 pl-4 py-1 italic">
+                        {cycle.note}
+                    </div>
+                )}
             </div>
 
             {/* Muscle Group Stats */}
@@ -147,46 +145,71 @@ export default function CycleDetailView({ cycle, exerciseMap }: CycleDetailViewP
                 </div>
             )}
 
-            {/* Slider Section */}
-            <div className="flex flex-col gap-4">
-                {/* Controls */}
-                {cycle.workouts && cycle.workouts.length > 0 && (
-                    <div className="flex justify-start">
-                        <SliderControls
-                            currentIndex={currentIndex}
-                            slideCount={slideCount}
-                            miniMode={miniMode}
-                            onMiniModeChange={(checked) => setMiniMode(!checked)}
-                            slidesToShow={slidesToShow}
-                            onSlidesToShowChange={(val) => {
-                                setSlidesToShow(val);
-                                setCurrentIndex(0);
-                            }}
-                            responsiveColumns={responsiveColumns}
-                            onPrev={slideLeft}
-                            onNext={slideRight}
-                        />
+            {/* Inline Exercise View */}
+            {selectedExerciseId && selectedExercise ? (
+                <div className="flex flex-col gap-4 animate-in fade-in duration-300">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-xl font-bold text-white">{selectedExercise.name}</h3>
+                        <Button
+                            onClick={() => setSelectedExerciseId(null)}
+                            size="icon"
+                            variant="default"
+                            className="rounded-full h-10 w-10 shadow-md"
+                        >
+                            <X className="h-6 w-6" />
+                        </Button>
                     </div>
-                )}
-
-                {/* Slider */}
-                {cycle.workouts && cycle.workouts.length > 0 ? (
-                    <WorkoutSlider
-                        workouts={cycle.workouts}
+                    <ExerciseView
+                        workouts={cycle.workouts || []}
+                        exercise={selectedExercise}
                         exerciseMap={exerciseMap}
-                        miniMode={miniMode}
-                        currentIndex={currentIndex}
-                        setCurrentIndex={setCurrentIndex}
-                        slidesToShow={effectiveSlidesToShow}
                         cycleId={cycle.uuid}
-                        reverse={false}
+                        hideSelector={true}
                     />
-                ) : (
-                    <div className="flex items-center justify-center h-64 border-2 border-dashed rounded-2xl bg-muted/5 text-muted-foreground font-medium">
-                        No workouts recorded for this cycle.
-                    </div>
-                )}
-            </div>
+                </div>
+            ) : (
+                /* Slider Section */
+                <div className="flex flex-col gap-4">
+                    {/* Controls */}
+                    {cycle.workouts && cycle.workouts.length > 0 && (
+                        <div className="flex justify-center">
+                            <SliderControls
+                                currentIndex={currentIndex}
+                                slideCount={slideCount}
+                                miniMode={miniMode}
+                                onMiniModeChange={(checked) => setMiniMode(!checked)}
+                                slidesToShow={slidesToShow}
+                                onSlidesToShowChange={(val) => {
+                                    setSlidesToShow(val);
+                                    setCurrentIndex(0);
+                                }}
+                                responsiveColumns={responsiveColumns}
+                                onPrev={slideLeft}
+                                onNext={slideRight}
+                            />
+                        </div>
+                    )}
+
+                    {/* Slider */}
+                    {cycle.workouts && cycle.workouts.length > 0 ? (
+                        <WorkoutSlider
+                            workouts={cycle.workouts}
+                            exerciseMap={exerciseMap}
+                            miniMode={miniMode}
+                            currentIndex={currentIndex}
+                            setCurrentIndex={setCurrentIndex}
+                            slidesToShow={effectiveSlidesToShow}
+                            cycleId={cycle.uuid}
+                            reverse={false}
+                            onExerciseClick={(id) => setSelectedExerciseId(id)}
+                        />
+                    ) : (
+                        <div className="flex items-center justify-center h-64 border-2 border-dashed rounded-2xl bg-muted/5 text-muted-foreground font-medium">
+                            No workouts recorded for this cycle.
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

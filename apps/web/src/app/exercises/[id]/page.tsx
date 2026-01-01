@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import ExercisePage from '@/components/exercisePage';
+import ExercisePage from '@/page-components/exercisePage';
 import { fetchExerciseMap } from '@/lib/fetchData';
 
 export async function generateStaticParams() {

@@ -1,6 +1,6 @@
 import { ChevronDown } from 'lucide-react';
 import Link from 'next/link';
-import React from 'react';
+import { type FC, useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -16,6 +16,7 @@ interface WorkoutTableProps {
     miniMode: boolean;
     maxHeight?: string;
     cycleId?: string;
+    onExerciseClick?: (id: string) => void;
 }
 
 const formatExerciseName = (name: string) => {
@@ -53,7 +54,7 @@ const findMaxWeightSet = (sets: SetDetail[]) => {
     return Math.max(...sets.map((set) => set.weight || 0));
 };
 
-const WorkoutTable: React.FC<WorkoutTableProps> = ({
+const WorkoutTable: FC<WorkoutTableProps> = ({
     workout,
     exerciseMap,
     selectedExercise,
@@ -62,11 +63,12 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({
     miniMode,
     maxHeight = '700px',
     cycleId,
+    onExerciseClick,
 }) => {
-    const [isMobile, setIsMobile] = React.useState(false);
+    const [isMobile, setIsMobile] = useState(false);
 
     // Detect mobile screen size
-    React.useEffect(() => {
+    useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768);
         checkMobile();
         window.addEventListener('resize', checkMobile);
@@ -126,15 +128,28 @@ const WorkoutTable: React.FC<WorkoutTableProps> = ({
                             <div key={exercise.exerciseId} className={cn('p-3', isFocused && 'bg-primary/10')}>
                                 {/* Exercise Name */}
                                 <div className={cn('flex items-start justify-between gap-2', miniMode ? 'flex-col' : 'flex-row mb-2 pb-2 border-b')}>
-                                    <Link
-                                        href={`/exercise/${exercise.exerciseId}${cycleId ? `?cycleId=${cycleId}` : ''}`}
-                                        className={cn(
-                                            'text-left min-w-[120px] text-md font-semibold hover:text-primary/60 leading-tight',
-                                            isFocused ? 'text-primary' : 'text-primary/80'
-                                        )}
-                                    >
-                                        {formatExerciseName(metadata?.name ?? `Exercise ${exercise.exerciseId}`)}
-                                    </Link>
+                                    {onExerciseClick ? (
+                                        <button
+                                            type="button"
+                                            className={cn(
+                                                'text-left min-w-[120px] text-md font-semibold hover:underline hover:text-primary/60 leading-tight transition-colors',
+                                                isFocused ? 'text-primary' : 'text-primary/80'
+                                            )}
+                                            onClick={() => onExerciseClick(exercise.exerciseId.toString())}
+                                        >
+                                            {formatExerciseName(metadata?.name ?? `Exercise ${exercise.exerciseId}`)}
+                                        </button>
+                                    ) : (
+                                        <Link
+                                            href={`/exercises/${exercise.exerciseId}${cycleId ? `?cycleId=${cycleId}` : ''}`}
+                                            className={cn(
+                                                'text-left min-w-[120px] text-md font-semibold hover:underline hover:text-primary/60 leading-tight transition-colors',
+                                                isFocused ? 'text-primary' : 'text-primary/80'
+                                            )}
+                                        >
+                                            {formatExerciseName(metadata?.name ?? `Exercise ${exercise.exerciseId}`)}
+                                        </Link>
+                                    )}
                                     {miniMode && <div className="text-sm text-muted-foreground">{formatExerciseSets(exercise)}</div>}
                                     {!miniMode && metadata?.primaryMuscleGroup && (
                                         <Badge variant={isFocused ? 'default' : 'secondary'} className="shrink-0">
