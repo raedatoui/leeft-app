@@ -1,4 +1,4 @@
-import { logger } from '../utils/logger';
+import { logger } from '@leeft/utils';
 import { parseTrainHeroicWorkout } from './extractDay';
 import { readTrainHeroicFile } from './readFiles';
 import { type ExerciseMetadata, ExerciseMetadataSchema, RawWorkoutSchema } from './types';

@@ -1,6 +1,6 @@
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { logger } from '../utils/logger';
+import { logger } from '@leeft/utils';
 import { parseTrainHeroicWorkout } from './extractDay';
 import { readLog, readTrainHeroicFiles } from './readFiles';
 import { type ExerciseMetadata, ExerciseMetadataSchema, RawWorkoutSchema, type Workout } from './types';

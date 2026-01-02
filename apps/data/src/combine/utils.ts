@@ -3,8 +3,8 @@ import { join } from 'node:path';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 import type { AllWorkout } from '../compile/types';
-import { isWithinInterval, normalizeToMidnightUTC } from '../utils/date';
-import { logger } from '../utils/logger';
+import { isWithinInterval, normalizeToMidnightUTC } from '@leeft/utils';
+import { logger } from '@leeft/utils';
 import { type Cycle, CycleSchema } from './types';
 
 export function addWorkoutsToCycles(workouts: { uuid: string; date: Date }[], cycles: Cycle[]): void {

@@ -1,5 +1,5 @@
 import { config } from 'dotenv';
-import { logger } from '../utils/logger';
+import { logger } from '@leeft/utils';
 import { runClassifyExercise } from './claudeClassifier';
 import { type ClassifiedExercise, loadExerciseMetadata, saveClassifiedExercises } from './utils';
 

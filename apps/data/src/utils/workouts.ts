@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { z } from 'zod';
 import { type AllWorkout, type CardioWorkout, CardioWorkoutSchema, type Workout, WorkoutSchema } from '../compile/types';
-import { logger } from './logger';
+import { logger } from '@leeft/utils';
 
 export function loadLiftingWorkouts(): Workout[] {
     logger.loading('Loading lifting workouts...');

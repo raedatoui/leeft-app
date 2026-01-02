@@ -1,6 +1,6 @@
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { logger } from '../utils/logger';
+import { logger } from '@leeft/utils';
 import { loadCardioWorkouts, loadLiftingWorkouts } from '../utils/workouts';
 import { type AllWorkout, AllWorkoutSchema } from './types';
 

@@ -1,5 +1,5 @@
 import { runCLI } from '../utils/cli';
-import { logger } from '../utils/logger';
+import { logger } from '@leeft/utils';
 import { main as classifySets } from './classifySets';
 import { main as compileAllMain } from './compileAllWorkouts';
 import { main as compileCardio } from './compileCardio';

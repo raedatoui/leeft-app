@@ -1,6 +1,6 @@
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { logger } from '../utils/logger';
+import { logger } from '@leeft/utils';
 import { type WorkoutItem, WorkoutItemsSchema } from './schema';
 
 async function getWorkoutsByRange(range: string, sessionToken: string): Promise<WorkoutItem[]> {

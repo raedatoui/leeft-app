@@ -1,4 +1,4 @@
-import { logger } from '../utils/logger';
+import { logger } from '@leeft/utils';
 import { main as combineAllMain } from './combineAll';
 import { main as combineLiftingMain } from './combineLifting';
 

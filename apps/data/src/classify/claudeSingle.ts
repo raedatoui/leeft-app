@@ -1,4 +1,4 @@
-import { logger } from '../utils/logger';
+import { logger } from '@leeft/utils';
 import { runClassifyExercise } from './claudeClassifier';
 
 export async function classifyAndPrintExercise(exerciseName: string) {

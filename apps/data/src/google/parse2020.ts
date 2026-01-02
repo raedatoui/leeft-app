@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { v4 as uuidv4 } from 'uuid';
 import { type SetDetail, type Workout, WorkoutSchema } from '../compile/types';
 import { runCLI } from '../utils/cli';
-import { logger } from '../utils/logger';
+import { logger } from '@leeft/utils';
 import { parseCsv } from './csv';
 import { type ParsedRow2020, ParsedRow2020Schema, type UnitType } from './types2020';
 

@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import dotenv from 'dotenv';
-import { logger } from '../utils/logger';
+import { logger } from '@leeft/utils';
 import { fetchActivities } from './utils';
 
 dotenv.config();

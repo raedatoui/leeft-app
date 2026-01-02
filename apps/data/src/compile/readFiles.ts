@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import path, { join } from 'node:path';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
-import { logger } from '../utils/logger';
+import { logger } from '@leeft/utils';
 import { type ExerciseMetadata, ExerciseMetadataSchema, type Workout, WorkoutSchema } from './types';
 
 export type JsonFile = {

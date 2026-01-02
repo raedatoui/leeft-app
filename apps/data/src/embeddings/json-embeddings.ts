@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { extname, join, relative } from 'node:path';
-import { logger } from '../utils/logger';
+import { logger } from '@leeft/utils';
 
 interface JsonFileData {
     path: string;

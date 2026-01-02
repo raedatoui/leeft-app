@@ -1,5 +1,5 @@
 import { readExerciseMap, readLog } from '../compile/readFiles';
-import { logger } from '../utils/logger';
+import { logger } from '@leeft/utils';
 import { analyze } from './utils';
 
 function analyzeLiftingLog(logFile = '../../data/out/lifting-log.json'): void {

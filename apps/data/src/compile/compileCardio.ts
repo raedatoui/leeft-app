@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type FitbitActivity, FitbitActivitySchema, filterCardioActivitiesByCriteria, getActivityTypeCounts } from '../fitbit/utils';
-import { logger } from '../utils/logger';
+import { logger } from '@leeft/utils';
 import { type CardioWorkout, CardioWorkoutSchema } from './types';
 
 function convertFitbitToCardioWorkout(activity: FitbitActivity): CardioWorkout {

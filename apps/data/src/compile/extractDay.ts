@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { normalizeToMidnightUTC } from '../utils/date';
-import { logger } from '../utils/logger';
+import { normalizeToMidnightUTC, logger } from '@leeft/utils';
 import { type Exercise, type RawWorkout, type Workout, WorkoutSchema } from './types';
 
 type ParsedSet = { reps?: number; time?: string; weight: number };

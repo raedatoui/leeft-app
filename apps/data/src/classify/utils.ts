@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { z } from 'zod';
-import { logger } from '../utils/logger';
+import { logger } from '@leeft/utils';
 
 export const RawExerciseSchema = z.object({
     id: z.number(),

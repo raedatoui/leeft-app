@@ -1,5 +1,5 @@
 import { runCLI } from '../utils/cli';
-import { logger } from '../utils/logger';
+import { logger } from '@leeft/utils';
 import { main as lifting } from './liftingLog';
 import { main as print } from './prettyPrint';
 import { main as trainheroic } from './trainheroicLogs';

@@ -1,4 +1,4 @@
-import { logger } from './logger';
+import { logger } from '@leeft/utils';
 
 export interface CommandMap {
     [key: string]: () => Promise<void> | void;

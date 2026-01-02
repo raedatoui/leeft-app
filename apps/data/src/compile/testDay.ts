@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { logger } from '../utils/logger';
+import { logger } from '@leeft/utils';
 import { parseTrainHeroicWorkout } from './extractDay';
 
 export function main(): void {

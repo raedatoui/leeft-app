@@ -7,7 +7,7 @@ import type { AuthClient, OAuth2Client } from 'google-auth-library';
 import type { JSONClient } from 'google-auth-library/build/src/auth/googleauth';
 import { google } from 'googleapis';
 import { runCLI } from '../utils/cli';
-import { logger } from '../utils/logger';
+import { logger } from '@leeft/utils';
 import { convertObjectToCsvString, parseCsv } from './csv';
 import { loadSheet } from './parser';
 import type { CsvRow } from './types';

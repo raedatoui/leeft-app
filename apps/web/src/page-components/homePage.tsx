@@ -125,7 +125,7 @@ export default function HomePage() {
                 </div>
             }
         >
-            <div className="flex flex-col gap-4 pt-4">
+            <div className="flex flex-col gap-4">
                 <WorkoutSlider
                     workouts={workouts}
                     exerciseMap={exerciseMap}

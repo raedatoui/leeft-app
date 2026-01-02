@@ -1,5 +1,5 @@
 import { runCLI } from '../utils/cli';
-import { logger } from '../utils/logger';
+import { logger } from '@leeft/utils';
 import { downloadWorkouts } from './download';
 
 async function download() {

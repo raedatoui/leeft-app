@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { readTrainHeroicFiles } from '../compile/readFiles';
-import { logger } from '../utils/logger';
+import { logger } from '@leeft/utils';
 import { analyze, WorkoutFileSchema, type WorkoutSummary } from './utils';
 
 export async function main() {

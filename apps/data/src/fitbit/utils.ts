@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import qs from 'node:querystring';
 import { z } from 'zod';
-import { logger } from '../utils/logger';
+import { logger } from '@leeft/utils';
 
 const API_BASE = 'https://api.fitbit.com/1/user/-/activities';
 const LIMIT = 100; // max per Fitbit docs

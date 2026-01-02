@@ -37,7 +37,12 @@ const MonthlyStats = ({
     workouts,
     exerciseMap,
     includeWarmup,
-}: { yearMonth: string; workouts: Workout[]; exerciseMap: ExerciseMap; includeWarmup: boolean }) => {
+}: {
+    yearMonth: string;
+    workouts: Workout[];
+    exerciseMap: ExerciseMap;
+    includeWarmup: boolean;
+}) => {
     const { workoutCount, avgExercises, topExercises } = computeStats(workouts);
     const totalVolume = workouts.reduce((sum, w) => sum + (includeWarmup ? w.volume : w.workVolume) || 0, 0);
     const avgVolume = totalVolume / workoutCount;

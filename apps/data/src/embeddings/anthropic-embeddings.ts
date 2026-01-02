@@ -1,7 +1,7 @@
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { extname, join, relative } from 'node:path';
 import Anthropic from '@anthropic-ai/sdk';
-import { logger } from '../utils/logger';
+import { logger } from '@leeft/utils';
 
 interface FileEmbedding {
     path: string;

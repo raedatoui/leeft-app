@@ -2,6 +2,9 @@ import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import type { Exercise, Workout } from '@/types';
 
+// Re-export shared utilities
+export { dateFromTitle, formatDate, getLastNDaysRange, isWithinInterval, normalizeToMidnightUTC, parseDate } from '@leeft/utils';
+
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
@@ -18,36 +21,6 @@ export function filterWorkoutsByDateRange(workouts: Workout[], startDate: Date, 
         const workoutDate = new Date(workout.date);
         return workoutDate >= start && workoutDate <= end;
     });
-}
-
-export function getLastNDaysRange(days: number): { start: Date; end: Date } {
-    const end = new Date();
-    const start = new Date();
-    start.setDate(start.getDate() - days);
-
-    // Normalize to midnight
-    start.setHours(0, 0, 0, 0);
-    end.setHours(23, 59, 59, 999);
-
-    return { start, end };
-}
-
-export function normalizeToMidnightUTC(date: Date): Date {
-    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-}
-
-export const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-        month: 'numeric',
-        day: 'numeric',
-        year: '2-digit',
-        timeZone: 'UTC',
-    });
-};
-
-export function dateFromTitle(w: string) {
-    const [year, month, day] = w.split('-').map(Number);
-    return new Date(year, month - 1, day);
 }
 
 export const computeStats = (workouts: Workout[] = []) => {

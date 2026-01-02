@@ -5,7 +5,7 @@ import readline from 'node:readline/promises';
 import dotenv from 'dotenv';
 import open from 'open';
 import { z } from 'zod';
-import { logger } from '../utils/logger';
+import { logger } from '@leeft/utils';
 
 dotenv.config();
 

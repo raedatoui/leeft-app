@@ -1,5 +1,5 @@
 {
-	"name": "@leeft/types",
+	"name": "@leeft/utils",
 	"version": "0.0.0",
 	"private": true,
 	"main": "./src/index.ts",
@@ -10,7 +10,7 @@
 		"check": "biome check --write . && tsc --noEmit"
 	},
 	"dependencies": {
-		"zod": "catalog:"
+		"@leeft/types": "workspace:*"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "catalog:",
