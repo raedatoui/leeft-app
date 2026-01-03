@@ -1,21 +1,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { logger } from '@leeft/utils';
-import type { Exercise, SetDetail, Workout } from './types';
-
-interface ClassifiedSet extends SetDetail {
-    isWorkSet: boolean;
-}
-
-interface ClassifiedExercise extends Omit<Exercise, 'sets' | 'workVolume'> {
-    sets: ClassifiedSet[];
-    workVolume: number;
-}
-
-interface ClassifiedWorkout extends Omit<Workout, 'exercises' | 'workVolume'> {
-    exercises: ClassifiedExercise[];
-    workVolume: number;
-}
+import type { BaseSet, BaseWorkout, SetDetail, Workout } from './types';
 
 interface ClassifyOptions {
     threshold: number; // 0-1, e.g., 0.85 for 85%
@@ -26,7 +12,7 @@ interface ClassifyOptions {
  * If any future set has BOTH higher weight AND higher reps, the current set is still a warmup.
  * (You're still building up if a later set is heavier AND has more reps)
  */
-function isStillWarmingUp(sets: SetDetail[], currentIndex: number): boolean {
+function isStillWarmingUp(sets: BaseSet[], currentIndex: number): boolean {
     const current = sets[currentIndex];
     const currentReps = current.reps ?? 0;
 
@@ -55,7 +41,7 @@ function isStillWarmingUp(sets: SetDetail[], currentIndex: number): boolean {
  *    - If yes, this set is still a warmup (keep looking for real work sets)
  * 6. Sets before boundary = warmup, at/after = work
  */
-function classifyExerciseSets(sets: SetDetail[], options: ClassifyOptions): ClassifiedSet[] {
+function classifyExerciseSets(sets: BaseSet[], options: ClassifyOptions): SetDetail[] {
     if (sets.length === 0) {
         return [];
     }
@@ -102,7 +88,7 @@ function classifyExerciseSets(sets: SetDetail[], options: ClassifyOptions): Clas
     }));
 }
 
-function classifyWorkout(workout: Workout, options: ClassifyOptions): ClassifiedWorkout {
+function classifyWorkout(workout: BaseWorkout, options: ClassifyOptions): Workout {
     const classifiedExercises = workout.exercises.map((exercise) => {
         const classifiedSets = classifyExerciseSets(exercise.sets, options);
         const workVolume = classifiedSets.filter((set) => set.isWorkSet).reduce((total, set) => total + (set.reps || 0) * set.weight, 0);
@@ -120,7 +106,7 @@ function classifyWorkout(workout: Workout, options: ClassifyOptions): Classified
     };
 }
 
-export function classifyAllWorkouts(workouts: Workout[], options: ClassifyOptions): ClassifiedWorkout[] {
+export function classifyAllWorkouts(workouts: BaseWorkout[], options: ClassifyOptions = { threshold: 0.85 }): Workout[] {
     return workouts.map((w) => classifyWorkout(w, options));
 }
 
@@ -141,7 +127,8 @@ export function main(): void {
     const inputData = JSON.parse(readFileSync(inputPath, 'utf-8'));
 
     // Parse dates back to Date objects
-    const workouts: Workout[] = inputData.workouts.map((w: Workout & { date: string }) => ({
+    // Cast to BaseWorkout[] to allow re-classification
+    const workouts: BaseWorkout[] = inputData.workouts.map((w: any) => ({
         ...w,
         date: new Date(w.date),
     }));

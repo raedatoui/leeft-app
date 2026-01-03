@@ -2,18 +2,13 @@
 
 import { Dumbbell } from 'lucide-react';
 import { useState } from 'react';
-import { ControlCard } from '@/components/controlCard';
-import PageTemplate from '@/components/pageTemplate';
-import { TopExercisesList } from '@/components/topExercisesList';
-import { WorkoutStatsGrid } from '@/components/workoutStatsGrid';
-import { Card, CardContent } from '@/components/ui/card';
+import { MonthlyStatsCard } from '@/components/analysis/monthlyStatsCard';
+import { ControlCard } from '@/components/common/controlCard';
+import PageTemplate from '@/components/layout/pageTemplate';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useWorkouts } from '@/lib/contexts';
-import { computeStats } from '@/lib/utils';
-import type { ExerciseMap, Workout } from '@/types';
-
-// ... (existing helper functions: groupByMonth, formatMonthYear, MonthlyStats) ...
+import type { Workout } from '@/types';
 
 const groupByMonth = (workouts: Workout[]) => {
     return workouts.reduce(
@@ -24,41 +19,6 @@ const groupByMonth = (workouts: Workout[]) => {
             return acc;
         },
         {} as Record<string, Workout[]>
-    );
-};
-
-const formatMonthYear = (yearMonth: string) => {
-    const [year, month] = yearMonth.split('-');
-    const date = new Date(Number.parseInt(year, 10), Number.parseInt(month, 10) - 1);
-    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-};
-
-const MonthlyStats = ({
-    yearMonth,
-    workouts,
-    exerciseMap,
-    includeWarmup,
-}: {
-    yearMonth: string;
-    workouts: Workout[];
-    exerciseMap: ExerciseMap;
-    includeWarmup: boolean;
-}) => {
-    const { workoutCount, avgExercises, topExercises } = computeStats(workouts);
-    const totalVolume = workouts.reduce((sum, w) => sum + (includeWarmup ? w.volume : w.workVolume) || 0, 0);
-    const avgVolume = totalVolume / workoutCount;
-
-    return (
-        <Card className="bg-black transition-all duration-300 w-full h-full hover:scale-[1.02] hover:shadow-none">
-            <CardContent className="py-3 px-3 sm:px-4 space-y-4 flex flex-col h-full">
-                <div className="flex flex-col gap-4">
-                    <h3 className="text-lg sm:text-xl font-bold text-primary">{formatMonthYear(yearMonth)}</h3>
-                    <WorkoutStatsGrid workoutCount={workoutCount} avgExercises={avgExercises} avgVolume={avgVolume} />
-                </div>
-
-                <TopExercisesList exercises={topExercises} exerciseMap={exerciseMap} limit={5} />
-            </CardContent>
-        </Card>
     );
 };
 
@@ -78,7 +38,6 @@ export default function WorkoutAnalysis() {
 
     const dateRange = {
         start: new Date(Math.min(...workouts.map((w) => w.date.getTime()))),
-
         end: new Date(Math.max(...workouts.map((w) => w.date.getTime()))),
     };
 
@@ -133,10 +92,9 @@ export default function WorkoutAnalysis() {
             }
         >
             {/* Monthly Breakdown */}
-
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
                 {sortedMonths.reverse().map((yearMonth) => (
-                    <MonthlyStats
+                    <MonthlyStatsCard
                         key={yearMonth}
                         yearMonth={yearMonth}
                         workouts={groupedWorkouts[yearMonth]}

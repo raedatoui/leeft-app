@@ -3,17 +3,17 @@
 import { ChevronLeft, ChevronRight, FileText, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import { type FC, useMemo, useState } from 'react';
-import { ControlCard } from '@/components/controlCard';
-import CycleDetailView from '@/components/cycleDetailView';
-import CycleHeader from '@/components/cycleHeader';
-import PageTemplate from '@/components/pageTemplate';
-import { TopExercisesList } from '@/components/topExercisesList';
-import { WorkoutStatsGrid } from '@/components/workoutStatsGrid';
+import { TopExercisesList } from '@/components/analysis/topExercisesList';
+import { ControlCard } from '@/components/common/controlCard';
+import CycleDetailView from '@/components/cycles/detail-view';
+import CycleHeader from '@/components/cycles/header';
+import PageTemplate from '@/components/layout/pageTemplate';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { WorkoutStatsGrid } from '@/components/workouts/workoutStatsGrid';
 import { useWorkouts } from '@/lib/contexts';
 import { cn, computeStats, formatDate } from '@/lib/utils';
 import type { ExerciseMap, MappedCycle, Workout } from '@/types';
@@ -517,7 +517,7 @@ export default function TrainingTimeline() {
                                     note={cycle.note}
                                     workouts={cycle.workouts}
                                     exerciseMap={exerciseMap}
-                                    className={cn('w-full border-3', styles.border, styles.shadow)}
+                                    className={cn('w-full border-1', styles.border, styles.shadow)}
                                     accentColor={styles.accent}
                                     badgeBorder={styles.badgeBorder}
                                     gradientColor={styles.gradient}

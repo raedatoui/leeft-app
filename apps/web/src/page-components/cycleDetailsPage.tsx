@@ -1,9 +1,9 @@
 'use client';
 
 import { useMemo } from 'react';
-import CycleDetailView from '@/components/cycleDetailView';
-import CycleHeader from '@/components/cycleHeader';
-import PageTemplate from '@/components/pageTemplate';
+import CycleDetailView from '@/components/cycles/detail-view';
+import CycleHeader from '@/components/cycles/header';
+import PageTemplate from '@/components/layout/pageTemplate';
 import { useWorkouts } from '@/lib/contexts';
 
 interface CycleDetailsPageProps {

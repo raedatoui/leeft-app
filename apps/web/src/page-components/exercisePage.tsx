@@ -3,8 +3,8 @@
 import { X } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
-import ExerciseView from '@/components/exercise';
-import PageTemplate from '@/components/pageTemplate';
+import ExerciseView from '@/components/exercises/exercise-item';
+import PageTemplate from '@/components/layout/pageTemplate';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useWorkouts } from '@/lib/contexts';

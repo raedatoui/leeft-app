@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import type { Exercise, ExerciseMetadata } from '@/types';
-import type { EditedExercise, EditedSet, NewExercise } from './types';
+import type { EditedExercise, NewExercise } from './types';
 import { generateAddExerciseCommand, generateCombinedCommand } from './utils';
 
 interface ExerciseEditRowProps {
@@ -204,7 +204,7 @@ export const NewExerciseRow: FC<NewExerciseRowProps> = ({
                         </thead>
                         <tbody>
                             {newExercise.sets.map((set, index) => (
-                                <tr key={index} className="border-b py-0.5 font-bold text-primary">
+                                <tr key={`${newExercise.exerciseId}-${index}`} className="border-b py-0.5 font-bold text-primary">
                                     <td className="w-1/3 py-0.5 text-center">{`#${index + 1}`}</td>
                                     <td className="w-1/3 py-0.5 text-center">
                                         <Input

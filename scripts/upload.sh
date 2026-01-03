@@ -43,7 +43,6 @@ gsc_path="gs://typedef/leeft/"
 timestamp=${1:-$(date +"%Y%m%d_%H%M%S")}
 
 upload_compressed_log "apps/data/data/out/lifting-log.json" "$timestamp" "$gsc_path"
-upload_compressed_log "apps/data/data/out/lifting-log-sets.json" "$timestamp" "$gsc_path"
 upload_compressed_log "apps/data/data/out/cardio-log.json" "$timestamp" "$gsc_path"
 upload_compressed_log "apps/data/data/out/cycles-lifting.json" "$timestamp" "$gsc_path"
 upload_compressed_log "apps/data/data/out/cycles-all-workouts.json" "$timestamp" "$gsc_path"

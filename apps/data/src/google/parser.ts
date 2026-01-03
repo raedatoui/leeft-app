@@ -1,5 +1,5 @@
-import { type SetDetail, type Workout, WorkoutSchema } from '../compile/types';
 import { logger } from '@leeft/utils';
+import { type SetDetail, type Workout, WorkoutSchema } from '../compile/types';
 import { type CsvRow, type ParsedRow, ParsedRowSchema } from './types';
 
 const isWorkout = (workout: ParsedRow) => {

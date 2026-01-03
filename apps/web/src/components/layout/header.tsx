@@ -43,11 +43,11 @@ export default function Header({ title, children }: HeaderProps) {
                         <Link href="/" className={getLinkClassName('/')}>
                             Workouts
                         </Link>
-                        <Link href="/cycles" className={getLinkClassName('/cycles')}>
-                            Cycles
-                        </Link>
                         <Link href="/exercises" className={getLinkClassName('/exercises')}>
                             Exercises
+                        </Link>
+                        <Link href="/cycles" className={getLinkClassName('/cycles')}>
+                            Cycles
                         </Link>
                         <Link href="/analysis" className={getLinkClassName('/analysis')}>
                             Monthly

@@ -1,6 +1,6 @@
+import { logger } from '@leeft/utils';
 import { difference } from 'lodash';
 import { readTrainHeroicFiles } from '../compile/readFiles';
-import { logger } from '@leeft/utils';
 
 export function compare() {
     const files = readTrainHeroicFiles();

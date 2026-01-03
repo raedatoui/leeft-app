@@ -1,9 +1,9 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import path, { join } from 'node:path';
+import { logger } from '@leeft/utils';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
-import { logger } from '@leeft/utils';
-import { type ExerciseMetadata, ExerciseMetadataSchema, type Workout, WorkoutSchema } from './types';
+import { type BaseWorkout, BaseWorkoutSchema, type ExerciseMetadata, ExerciseMetadataSchema } from './types';
 
 export type JsonFile = {
     name: string;
@@ -42,7 +42,7 @@ export function readTrainHeroicFiles(): JsonFile[] {
     return allFiles;
 }
 
-export function readLog(workoutLog: string): Workout[] {
+export function readLog(workoutLog: string): BaseWorkout[] {
     const path = join(__dirname, workoutLog);
     const content = JSON.parse(readFileSync(path, 'utf8'));
     return z
@@ -53,7 +53,7 @@ export function readLog(workoutLog: string): Workout[] {
             date: new Date(w.date),
         }))
         .map((w) =>
-            WorkoutSchema.parse({
+            BaseWorkoutSchema.parse({
                 ...w,
                 uuid: uuidv4(),
             })

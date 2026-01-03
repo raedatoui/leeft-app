@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { runCLI } from '../utils/cli';
 import { logger } from '@leeft/utils';
+import { runCLI } from '../utils/cli';
 import { AnthropicEmbeddingGenerator } from './anthropic-embeddings';
 import { JsonEmbeddingGenerator } from './json-embeddings';
 

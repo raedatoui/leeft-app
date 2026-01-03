@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight, Columns, Dumbbell, Eye } from 'lucide-react';
 import type React from 'react';
-import { ControlCard } from '@/components/controlCard';
+import { ControlCard } from '@/components/common/controlCard';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -21,7 +21,7 @@ interface SliderControlsProps {
     children?: React.ReactNode;
 }
 
-export default function SliderControls({
+export function SliderControls({
     currentIndex,
     slideCount,
     miniMode,

@@ -3,8 +3,8 @@
 import { BicepsFlexed, Dumbbell, Layers } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { ControlCard } from '@/components/controlCard';
-import PageTemplate from '@/components/pageTemplate';
+import { ControlCard } from '@/components/common/controlCard';
+import PageTemplate from '@/components/layout/pageTemplate';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';

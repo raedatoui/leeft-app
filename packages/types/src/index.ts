@@ -34,30 +34,41 @@ export const ExerciseMetadataSchema = z.object({
 	description: z.string().optional(),
 });
 
-export const SetSchema = z.object({
+export const BaseSetSchema = z.object({
 	reps: z.number().optional(),
 	time: z.string().optional(),
 	weight: z.number(),
 	order: z.number(),
+});
+
+export const SetSchema = BaseSetSchema.extend({
 	isWorkSet: z.boolean(),
 });
 
-export const ExerciseSchema = z.object({
+export const BaseExerciseSchema = z.object({
 	exerciseId: z.number(),
 	order: z.number(),
-	sets: z.array(SetSchema),
+	sets: z.array(BaseSetSchema),
 	volume: z.number(),
+});
+
+export const ExerciseSchema = BaseExerciseSchema.extend({
+	sets: z.array(SetSchema),
 	workVolume: z.number(),
 });
 
-export const WorkoutSchema = z.object({
+export const BaseWorkoutSchema = z.object({
 	uuid: z.uuid(),
 	date: z.date(),
 	title: z.string(),
 	duration: z.number(),
 	rpe: z.number().nullable(),
-	exercises: z.array(ExerciseSchema),
+	exercises: z.array(BaseExerciseSchema),
 	volume: z.number(),
+});
+
+export const WorkoutSchema = BaseWorkoutSchema.extend({
+	exercises: z.array(ExerciseSchema),
 	workVolume: z.number(),
 });
 
@@ -95,6 +106,9 @@ export const MappedCycleSchema = CycleSchema.extend({
 
 export type RawWorkout = z.infer<typeof RawWorkoutSchema>;
 export type ExerciseMetadata = z.infer<typeof ExerciseMetadataSchema>;
+export type BaseSet = z.infer<typeof BaseSetSchema>;
+export type BaseExercise = z.infer<typeof BaseExerciseSchema>;
+export type BaseWorkout = z.infer<typeof BaseWorkoutSchema>;
 export type Exercise = z.infer<typeof ExerciseSchema>;
 export type SetDetail = z.infer<typeof SetSchema>;
 export type Workout = z.infer<typeof WorkoutSchema>;

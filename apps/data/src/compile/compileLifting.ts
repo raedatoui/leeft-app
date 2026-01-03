@@ -1,15 +1,16 @@
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { logger } from '@leeft/utils';
+import { classifyAllWorkouts } from './classifySets';
 import { parseTrainHeroicWorkout } from './extractDay';
 import { readLog, readTrainHeroicFiles } from './readFiles';
-import { type ExerciseMetadata, ExerciseMetadataSchema, RawWorkoutSchema, type Workout } from './types';
+import { type BaseWorkout, type ExerciseMetadata, ExerciseMetadataSchema, RawWorkoutSchema } from './types';
 
 const mapOfRawDate = new Map<string, boolean>();
 const mapOfWorkoutTitle = new Map<string, boolean>();
 const exerciseMap = new Map<number, ExerciseMetadata>();
 
-function mergeWorkouts(googleWorkouts: Workout[], trainHeroicWorkouts: Workout[]): Workout[] {
+function mergeWorkouts(googleWorkouts: BaseWorkout[], trainHeroicWorkouts: BaseWorkout[]): BaseWorkout[] {
     const mergedWorkouts = [...trainHeroicWorkouts];
 
     for (const workout of googleWorkouts) {
@@ -26,9 +27,9 @@ function mergeWorkouts(googleWorkouts: Workout[], trainHeroicWorkouts: Workout[]
     return mergedWorkouts.sort((a, b) => a.date.getTime() - b.date.getTime());
 }
 
-function compileTrainHeroicWorkouts(): Workout[] {
+function compileTrainHeroicWorkouts(): BaseWorkout[] {
     const files = readTrainHeroicFiles();
-    const workouts: Workout[] = [];
+    const workouts: BaseWorkout[] = [];
     for (const file of files) {
         try {
             const jsonData = JSON.parse(file.content);
@@ -77,7 +78,7 @@ export function main(): void {
     const trainHeroicWorkouts = compileTrainHeroicWorkouts();
     const googleWorkouts = readLog('../../data/download/google/google-log.json');
     const google2020Workouts = readLog('../../data/download/google/lifting-log-2020.json');
-    const workout = google2020Workouts.concat(mergeWorkouts(googleWorkouts, trainHeroicWorkouts));
+    const allWorkouts = google2020Workouts.concat(mergeWorkouts(googleWorkouts, trainHeroicWorkouts));
     // filtering the exercises that have time in them
     // return allExercises
     //     .map((w) => ({
@@ -121,7 +122,10 @@ export function main(): void {
     const metadataFilename = join(__dirname, '../', '../', 'data', 'out', 'exercise-metadata.json');
     writeFileSync(metadataFilename, JSON.stringify({ exercises: exerciseList }, null, 2));
 
+    // Classify Sets and Compute Work Volume
+    const classifiedWorkouts = classifyAllWorkouts(allWorkouts);
+
     const filename = join(__dirname, '../', '../', 'data', 'out', 'lifting-log.json');
-    writeFileSync(filename, JSON.stringify({ workouts: workout }, null, 2));
+    writeFileSync(filename, JSON.stringify({ workouts: classifiedWorkouts }, null, 2));
     logger.success('Lifting log generated in directory: data/out/lifting-log.json');
 }

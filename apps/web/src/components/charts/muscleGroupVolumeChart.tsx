@@ -4,13 +4,13 @@ import Highcharts, { type Options, type Point } from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import { Dumbbell } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { ControlCard } from '@/components/common/controlCard';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import WorkoutTable from '@/components/workoutTable';
+import WorkoutTable from '@/components/workouts/workoutTable';
 import { chartColors as colors, chartFonts as fonts } from '@/lib/chart-theme';
 import type { ExerciseMap, Workout } from '@/types';
-import { ControlCard } from '@/components/controlCard';
 
 interface MuscleGroupVolumeChartProps {
     muscleGroup: string;

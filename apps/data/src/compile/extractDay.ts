@@ -1,6 +1,6 @@
+import { logger, normalizeToMidnightUTC } from '@leeft/utils';
 import { v4 as uuidv4 } from 'uuid';
-import { normalizeToMidnightUTC, logger } from '@leeft/utils';
-import { type Exercise, type RawWorkout, type Workout, WorkoutSchema } from './types';
+import { type BaseExercise, type BaseWorkout, BaseWorkoutSchema, type RawWorkout } from './types';
 
 type ParsedSet = { reps?: number; time?: string; weight: number };
 
@@ -47,7 +47,7 @@ export function parseAbr(abr: string): ParsedSet[] {
     return sets;
 }
 
-export function parseTrainHeroicWorkout(rawWorkout: RawWorkout): Workout {
+export function parseTrainHeroicWorkout(rawWorkout: RawWorkout): BaseWorkout {
     const { saved_workout, date } = rawWorkout;
     let durationMinutes = Math.round((saved_workout.timestamp_completed - saved_workout.timestamp_started) / 60);
     if (durationMinutes > 200) {
@@ -74,7 +74,6 @@ export function parseTrainHeroicWorkout(rawWorkout: RawWorkout): Workout {
                         const sets = parseAbr(exercise.abr).map((set, index) => ({
                             ...set,
                             order: index,
-                            isWorkSet: true,
                         }));
                         // Use ws.order for the first exercise, then increment for subsequent exercises
                         const exerciseOrder = exerciseIndex === 0 ? ws.order : ++nextOrder;
@@ -86,13 +85,12 @@ export function parseTrainHeroicWorkout(rawWorkout: RawWorkout): Workout {
                             order: exerciseOrder,
                             sets,
                             volume: sets.reduce((total, set) => total + (set.reps || 0) * set.weight, 0),
-                            workVolume: sets.reduce((total, set) => total + (set.reps || 0) * set.weight, 0),
                         };
                     })
             );
         })
         // Combine exercises with same ID
-        .reduce<Exercise[]>((acc, curr) => {
+        .reduce<BaseExercise[]>((acc, curr) => {
             const existingExercise = acc.find((ex) => ex.exerciseId === curr.exerciseId);
 
             if (existingExercise) {
@@ -100,7 +98,6 @@ export function parseTrainHeroicWorkout(rawWorkout: RawWorkout): Workout {
                 existingExercise.sets = [...existingExercise.sets, ...curr.sets].map((set, index) => ({
                     ...set,
                     order: index,
-                    isWorkSet: true,
                 }));
                 // Update volume
                 existingExercise.volume = existingExercise.sets.reduce((total, set) => total + (set.reps || 0) * set.weight, 0);
@@ -109,12 +106,11 @@ export function parseTrainHeroicWorkout(rawWorkout: RawWorkout): Workout {
 
             // Add volume calculation for new exercises
             curr.volume = curr.sets.reduce((total, set) => total + (set.reps || 0) * set.weight, 0);
-            curr.workVolume = curr.volume;
             acc.push(curr);
             return acc;
         }, []);
 
-    return WorkoutSchema.parse({
+    return BaseWorkoutSchema.parse({
         uuid: uuidv4(),
         date: savedWorkoutTitle,
         title: rawWorkout.saved_workout.title,

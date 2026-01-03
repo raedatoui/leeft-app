@@ -1,8 +1,8 @@
 import { mkdirSync, promises, readFileSync, writeFileSync } from 'node:fs';
 import path, { join } from 'node:path';
+import { logger } from '@leeft/utils';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
-import { logger } from '@leeft/utils';
 import {
     type FitbitActivity,
     FitbitActivitySchema,

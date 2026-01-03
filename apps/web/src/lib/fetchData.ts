@@ -6,7 +6,7 @@ const CDN_BASE_URL = process.env.NEXT_PUBLIC_CDN_URL;
 const TIMESTAMP = process.env.NEXT_PUBLIC_TIMESTAMP;
 
 export async function fetchWorkouts(): Promise<Workout[]> {
-    const response = await fetch(`${CDN_BASE_URL}/lifting-log-sets_${TIMESTAMP}.json.gz`, {
+    const response = await fetch(`${CDN_BASE_URL}/lifting-log_${TIMESTAMP}.json.gz`, {
         cache: 'no-cache', // or 'force-cache' or 'reload' depending on needs
     });
     const data = await response.json();

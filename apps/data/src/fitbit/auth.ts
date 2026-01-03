@@ -2,10 +2,10 @@ import fs from 'node:fs';
 import { stdin as input, stdout as output } from 'node:process';
 import qs from 'node:querystring';
 import readline from 'node:readline/promises';
+import { logger } from '@leeft/utils';
 import dotenv from 'dotenv';
 import open from 'open';
 import { z } from 'zod';
-import { logger } from '@leeft/utils';
 
 dotenv.config();
 

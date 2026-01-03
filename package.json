@@ -13,6 +13,7 @@
     "lint": "pnpm -r lint",
     "format": "pnpm -r format",
     "check": "pnpm -r check",
+    "check:fix": "pnpm -r check:fix",
     "deploy:web": "pnpm --filter @leeft/web build && cd apps/web && firebase deploy",
     "upload:data": "./scripts/upload.sh"
   }

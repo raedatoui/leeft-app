@@ -1,12 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { logger } from '@leeft/utils';
 import { z } from 'zod';
 import { type AllWorkout, type CardioWorkout, CardioWorkoutSchema, type Workout, WorkoutSchema } from '../compile/types';
-import { logger } from '@leeft/utils';
 
 export function loadLiftingWorkouts(): Workout[] {
     logger.loading('Loading lifting workouts...');
-    const workoutsLog = join(__dirname, '../../data/out/lifting-log-sets.json');
+    const workoutsLog = join(__dirname, '../../data/out/lifting-log.json');
     const workoutsJson = JSON.parse(readFileSync(workoutsLog, 'utf8'));
     const workouts = z
         .object({ workouts: z.array(z.any()) })

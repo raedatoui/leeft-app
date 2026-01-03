@@ -1,6 +1,6 @@
+import { logger } from '@leeft/utils';
 import { config } from 'dotenv';
 import OpenAI from 'openai';
-import { logger } from '@leeft/utils';
 
 config();
 

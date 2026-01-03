@@ -1,5 +1,5 @@
-import { runCLI } from '../utils/cli';
 import { logger } from '@leeft/utils';
+import { runCLI } from '../utils/cli';
 import { main as auth } from './auth';
 import { main as downloadAll } from './downloadAll';
 import { main as downloadLatest } from './downloadLatest';

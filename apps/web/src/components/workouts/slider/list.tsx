@@ -1,6 +1,6 @@
 import { type FC, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
-import WorkoutTable from '@/components/workoutTable';
+import WorkoutTable from '@/components/workouts/workoutTable';
 import type { ExerciseMetadata, Workout } from '@/types';
 
 interface WorkoutSliderProps {
@@ -17,7 +17,7 @@ interface WorkoutSliderProps {
     includeWarmup?: boolean;
 }
 
-const VirtualizedWorkoutSlider: FC<WorkoutSliderProps> = ({
+export const WorkoutSliderList: FC<WorkoutSliderProps> = ({
     workouts,
     exerciseMap,
     miniMode,
@@ -140,5 +140,3 @@ const VirtualizedWorkoutSlider: FC<WorkoutSliderProps> = ({
         </div>
     );
 };
-
-export default VirtualizedWorkoutSlider;

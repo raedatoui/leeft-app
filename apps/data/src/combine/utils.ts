@@ -1,10 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { isWithinInterval, logger, normalizeToMidnightUTC } from '@leeft/utils';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 import type { AllWorkout } from '../compile/types';
-import { isWithinInterval, normalizeToMidnightUTC } from '@leeft/utils';
-import { logger } from '@leeft/utils';
 import { type Cycle, CycleSchema } from './types';
 
 export function addWorkoutsToCycles(workouts: { uuid: string; date: Date }[], cycles: Cycle[]): void {
