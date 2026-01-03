@@ -207,7 +207,7 @@ const WorkoutTable: FC<WorkoutTableProps> = ({
     );
 
     const ViewCard = (
-        <Card className="font-mono w-full h-full flex flex-col">
+        <Card className="rounded-xl font-mono w-full h-full flex flex-col">
             <CardHeader className="p-3 space-y-2">{viewHeader}</CardHeader>
             <CardContent className="overflow-y-auto flex-1 p-0">
                 <div className="divide-y">
@@ -239,7 +239,7 @@ const WorkoutTable: FC<WorkoutTableProps> = ({
     );
 
     const EditCard = (
-        <Card className="font-mono w-full h-full flex flex-col">
+        <Card className="rounded-xl font-mono w-full h-full flex flex-col">
             <CardHeader className="p-3 space-y-2">{editHeader}</CardHeader>
             <CardContent className="overflow-y-auto flex-1 p-0">
                 <div className="divide-y">

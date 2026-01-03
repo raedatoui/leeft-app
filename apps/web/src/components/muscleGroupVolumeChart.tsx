@@ -8,28 +8,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import WorkoutTable from '@/components/workoutTable';
+import { chartColors as colors, chartFonts as fonts } from '@/lib/chart-theme';
 import type { ExerciseMap, Workout } from '@/types';
+import { ControlCard } from '@/components/controlCard';
 
 interface MuscleGroupVolumeChartProps {
-    workouts: Workout[];
-    muscleGroup: string;
+    // ... (omitting lines between interface and function)
     exerciseMap: ExerciseMap;
 }
-
-// Theme colors - matching exercise.tsx
-const colors = {
-    primary: 'rgb(255, 176, 38)',
-    primaryDark: 'rgb(204, 141, 30)',
-    background: 'hsl(240, 10%, 3.9%)',
-    foreground: 'rgb(249, 249, 249)',
-    mutedForeground: 'rgb(161, 161, 170)',
-    border: 'rgb(39, 39, 42)',
-} as const;
-
-const fonts = {
-    sans: 'var(--font-geist-sans)',
-    mono: 'var(--font-geist-mono)',
-} as const;
 
 const workoutDate = (w: Workout): string =>
     w.date.toLocaleDateString('en-US', {
@@ -266,40 +252,38 @@ export default function MuscleGroupVolumeChart({ workouts, muscleGroup, exercise
     return (
         <div className="flex flex-col gap-4">
             {/* Header with stats and toggle */}
-            <Card>
-                <CardContent className="py-3 px-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div className="flex flex-col gap-1">
-                            <h3 className="text-lg font-bold capitalize">{muscleGroup} Volume</h3>
-                            <p className="text-xs text-muted-foreground">{includeWarmup ? 'All sets' : 'Work sets only'} • Volume = Reps × Weight</p>
+            <ControlCard>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="flex flex-col gap-1">
+                        <h3 className="text-lg font-bold capitalize">{muscleGroup} Volume</h3>
+                        <p className="text-xs text-muted-foreground">{includeWarmup ? 'All sets' : 'Work sets only'} • Volume = Reps × Weight</p>
+                    </div>
+
+                    <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-2.5 text-xs font-bold uppercase tracking-tighter">
+                            <Label htmlFor="include-warmup" className="cursor-pointer">
+                                <Dumbbell className="h-4 w-4 text-muted-foreground" />
+                            </Label>
+                            <Switch id="include-warmup" checked={includeWarmup} onCheckedChange={setIncludeWarmup} className="scale-90" />
                         </div>
 
-                        <div className="flex items-center gap-6">
-                            <div className="flex items-center gap-2.5 text-xs font-bold uppercase tracking-tighter">
-                                <Label htmlFor="include-warmup" className="cursor-pointer">
-                                    <Dumbbell className="h-4 w-4 text-muted-foreground" />
-                                </Label>
-                                <Switch id="include-warmup" checked={includeWarmup} onCheckedChange={setIncludeWarmup} className="scale-90" />
+                        <div className="flex gap-4">
+                            <div className="flex flex-col items-center">
+                                <span className="text-lg font-bold text-primary">{volumeData.length}</span>
+                                <span className="text-xs text-muted-foreground">Workouts</span>
                             </div>
-
-                            <div className="flex gap-4">
-                                <div className="flex flex-col items-center">
-                                    <span className="text-lg font-bold text-primary">{volumeData.length}</span>
-                                    <span className="text-xs text-muted-foreground">Workouts</span>
-                                </div>
-                                <div className="flex flex-col items-center">
-                                    <span className="text-lg font-bold text-primary">{avgVolume.toLocaleString()}</span>
-                                    <span className="text-xs text-muted-foreground">Avg Vol</span>
-                                </div>
-                                <div className="flex flex-col items-center">
-                                    <span className="text-lg font-bold text-primary">{maxVolume.toLocaleString()}</span>
-                                    <span className="text-xs text-muted-foreground">Max Vol</span>
-                                </div>
+                            <div className="flex flex-col items-center">
+                                <span className="text-lg font-bold text-primary">{avgVolume.toLocaleString()}</span>
+                                <span className="text-xs text-muted-foreground">Avg Vol</span>
+                            </div>
+                            <div className="flex flex-col items-center">
+                                <span className="text-lg font-bold text-primary">{maxVolume.toLocaleString()}</span>
+                                <span className="text-xs text-muted-foreground">Max Vol</span>
                             </div>
                         </div>
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </ControlCard>
 
             {/* Chart and Workout Table */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

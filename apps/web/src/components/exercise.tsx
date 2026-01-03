@@ -19,21 +19,7 @@ interface Props {
     hideTitle?: boolean;
 }
 
-// Theme colors - using CSS variables for consistency with shadcn
-const colors = {
-    primary: 'rgb(255, 176, 38)',
-    primaryDark: 'rgb(204, 141, 30)',
-    background: 'hsl(240, 10%, 3.9%)', // matches card background
-    foreground: 'rgb(249, 249, 249)',
-    mutedForeground: 'rgb(161, 161, 170)',
-    border: 'rgb(39, 39, 42)',
-} as const;
-
-// Font families
-const fonts = {
-    sans: 'var(--font-geist-sans)',
-    mono: 'var(--font-geist-mono)',
-} as const;
+import { chartColors as colors, chartFonts as fonts } from '@/lib/chart-theme';
 
 const defaultOptions: Options = {
     chart: {

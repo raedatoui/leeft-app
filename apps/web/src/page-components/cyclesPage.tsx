@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { type FC, useMemo, useState } from 'react';
 import { ControlCard } from '@/components/controlCard';
 import CycleDetailView from '@/components/cycleDetailView';
+import CycleHeader from '@/components/cycleHeader';
 import PageTemplate from '@/components/pageTemplate';
 import { TopExercisesList } from '@/components/topExercisesList';
 import { WorkoutStatsGrid } from '@/components/workoutStatsGrid';
@@ -333,7 +334,7 @@ export default function TrainingTimeline() {
             title="Training Cycles"
             stickyHeader={
                 <div className="flex flex-col gap-4">
-                    {/* Controls & Summary Row */}
+                    {/* Controls & Summary Row - Hide when a cycle is selected */}
                     <ControlCard className="w-full">
                         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                             <div className="flex items-center gap-3">
@@ -492,12 +493,19 @@ export default function TrainingTimeline() {
                             </div>
                         </div>
                     </ControlCard>
+
+                    {/* Hoisted Cycle Header */}
+                    {selectedCycle && (
+                        <ControlCard>
+                            <CycleHeader cycle={selectedCycle} onClose={() => setSelectedCycleUuid(null)} />
+                        </ControlCard>
+                    )}
                 </div>
             }
         >
             <div className="min-h-[400px] sm:min-h-[600px] mt-4">
                 {selectedCycle && selectedCycleUuid ? (
-                    <CycleDetailView cycle={selectedCycle} exerciseMap={exerciseMap} />
+                    <CycleDetailView cycle={selectedCycle} exerciseMap={exerciseMap} hideHeader={true} />
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {displayCycles.map((cycle) => {

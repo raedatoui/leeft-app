@@ -109,7 +109,6 @@ const VirtualizedWorkoutSlider: FC<WorkoutSliderProps> = ({
                         style={{
                             scrollbarWidth: 'none',
                             msOverflowStyle: 'none',
-                            scrollSnapType: 'x proximity',
                             touchAction: 'pan-y pan-x',
                             WebkitOverflowScrolling: 'touch',
                         }}
@@ -119,16 +118,17 @@ const VirtualizedWorkoutSlider: FC<WorkoutSliderProps> = ({
                                 <div style={style} className="px-2 snap-start">
                                     <div className={`grid ${gridCols} gap-4`}>
                                         {slides[index].map((workout) => (
-                                            <WorkoutTable
-                                                key={workout.title}
-                                                workout={workout}
-                                                exerciseMap={exerciseMap}
-                                                miniMode={miniMode}
-                                                cycleId={cycleId}
-                                                onExerciseClick={onExerciseClick}
-                                                muscleGroupFilter={muscleGroupFilter}
-                                                includeWarmup={includeWarmup}
-                                            />
+                                            <div key={workout.title} className="overflow-hidden h-full">
+                                                <WorkoutTable
+                                                    workout={workout}
+                                                    exerciseMap={exerciseMap}
+                                                    miniMode={miniMode}
+                                                    cycleId={cycleId}
+                                                    onExerciseClick={onExerciseClick}
+                                                    muscleGroupFilter={muscleGroupFilter}
+                                                    includeWarmup={includeWarmup}
+                                                />
+                                            </div>
                                         ))}
                                     </div>
                                 </div>

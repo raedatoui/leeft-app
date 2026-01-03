@@ -32,16 +32,7 @@ export default function Background() {
     return (
         <div className="fixed inset-0 -z-50 bg-background overflow-hidden pointer-events-none">
             {/* Technical Grid Background */}
-            <div
-                className="absolute inset-0 opacity-[0.15]"
-                style={{
-                    backgroundImage: `linear-gradient(to right, #808080 1px, transparent 1px),
-                                      linear-gradient(to bottom, #808080 1px, transparent 1px)`,
-                    backgroundSize: '4rem 4rem',
-                    // increased mask size slightly for better edge blending on large screens
-                    maskImage: 'radial-gradient(ellipse 60% 60% at center, black 40%, transparent 100%)',
-                }}
-            />
+            <div className="absolute inset-0 bg-grid-pattern" />
 
             {/* Floating Data Points */}
             {!shouldReduceMotion &&

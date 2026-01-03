@@ -87,4 +87,11 @@
     h2 {
         @apply text-center md:text-left;
     }
+
+    .bg-grid-pattern {
+        background-image:
+            linear-gradient(to right, hsl(var(--muted-foreground) / 0.2) 1px, transparent 1px),
+            linear-gradient(to bottom, hsl(var(--muted-foreground) / 0.2) 1px, transparent 1px);
+        background-size: 4rem 4rem;
+    }
 }

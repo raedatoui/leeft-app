@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import CycleDetailView from '@/components/cycleDetailView';
+import CycleHeader from '@/components/cycleHeader';
 import PageTemplate from '@/components/pageTemplate';
 import { useWorkouts } from '@/lib/contexts';
 
@@ -19,9 +20,9 @@ export default function CycleDetailsPage({ id }: CycleDetailsPageProps) {
     if (!cycle) return <div>Cycle not found</div>;
 
     return (
-        <PageTemplate title="Training Cycles">
+        <PageTemplate title="Training Cycles" stickyHeader={<CycleHeader cycle={cycle} />}>
             <div className="mt-6">
-                <CycleDetailView cycle={cycle} exerciseMap={exerciseMap} />
+                <CycleDetailView cycle={cycle} exerciseMap={exerciseMap} hideHeader={true} />
             </div>
         </PageTemplate>
     );
