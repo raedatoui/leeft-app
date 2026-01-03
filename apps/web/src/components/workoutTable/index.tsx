@@ -3,8 +3,8 @@ import { type FC, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { ExerciseEditRow } from './edit';
-import type { EditedExercise, WorkoutTableProps } from './types';
+import { AddExerciseButton, ExerciseEditRow, NewExerciseRow } from './edit';
+import type { EditedExercise, NewExercise, WorkoutTableProps } from './types';
 import { initEditedExercise } from './utils';
 import { ExerciseViewRow } from './view';
 
@@ -24,6 +24,7 @@ const WorkoutTable: FC<WorkoutTableProps> = ({
     const [isMobile, setIsMobile] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editedExercises, setEditedExercises] = useState<Map<number, EditedExercise>>(new Map());
+    const [newExercises, setNewExercises] = useState<NewExercise[]>([]);
     const [copiedCommand, setCopiedCommand] = useState<string | null>(null);
 
     // Enter edit mode
@@ -40,7 +41,45 @@ const WorkoutTable: FC<WorkoutTableProps> = ({
     const exitEditMode = () => {
         setIsEditing(false);
         setEditedExercises(new Map());
+        setNewExercises([]);
         setCopiedCommand(null);
+    };
+
+    // Add a new exercise
+    const addNewExercise = () => {
+        const tempId = `new-${Date.now()}`;
+        setNewExercises((prev) => [...prev, { tempId, exerciseId: null, sets: [] }]);
+    };
+
+    // Update exercise selection for a new exercise
+    const updateNewExerciseId = (tempId: string, exerciseId: number) => {
+        setNewExercises((prev) => prev.map((ex) => (ex.tempId === tempId ? { ...ex, exerciseId } : ex)));
+    };
+
+    // Add a set to a new exercise
+    const addSetToNewExercise = (tempId: string) => {
+        setNewExercises((prev) => prev.map((ex) => (ex.tempId === tempId ? { ...ex, sets: [...ex.sets, { reps: undefined, weight: 0 }] } : ex)));
+    };
+
+    // Update a set in a new exercise
+    const updateNewExerciseSet = (tempId: string, setIndex: number, field: 'reps' | 'weight', value: string) => {
+        setNewExercises((prev) =>
+            prev.map((ex) => {
+                if (ex.tempId !== tempId) return ex;
+                const newSets = [...ex.sets];
+                if (field === 'reps') {
+                    newSets[setIndex] = { ...newSets[setIndex], reps: value === '' ? undefined : Number.parseInt(value, 10) };
+                } else {
+                    newSets[setIndex] = { ...newSets[setIndex], weight: Number.parseFloat(value) || 0 };
+                }
+                return { ...ex, sets: newSets };
+            })
+        );
+    };
+
+    // Remove a new exercise
+    const removeNewExercise = (tempId: string) => {
+        setNewExercises((prev) => prev.filter((ex) => ex.tempId !== tempId));
     };
 
     // Update a set value
@@ -224,7 +263,22 @@ const WorkoutTable: FC<WorkoutTableProps> = ({
                             />
                         );
                     })}
+                    {newExercises.map((newExercise) => (
+                        <NewExerciseRow
+                            key={newExercise.tempId}
+                            newExercise={newExercise}
+                            exerciseMap={exerciseMap}
+                            workoutTitle={workout.title}
+                            copiedCommand={copiedCommand}
+                            onUpdateExerciseId={updateNewExerciseId}
+                            onAddSet={addSetToNewExercise}
+                            onUpdateSet={updateNewExerciseSet}
+                            onRemove={removeNewExercise}
+                            onCopyCommand={copyCommand}
+                        />
+                    ))}
                 </div>
+                <AddExerciseButton onAdd={addNewExercise} />
             </CardContent>
         </Card>
     );

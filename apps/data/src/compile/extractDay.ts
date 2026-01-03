@@ -74,6 +74,7 @@ export function parseTrainHeroicWorkout(rawWorkout: RawWorkout): Workout {
                         const sets = parseAbr(exercise.abr).map((set, index) => ({
                             ...set,
                             order: index,
+                            isWorkSet: true,
                         }));
                         // Use ws.order for the first exercise, then increment for subsequent exercises
                         const exerciseOrder = exerciseIndex === 0 ? ws.order : ++nextOrder;
@@ -85,6 +86,7 @@ export function parseTrainHeroicWorkout(rawWorkout: RawWorkout): Workout {
                             order: exerciseOrder,
                             sets,
                             volume: sets.reduce((total, set) => total + (set.reps || 0) * set.weight, 0),
+                            workVolume: sets.reduce((total, set) => total + (set.reps || 0) * set.weight, 0),
                         };
                     })
             );
@@ -98,6 +100,7 @@ export function parseTrainHeroicWorkout(rawWorkout: RawWorkout): Workout {
                 existingExercise.sets = [...existingExercise.sets, ...curr.sets].map((set, index) => ({
                     ...set,
                     order: index,
+                    isWorkSet: true,
                 }));
                 // Update volume
                 existingExercise.volume = existingExercise.sets.reduce((total, set) => total + (set.reps || 0) * set.weight, 0);
@@ -106,6 +109,7 @@ export function parseTrainHeroicWorkout(rawWorkout: RawWorkout): Workout {
 
             // Add volume calculation for new exercises
             curr.volume = curr.sets.reduce((total, set) => total + (set.reps || 0) * set.weight, 0);
+            curr.workVolume = curr.volume;
             acc.push(curr);
             return acc;
         }, []);

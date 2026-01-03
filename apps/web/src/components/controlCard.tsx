@@ -8,7 +8,7 @@ interface ControlCardProps extends React.ComponentProps<typeof Card> {
 
 export function ControlCard({ className, children, ...props }: ControlCardProps) {
     return (
-        <Card className={cn('w-full lg:w-auto shadow-md border-muted/80', className)} {...props}>
+        <Card className={cn('w-full lg:w-auto shadow-md border-hsl(var(--primary))/80', className)} {...props}>
             <CardContent className="p-4">{children}</CardContent>
         </Card>
     );

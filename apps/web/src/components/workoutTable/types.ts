@@ -24,3 +24,9 @@ export interface EditedExercise {
     newExerciseId?: number;
     sets: EditedSet[];
 }
+
+export interface NewExercise {
+    tempId: string;
+    exerciseId: number | null;
+    sets: EditedSet[];
+}

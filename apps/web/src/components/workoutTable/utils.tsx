@@ -12,6 +12,13 @@ export function generateSwapCommand(workoutTitle: string, fromId: number, toId: 
     return `bun src/edit/index.ts swap-exercise --date="${workoutTitle}" --exercise=${fromId} --to=${toId}`;
 }
 
+export function generateAddExerciseCommand(workoutTitle: string, exerciseId: number, sets: EditedSet[]): string {
+    const reps = sets.map((s) => s.reps ?? '').join(',');
+    const weights = sets.map((s) => Math.round(s.weight)).join(',');
+    const setsStr = `${reps}@${weights}`;
+    return `bun src/edit/index.ts add-exercise --date="${workoutTitle}" --exercise=${exerciseId} --sets="${setsStr}"`;
+}
+
 export function generateCombinedCommand(workoutTitle: string, exercise: Exercise, editedExercise: EditedExercise): string {
     const commands: string[] = [];
 

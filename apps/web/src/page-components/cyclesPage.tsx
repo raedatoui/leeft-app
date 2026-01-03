@@ -6,6 +6,8 @@ import { type FC, useMemo, useState } from 'react';
 import { ControlCard } from '@/components/controlCard';
 import CycleDetailView from '@/components/cycleDetailView';
 import PageTemplate from '@/components/pageTemplate';
+import { TopExercisesList } from '@/components/topExercisesList';
+import { WorkoutStatsGrid } from '@/components/workoutStatsGrid';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -120,44 +122,8 @@ const CycleCard: FC<CycleProps> = ({
                 {/* Workout stats */}
                 {workouts.length > 0 && (
                     <div className="space-y-2">
-                        <div className="grid grid-cols-3 gap-2">
-                            <div className="bg-zinc-900/50 rounded-lg p-2 border border-zinc-800">
-                                <div className="text-2xl font-bold">{workoutCount}</div>
-                                <div className="text-xs text-muted-foreground">Workouts</div>
-                            </div>
-                            <div className="bg-zinc-900/50 rounded-lg p-2 border border-zinc-800">
-                                <div className="text-2xl font-bold">{avgExercises.toFixed(1)}</div>
-                                <div className="text-xs text-muted-foreground">Avg exercises</div>
-                            </div>
-                            <div className="bg-zinc-900/50 rounded-lg p-2 border border-zinc-800">
-                                <div className="text-2xl font-bold">{avgVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
-                                <div className="text-xs text-muted-foreground">Avg Volume</div>
-                            </div>
-                        </div>
-
-                        {showDetails && (
-                            <div>
-                                <div className="text-sm font-semibold mb-1.5 flex items-center gap-2">
-                                    <span>Top exercises</span>
-                                    <div className="flex-1 h-px bg-zinc-800" />
-                                </div>
-                                <ul className="space-y-1.5">
-                                    {topExercises.map((ex) => (
-                                        <li key={ex.id} className="flex items-start gap-2 text-sm">
-                                            <span className="text-muted-foreground mt-0.5">→</span>
-                                            <div className="flex-1">
-                                                <Link href={`/exercises/${ex.id}`} className="font-semibold hover:text-primary transition-colors">
-                                                    {exerciseMap.get(ex.id.toString())?.name}
-                                                </Link>
-                                                <div className="text-xs text-muted-foreground">
-                                                    {ex.count} times • max {ex.maxWeight}
-                                                </div>
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
+                        <WorkoutStatsGrid workoutCount={workoutCount} avgExercises={avgExercises} avgVolume={avgVolume} />
+                        {showDetails && <TopExercisesList exercises={topExercises} exerciseMap={exerciseMap} />}
                     </div>
                 )}
 
