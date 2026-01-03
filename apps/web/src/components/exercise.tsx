@@ -20,6 +20,7 @@ interface Props {
 }
 
 import { chartColors as colors, chartFonts as fonts } from '@/lib/chart-theme';
+import { ControlCard } from '@/components/controlCard';
 
 const defaultOptions: Options = {
     chart: {
@@ -286,64 +287,62 @@ export default function ExerciseView({ workouts, exercise, exerciseMap, cycleId,
     return (
         <div className="flex flex-col gap-4">
             {/* Filters Section */}
-            <Card>
-                <CardContent className="py-3 px-3 sm:px-4">
-                    <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
-                        <div className="flex items-center gap-2 sm:gap-3">
-                            <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
-                                Rep Range: {repRange.min}-{repRange.max}
-                            </span>
-                            <Slider
-                                min={1}
-                                max={50}
-                                step={1}
-                                value={[repRange.min, repRange.max]}
-                                onValueChange={handleRepRangeChange}
-                                className="w-[200px]"
-                            />
-                        </div>
-
-                        <div className="flex items-center gap-2 flex-wrap">
-                            {maxCalculators.map((method) => (
-                                <Button
-                                    key={method.name}
-                                    onClick={() => setSelectedMethod(method)}
-                                    variant={selectedMethod.name === method.name ? 'default' : 'outline'}
-                                    size="sm"
-                                >
-                                    {method.name}
-                                </Button>
-                            ))}
-
-                            {/* 1RM Dropdown */}
-                            <Select
-                                value={oneRepMaxCalculators.includes(selectedMethod) ? selectedMethod.name : ''}
-                                onValueChange={(value) => {
-                                    const method = oneRepMaxCalculators.find((m) => m.name === value);
-                                    if (method) setSelectedMethod(method);
-                                }}
-                            >
-                                <SelectTrigger className="w-[180px]">
-                                    <SelectValue placeholder="1RM Max" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {oneRepMaxCalculators.map((method) => (
-                                        <SelectItem key={method.name} value={method.name}>
-                                            {method.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        {!hideSelector && (
-                            <div className="w-full lg:w-auto flex justify-center lg:justify-end">
-                                <ExerciseSelector exerciseMap={exerciseMap} />
-                            </div>
-                        )}
+            <ControlCard>
+                <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+                            Rep Range: {repRange.min}-{repRange.max}
+                        </span>
+                        <Slider
+                            min={1}
+                            max={50}
+                            step={1}
+                            value={[repRange.min, repRange.max]}
+                            onValueChange={handleRepRangeChange}
+                            className="w-[200px]"
+                        />
                     </div>
-                </CardContent>
-            </Card>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                        {maxCalculators.map((method) => (
+                            <Button
+                                key={method.name}
+                                onClick={() => setSelectedMethod(method)}
+                                variant={selectedMethod.name === method.name ? 'default' : 'outline'}
+                                size="sm"
+                            >
+                                {method.name}
+                            </Button>
+                        ))}
+
+                        {/* 1RM Dropdown */}
+                        <Select
+                            value={oneRepMaxCalculators.includes(selectedMethod) ? selectedMethod.name : ''}
+                            onValueChange={(value) => {
+                                const method = oneRepMaxCalculators.find((m) => m.name === value);
+                                if (method) setSelectedMethod(method);
+                            }}
+                        >
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="1RM Max" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {oneRepMaxCalculators.map((method) => (
+                                    <SelectItem key={method.name} value={method.name}>
+                                        {method.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {!hideSelector && (
+                        <div className="w-full lg:w-auto flex justify-center lg:justify-end">
+                            <ExerciseSelector exerciseMap={exerciseMap} />
+                        </div>
+                    )}
+                </div>
+            </ControlCard>
 
             {/* Stats & Description Card - Full Width */}
             <Card>

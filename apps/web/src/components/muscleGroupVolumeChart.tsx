@@ -13,7 +13,8 @@ import type { ExerciseMap, Workout } from '@/types';
 import { ControlCard } from '@/components/controlCard';
 
 interface MuscleGroupVolumeChartProps {
-    // ... (omitting lines between interface and function)
+    muscleGroup: string;
+    workouts: Workout[];
     exerciseMap: ExerciseMap;
 }
 

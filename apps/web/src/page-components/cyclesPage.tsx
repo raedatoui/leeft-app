@@ -495,17 +495,13 @@ export default function TrainingTimeline() {
                     </ControlCard>
 
                     {/* Hoisted Cycle Header */}
-                    {selectedCycle && (
-                        <ControlCard>
-                            <CycleHeader cycle={selectedCycle} onClose={() => setSelectedCycleUuid(null)} />
-                        </ControlCard>
-                    )}
+                    {selectedCycle && <CycleHeader cycle={selectedCycle} onClose={() => setSelectedCycleUuid(null)} />}
                 </div>
             }
         >
             <div className="min-h-[400px] sm:min-h-[600px] mt-4">
                 {selectedCycle && selectedCycleUuid ? (
-                    <CycleDetailView cycle={selectedCycle} exerciseMap={exerciseMap} hideHeader={true} />
+                    <CycleDetailView cycle={selectedCycle} exerciseMap={exerciseMap} />
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {displayCycles.map((cycle) => {

@@ -2,7 +2,6 @@
 
 import { X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import CycleHeader from '@/components/cycleHeader';
 import ExerciseView from '@/components/exercise';
 import MuscleGroupVolumeChart from '@/components/muscleGroupVolumeChart';
 import WorkoutSlider from '@/components/slider';
@@ -15,10 +14,9 @@ import type { ExerciseMap, MappedCycle } from '@/types';
 interface CycleDetailViewProps {
     cycle: MappedCycle;
     exerciseMap: ExerciseMap;
-    hideHeader?: boolean;
 }
 
-export default function CycleDetailView({ cycle, exerciseMap, hideHeader = false }: CycleDetailViewProps) {
+export default function CycleDetailView({ cycle, exerciseMap }: CycleDetailViewProps) {
     const [miniMode, setMiniMode] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [slidesToShow, setSlidesToShow] = useState(4);
@@ -97,9 +95,6 @@ export default function CycleDetailView({ cycle, exerciseMap, hideHeader = false
 
     return (
         <div className="flex flex-col gap-6">
-            {/* Header Section */}
-            {!hideHeader && <CycleHeader cycle={cycle} />}
-
             {/* Muscle Group Stats */}
             {muscleGroupStats.length > 0 && (
                 <div className="flex flex-wrap gap-3">

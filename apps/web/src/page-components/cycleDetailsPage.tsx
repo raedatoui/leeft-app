@@ -22,7 +22,7 @@ export default function CycleDetailsPage({ id }: CycleDetailsPageProps) {
     return (
         <PageTemplate title="Training Cycles" stickyHeader={<CycleHeader cycle={cycle} />}>
             <div className="mt-6">
-                <CycleDetailView cycle={cycle} exerciseMap={exerciseMap} hideHeader={true} />
+                <CycleDetailView cycle={cycle} exerciseMap={exerciseMap} />
             </div>
         </PageTemplate>
     );

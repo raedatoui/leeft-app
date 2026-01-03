@@ -65,8 +65,8 @@ export default function CycleHeader({ cycle, onClose }: CycleHeaderProps) {
                 )}
             </div>
             {onClose && (
-                <Button onClick={onClose} variant="default" size="icon" className="h-8 w-8 rounded-full shadow-md">
-                    <X size={18} />
+                <Button onClick={onClose} variant="default" size="icon" className="rounded-full h-10 w-10 shadow-md">
+                    <X className="h-6 w-6" />
                     <span className="sr-only">Close</span>
                 </Button>
             )}
