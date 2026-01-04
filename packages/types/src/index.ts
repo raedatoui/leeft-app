@@ -23,15 +23,19 @@ export const RawWorkoutSchema = z.object({
 	date: z.string(),
 });
 
-export const ExerciseMetadataSchema = z.object({
+export const BaseExerciseMetadataSchema = z.object({
 	id: z.number(),
 	name: z.string(),
 	slug: z.string(),
 	videoUrl: z.string().nullable(),
 	category: z.string(),
-	primaryMuscleGroup: z.string(),
 	equipment: z.array(z.string()),
 	description: z.string().optional(),
+	originalMuscleGroup: z.string().optional(),
+});
+
+export const ExerciseMetadataSchema = BaseExerciseMetadataSchema.extend({
+	primaryMuscleGroup: z.string(),
 });
 
 export const BaseSetSchema = z.object({

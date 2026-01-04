@@ -6,38 +6,15 @@ import { useMemo, useState } from 'react';
 import { ControlCard } from '@/components/common/controlCard';
 import PageTemplate from '@/components/layout/pageTemplate';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useWorkouts } from '@/lib/contexts';
 
 export default function ExercisesPage() {
-    const { exerciseMap, isLoading } = useWorkouts();
+    const { exerciseMap, muscleGroups: canonicalMuscleGroups, categories, equipmentList, isLoading } = useWorkouts();
     const [muscleFilter, setMuscleFilter] = useState<string>('all');
     const [categoryFilter, setCategoryFilter] = useState<string>('all');
     const [equipmentFilter, setEquipmentFilter] = useState<string>('all');
-
-    // Extract unique values for filters (for the dropdown options - always all available)
-    const { muscleGroups, categories, equipmentList } = useMemo(() => {
-        const muscles = new Set<string>();
-        const cats = new Set<string>();
-        const equips = new Set<string>();
-
-        for (const ex of exerciseMap.values()) {
-            if (ex.primaryMuscleGroup) muscles.add(ex.primaryMuscleGroup);
-            if (ex.category) cats.add(ex.category);
-            if (ex.equipment) {
-                for (const eq of ex.equipment) {
-                    equips.add(eq);
-                }
-            }
-        }
-
-        return {
-            muscleGroups: Array.from(muscles).sort(),
-            categories: Array.from(cats).sort(),
-            equipmentList: Array.from(equips).sort(),
-        };
-    }, [exerciseMap]);
 
     // Filter exercises
     const filteredExercises = useMemo(() => {
@@ -131,9 +108,9 @@ export default function ExercisesPage() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">All Muscle Groups</SelectItem>
-                                        {muscleGroups.map((m) => (
-                                            <SelectItem key={m} value={m}>
-                                                {m}
+                                        {canonicalMuscleGroups.map((m) => (
+                                            <SelectItem key={m.id} value={m.id}>
+                                                {m.name}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -186,28 +163,40 @@ export default function ExercisesPage() {
         >
             {/* Exercise List */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-                {filteredExercises.map((ex) => (
-                    <Link key={ex.id} href={`/exercises/${ex.id}`} className="no-underline">
-                        <Card className="transition-all duration-300 h-full hover:scale-[1.02] hover:shadow-none">
-                            <CardHeader>
-                                <div className="flex justify-between items-start gap-4">
-                                    <CardTitle className="text-lg font-medium">{ex.name}</CardTitle>
-                                </div>
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                    <Badge variant="outline" className="text-xs">
-                                        {ex.primaryMuscleGroup}
-                                    </Badge>
-                                    <Badge variant="secondary" className="text-xs">
-                                        {ex.category}
-                                    </Badge>
-                                </div>
-                                {ex.equipment && ex.equipment.length > 0 && (
-                                    <CardDescription className="mt-2 text-xs">{ex.equipment.join(', ')}</CardDescription>
-                                )}
-                            </CardHeader>
-                        </Card>
-                    </Link>
-                ))}
+                {filteredExercises.map((ex) => {
+                    const muscleGroup = canonicalMuscleGroups.find((m) => m.id === ex.primaryMuscleGroup);
+                    return (
+                        <Link key={ex.id} href={`/exercises/${ex.id}`} className="no-underline">
+                            <Card className="transition-all duration-300 h-full hover:scale-[1.02] hover:shadow-none">
+                                <CardHeader>
+                                    <div className="flex justify-between items-start gap-4">
+                                        <CardTitle className="text-lg font-medium">{ex.name}</CardTitle>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2 mt-2">
+                                        <Badge
+                                            variant="outline"
+                                            className="text-xs"
+                                            style={{ borderColor: muscleGroup?.color, color: muscleGroup?.color }}
+                                        >
+                                            {muscleGroup?.name || ex.primaryMuscleGroup}
+                                        </Badge>
+                                        <Badge variant="secondary" className="text-xs text-primary">
+                                            {ex.category}
+                                        </Badge>
+                                        {ex.equipment && ex.equipment.length > 0 &&
+                                            ex.equipment.map((eq) => (
+                                                <Badge key={eq} variant="secondary">
+                                                    {eq}
+                                                </Badge>
+                                            ))
+                                        }
+                                    </div>
+
+                                </CardHeader>
+                            </Card>
+                        </Link>
+                    );
+                })}
                 {filteredExercises.length === 0 && (
                     <div className="col-span-full text-center text-muted-foreground py-10">No exercises found matching the selected filters.</div>
                 )}

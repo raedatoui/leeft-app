@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import WorkoutTable from '@/components/workouts/workoutTable';
 import { chartColors as colors, chartFonts as fonts } from '@/lib/chart-theme';
+import { useWorkouts } from '@/lib/contexts';
 import type { ExerciseMap, Workout } from '@/types';
 
 interface MuscleGroupVolumeChartProps {
@@ -26,10 +27,14 @@ const workoutDate = (w: Workout): string =>
         timeZone: 'EST',
     });
 
-export default function MuscleGroupVolumeChart({ workouts, muscleGroup, exerciseMap }: MuscleGroupVolumeChartProps) {
+export default function MuscleGroupVolumeChart({ workouts, muscleGroup: muscleGroupId, exerciseMap }: MuscleGroupVolumeChartProps) {
+    const { muscleGroups } = useWorkouts();
     const [includeWarmup, setIncludeWarmup] = useState(true);
     const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
     const [isExpanded, setIsExpanded] = useState(false);
+
+    const muscleGroup = useMemo(() => muscleGroups.find((m) => m.id === muscleGroupId), [muscleGroups, muscleGroupId]);
+    const muscleGroupName = muscleGroup?.name || muscleGroupId;
 
     const volumeData = useMemo(() => {
         const dataPoints: { date: Date; dateStr: string; volume: number; sets: number; workout: Workout }[] = [];
@@ -40,7 +45,7 @@ export default function MuscleGroupVolumeChart({ workouts, muscleGroup, exercise
 
             for (const exercise of workout.exercises) {
                 const metadata = exerciseMap.get(exercise.exerciseId.toString());
-                if (metadata?.primaryMuscleGroup !== muscleGroup) continue;
+                if (metadata?.primaryMuscleGroup !== muscleGroupId) continue;
 
                 for (const set of exercise.sets) {
                     const isQualifyingSet = includeWarmup || set.isWorkSet;
@@ -63,7 +68,7 @@ export default function MuscleGroupVolumeChart({ workouts, muscleGroup, exercise
         }
 
         return dataPoints.sort((a, b) => a.date.getTime() - b.date.getTime());
-    }, [workouts, muscleGroup, exerciseMap, includeWarmup]);
+    }, [workouts, muscleGroupId, exerciseMap, includeWarmup]);
 
     const totalVolume = volumeData.reduce((sum, d) => sum + d.volume, 0);
     const avgVolume = volumeData.length > 0 ? Math.round(totalVolume / volumeData.length) : 0;
@@ -256,7 +261,7 @@ export default function MuscleGroupVolumeChart({ workouts, muscleGroup, exercise
             <ControlCard>
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="flex flex-col gap-1">
-                        <h3 className="text-lg font-bold capitalize">{muscleGroup} Volume</h3>
+                        <h3 className="text-lg font-bold capitalize">{muscleGroupName} Volume</h3>
                         <p className="text-xs text-muted-foreground">{includeWarmup ? 'All sets' : 'Work sets only'} • Volume = Reps × Weight</p>
                     </div>
 
@@ -298,7 +303,7 @@ export default function MuscleGroupVolumeChart({ workouts, muscleGroup, exercise
                     <WorkoutTable
                         workout={selectedWorkout}
                         exerciseMap={exerciseMap}
-                        muscleGroupFilter={muscleGroup}
+                        muscleGroupFilter={muscleGroupId}
                         showFullWorkout={isExpanded}
                         onToggleFullWorkout={() => setIsExpanded(true)}
                         miniMode={false}

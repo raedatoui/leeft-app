@@ -16,5 +16,8 @@
     "check:fix": "pnpm -r check:fix",
     "deploy:web": "pnpm --filter @leeft/web build && cd apps/web && firebase deploy",
     "upload:data": "./scripts/upload.sh"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.3"
   }
 }
