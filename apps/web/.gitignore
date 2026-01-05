@@ -40,3 +40,9 @@ yarn-error.log*
 next-env.d.ts
 .idea
 .firebase
+
+# playwright
+screenshots/
+test-results/
+playwright-report/
+README.md

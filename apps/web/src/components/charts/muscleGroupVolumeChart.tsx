@@ -270,7 +270,7 @@ export default function MuscleGroupVolumeChart({ workouts, muscleGroup: muscleGr
                             <Label htmlFor="include-warmup" className="cursor-pointer">
                                 <Dumbbell className="h-4 w-4 text-muted-foreground" />
                             </Label>
-                            <Switch id="include-warmup" checked={includeWarmup} onCheckedChange={setIncludeWarmup} className="scale-90" />
+                            <Switch id="include-warmup" checked={!includeWarmup} onCheckedChange={(c) => setIncludeWarmup(!c)} className="scale-90" />
                         </div>
 
                         <div className="flex gap-4">

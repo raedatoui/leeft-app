@@ -43,6 +43,7 @@
     },
     "devDependencies": {
         "@biomejs/biome": "catalog:",
+        "@playwright/test": "^1.57.0",
         "@types/node": "^22",
         "@types/react": "^19",
         "@types/react-dom": "^19",

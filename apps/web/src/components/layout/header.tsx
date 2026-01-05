@@ -15,7 +15,7 @@ export default function Header({ title, children }: HeaderProps) {
 
     const getLinkClassName = (href: string) => {
         const isActive = href === '/' ? pathname === '/' : pathname?.startsWith(href);
-        return cn('transition-colors hover:text-foreground', isActive ? 'text-yellow-500 font-medium' : 'text-muted-foreground');
+        return cn('transition-colors hover:text-foreground', isActive ? 'text-primary font-medium' : 'text-muted-foreground');
     };
 
     return (
