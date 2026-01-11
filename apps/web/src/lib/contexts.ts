@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import type { ExerciseMap, MappedCycle, Workout } from '@/types';
+import type { CardioWorkout, DayWorkout, ExerciseMap, MappedCycle, Workout } from '@/types';
 
 export interface MuscleGroup {
     id: string;
@@ -11,6 +11,8 @@ export interface MuscleGroup {
 
 interface WorkoutContextType {
     workouts: Workout[];
+    cardioWorkouts: CardioWorkout[];
+    allWorkouts: DayWorkout[];
     exerciseMap: ExerciseMap;
     muscleGroups: MuscleGroup[];
     categories: string[];

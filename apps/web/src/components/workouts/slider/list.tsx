@@ -1,9 +1,24 @@
 import { type FC, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
-import WorkoutTable from '@/components/workouts/workoutTable';
-import type { ExerciseMetadata, Workout } from '@/types';
+import DayCard from '@/components/workouts/dayCard';
+import type { DayWorkout, ExerciseMetadata, Workout } from '@/types';
 
 interface WorkoutSliderProps {
+    workouts: DayWorkout[];
+    exerciseMap: Map<string, ExerciseMetadata>;
+    miniMode: boolean;
+    currentIndex: number;
+    setCurrentIndex: (index: number) => void;
+    slidesToShow: number;
+    cycleId?: string;
+    reverse?: boolean;
+    onExerciseClick?: (id: string) => void;
+    muscleGroupFilter?: string | null;
+    includeWarmup?: boolean;
+}
+
+// Interface for lifting-only slider (used by cycles)
+interface LiftingSliderProps {
     workouts: Workout[];
     exerciseMap: Map<string, ExerciseMetadata>;
     miniMode: boolean;
@@ -33,13 +48,16 @@ export const WorkoutSliderList: FC<WorkoutSliderProps> = ({
     // Reverse the workouts order if requested
     const reversedWorkouts = reverse ? [...workouts].reverse() : workouts;
 
-    // Filter workouts by muscle group if filter is active
+    // Filter day workouts by muscle group if filter is active
+    // Only show days that have at least one matching lifting exercise
     const processedWorkouts = muscleGroupFilter
-        ? reversedWorkouts.filter((workout) =>
-              workout.exercises.some((e) => {
-                  const metadata = exerciseMap.get(e.exerciseId.toString());
-                  return metadata?.primaryMuscleGroup === muscleGroupFilter;
-              })
+        ? reversedWorkouts.filter((day) =>
+              day.liftingWorkouts.some((w) =>
+                  w.exercises.some((e) => {
+                      const metadata = exerciseMap.get(e.exerciseId.toString());
+                      return metadata?.primaryMuscleGroup === muscleGroupFilter;
+                  })
+              )
           )
         : reversedWorkouts;
 
@@ -51,21 +69,21 @@ export const WorkoutSliderList: FC<WorkoutSliderProps> = ({
     const listRef = useRef<List>(null);
     const outerRef = useRef<HTMLDivElement>(null);
     const [containerWidth, setContainerWidth] = useState<number>(0);
+    const [sliderHeight, setSliderHeight] = useState<number>(700);
 
-    // Measure the container width
+    // Measure the container width and height
     useLayoutEffect(() => {
-        if (containerRef.current) {
-            setContainerWidth(containerRef.current.offsetWidth);
-        }
-
-        const handleResize = () => {
+        const updateDimensions = () => {
             if (containerRef.current) {
                 setContainerWidth(containerRef.current.offsetWidth);
             }
+            // Use viewport height minus header/controls (approx 200px)
+            setSliderHeight(window.innerHeight - 200);
         };
 
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
+        updateDimensions();
+        window.addEventListener('resize', updateDimensions);
+        return () => window.removeEventListener('resize', updateDimensions);
     }, []);
 
     // Smooth scroll when currentIndex changes
@@ -91,8 +109,6 @@ export const WorkoutSliderList: FC<WorkoutSliderProps> = ({
                   8: 'grid-cols-8',
               }[slidesToShow] || 'grid-cols-4';
 
-    const sliderHeight = typeof window !== 'undefined' && window.innerWidth < 768 ? window.innerHeight * 0.75 : 700;
-
     return (
         <div className="relative h-full" ref={containerRef}>
             <div className="overflow-hidden">
@@ -115,12 +131,12 @@ export const WorkoutSliderList: FC<WorkoutSliderProps> = ({
                     >
                         {({ index, style }) => {
                             return (
-                                <div style={style} className="px-2 snap-start">
-                                    <div className={`grid ${gridCols} gap-4`}>
-                                        {slides[index].map((workout) => (
-                                            <div key={workout.title} className="overflow-hidden h-full">
-                                                <WorkoutTable
-                                                    workout={workout}
+                                <div style={style} className="px-2 snap-start py-2">
+                                    <div className={`grid ${gridCols} gap-4 h-full`}>
+                                        {slides[index].map((dayWorkout) => (
+                                            <div key={`day-${dayWorkout.date.toISOString()}`} className="overflow-hidden min-h-0">
+                                                <DayCard
+                                                    dayWorkout={dayWorkout}
                                                     exerciseMap={exerciseMap}
                                                     miniMode={miniMode}
                                                     cycleId={cycleId}
@@ -139,4 +155,15 @@ export const WorkoutSliderList: FC<WorkoutSliderProps> = ({
             </div>
         </div>
     );
+};
+
+// Lifting-only slider for cycle views (backwards compatible)
+export const LiftingWorkoutSliderList: FC<LiftingSliderProps> = (props) => {
+    // Wrap lifting workouts in DayWorkout format (one workout per day card)
+    const wrappedWorkouts: DayWorkout[] = props.workouts.map((w) => ({
+        date: w.date,
+        liftingWorkouts: [w],
+        cardioWorkouts: [],
+    }));
+    return <WorkoutSliderList {...props} workouts={wrappedWorkouts} />;
 };

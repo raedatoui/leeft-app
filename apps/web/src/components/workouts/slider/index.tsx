@@ -1,2 +1,2 @@
 export { SliderControls } from './controls';
-export { WorkoutSliderList as WorkoutSlider } from './list';
+export { LiftingWorkoutSliderList as LiftingWorkoutSlider, WorkoutSliderList as WorkoutSlider } from './list';

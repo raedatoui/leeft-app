@@ -6,7 +6,7 @@ import MuscleGroupWorkSetsChart from '@/components/charts/muscleGroupWorkSetsCha
 import ExerciseView from '@/components/exercises/exercise-item';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { SliderControls, WorkoutSlider } from '@/components/workouts/slider';
+import { LiftingWorkoutSlider, SliderControls } from '@/components/workouts/slider';
 import { useWorkouts } from '@/lib/contexts';
 import { cn } from '@/lib/utils';
 import type { ExerciseMap, MappedCycle } from '@/types';
@@ -185,7 +185,7 @@ export default function CycleDetailView({ cycle, exerciseMap }: CycleDetailViewP
 
                     {/* Slider */}
                     {cycle.workouts && cycle.workouts.length > 0 ? (
-                        <WorkoutSlider
+                        <LiftingWorkoutSlider
                             workouts={cycle.workouts}
                             exerciseMap={exerciseMap}
                             miniMode={miniMode}

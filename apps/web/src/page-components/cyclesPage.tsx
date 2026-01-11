@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import type { MappedCycle } from '@/types';
 
 export default function TrainingTimeline() {
-    const [visibleYear, setVisibleYear] = useState(2025);
+    const [visibleYear, setVisibleYear] = useState(2026);
     const [isReversed, setIsReversed] = useState(false);
     const [activeType, setActiveType] = useState<string | null>(null);
     const [selectedCycleUuid, setSelectedCycleUuid] = useState<string | null>(null);

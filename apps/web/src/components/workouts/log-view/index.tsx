@@ -5,7 +5,7 @@ import { useWorkouts } from '@/lib/contexts';
 import WorkoutLogViewJSX from './view';
 
 export default function WorkoutLogView() {
-    const { workouts, exerciseMap, isLoading, error } = useWorkouts();
+    const { allWorkouts, exerciseMap, isLoading, error } = useWorkouts();
     const [miniMode, setMiniMode] = useState(true);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [slidesToShow, setSlidesToShow] = useState(4);
@@ -17,11 +17,11 @@ export default function WorkoutLogView() {
     // Extract available years from workouts
     const availableYears = useMemo(() => {
         const years = new Set<number>();
-        workouts.forEach((workout) => {
-            years.add(workout.date.getFullYear());
+        allWorkouts.forEach((day) => {
+            years.add(day.date.getFullYear());
         });
         return Array.from(years).sort((a, b) => b - a); // Most recent first
-    }, [workouts]);
+    }, [allWorkouts]);
 
     // Constant for months (reversed for recent-first order)
     const ALL_MONTHS = useMemo(
@@ -77,7 +77,7 @@ export default function WorkoutLogView() {
     }, [slidesToShow]);
 
     const effectiveSlidesToShow = responsiveColumns;
-    const slideCount = useMemo(() => Math.ceil(workouts.length / effectiveSlidesToShow), [workouts.length, effectiveSlidesToShow]);
+    const slideCount = useMemo(() => Math.ceil(allWorkouts.length / effectiveSlidesToShow), [allWorkouts.length, effectiveSlidesToShow]);
 
     const slideLeft = () => {
         setCurrentIndex((prev) => Math.max(prev - 1, 0));
@@ -93,10 +93,10 @@ export default function WorkoutLogView() {
         setSelectedMonth(undefined); // Reset month when year changes
 
         // Reverse workouts like the slider does
-        const reversedWorkouts = [...workouts].reverse();
+        const reversedWorkouts = [...allWorkouts].reverse();
 
-        // Find first workout of the selected year
-        const workoutIndex = reversedWorkouts.findIndex((workout) => workout.date.getFullYear() === Number(year));
+        // Find first day of the selected year
+        const workoutIndex = reversedWorkouts.findIndex((day) => day.date.getFullYear() === Number(year));
 
         if (workoutIndex !== -1) {
             // Calculate which slide contains this workout
@@ -110,10 +110,12 @@ export default function WorkoutLogView() {
         setSelectedMonth(monthStr);
 
         const month = Number(monthStr);
-        const reversedWorkouts = [...workouts].reverse();
+        const reversedWorkouts = [...allWorkouts].reverse();
 
-        // Find first workout of the selected year AND month
-        const workoutIndex = reversedWorkouts.findIndex((workout) => workout.date.getFullYear() === activeYear && workout.date.getMonth() === month);
+        // Find first day of the selected year AND month
+        const workoutIndex = reversedWorkouts.findIndex(
+            (day) => day.date.getFullYear() === activeYear && day.date.getMonth() === month
+        );
 
         if (workoutIndex !== -1) {
             const slideIndex = Math.floor(workoutIndex / effectiveSlidesToShow);
@@ -123,7 +125,7 @@ export default function WorkoutLogView() {
 
     return (
         <WorkoutLogViewJSX
-            workouts={workouts}
+            workouts={allWorkouts}
             exerciseMap={exerciseMap}
             isLoading={isLoading}
             error={error}

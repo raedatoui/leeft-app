@@ -3,8 +3,8 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
 import { getUniqueValues } from '@/lib/exercises';
-import { fetchCycles, fetchExerciseMap, fetchWorkouts } from '@/lib/fetchData';
-import type { ExerciseMap, MappedCycle, Workout } from '@/types';
+import { fetchCardioWorkouts, fetchCycles, fetchExerciseMap, fetchWorkouts } from '@/lib/fetchData';
+import type { CardioWorkout, DayWorkout, ExerciseMap, MappedCycle, Workout } from '@/types';
 import { type MuscleGroup, WorkoutContext } from './contexts';
 
 interface ProvidersProps {
@@ -31,6 +31,8 @@ const PALETTE = [
 
 export function WorkoutProvider({ children }: WorkoutProviderProps) {
     const [workouts, setWorkouts] = useState<Workout[]>([]);
+    const [cardioWorkouts, setCardioWorkouts] = useState<CardioWorkout[]>([]);
+    const [allWorkouts, setAllWorkouts] = useState<DayWorkout[]>([]);
     const [exerciseMap, setExerciseMap] = useState<ExerciseMap>(new Map());
     const [cycles, setCycles] = useState<MappedCycle[]>([]);
     const [muscleGroups, setMuscleGroups] = useState<MuscleGroup[]>([]);
@@ -43,11 +45,8 @@ export function WorkoutProvider({ children }: WorkoutProviderProps) {
     useEffect(() => {
         async function fetchData() {
             try {
-                // Fetch workouts
-                const wo = await fetchWorkouts();
-
-                // Fetch exercise metadata
-                const m = await fetchExerciseMap();
+                // Fetch all data in parallel
+                const [wo, cardio, m, cy] = await Promise.all([fetchWorkouts(), fetchCardioWorkouts(), fetchExerciseMap(), fetchCycles()]);
 
                 // 1. Extract unique values and canonicalize muscle groups
                 const { muscleGroups: uniqueGroups, categories: uniqueCategories, equipmentList: uniqueEquipment } = getUniqueValues(m);
@@ -70,14 +69,45 @@ export function WorkoutProvider({ children }: WorkoutProviderProps) {
                     });
                 }
 
-                // Fetch cycles
-                const cy = await fetchCycles();
+                // Map cycles
                 const mappedCycles = cy.map((i) => ({
                     ...i,
                     workouts: wo.filter((w) => i.workouts?.includes(w.uuid)),
                 }));
 
+                // Group all workouts by date (same day)
+                const dayWorkoutsMap = new Map<string, { lifting: Workout[]; cardio: CardioWorkout[] }>();
+
+                // Add lifting workouts
+                for (const w of wo) {
+                    const dateKey = w.date.toISOString().split('T')[0]; // YYYY-MM-DD
+                    const existing = dayWorkoutsMap.get(dateKey) || { lifting: [], cardio: [] };
+                    existing.lifting.push(w);
+                    dayWorkoutsMap.set(dateKey, existing);
+                }
+
+                // Add cardio workouts
+                for (const c of cardio) {
+                    const dateKey = c.date.toISOString().split('T')[0]; // YYYY-MM-DD
+                    const existing = dayWorkoutsMap.get(dateKey) || { lifting: [], cardio: [] };
+                    existing.cardio.push(c);
+                    dayWorkoutsMap.set(dateKey, existing);
+                }
+
+                // Convert to DayWorkout array and sort
+                const combined: DayWorkout[] = Array.from(dayWorkoutsMap.entries())
+                    .map(([dateKey, { lifting, cardio: cardioList }]) => ({
+                        date: new Date(dateKey),
+                        // Sort lifting by date/time
+                        liftingWorkouts: lifting.sort((a, b) => a.date.getTime() - b.date.getTime()),
+                        // Sort cardio by time within day
+                        cardioWorkouts: cardioList.sort((a, b) => a.date.getTime() - b.date.getTime()),
+                    }))
+                    .sort((a, b) => a.date.getTime() - b.date.getTime());
+
                 setWorkouts(wo);
+                setCardioWorkouts(cardio);
+                setAllWorkouts(combined);
                 setExerciseMap(updatedExerciseMap);
                 setMuscleGroups(canonicalMuscleGroups);
                 setCategories(uniqueCategories);
@@ -95,6 +125,8 @@ export function WorkoutProvider({ children }: WorkoutProviderProps) {
 
     const value = {
         workouts,
+        cardioWorkouts,
+        allWorkouts,
         exerciseMap,
         muscleGroups,
         categories,

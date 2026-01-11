@@ -108,6 +108,48 @@ export const MappedCycleSchema = CycleSchema.extend({
 	workouts: z.array(WorkoutSchema),
 });
 
+// Cardio workout types
+export const EffortSchema = z.object({
+	minutes: z.number(),
+	name: z.enum(['sedentary', 'lightly', 'fairly', 'very']),
+});
+
+export const CardioTypeEnum = z.enum([
+	'Run',
+	'Swim',
+	'Treadmill run',
+	'HIIT',
+	'Aerobic Workout',
+	'Outdoor Bike',
+	'Rowing machine',
+	'Elliptical',
+	'Bike',
+]);
+
+export const CardioWorkoutSchema = z.object({
+	uuid: z.string().uuid(),
+	date: z.date(),
+	type: CardioTypeEnum,
+	durationMs: z.number(),
+	durationMin: z.number(),
+	loggedBy: z.enum(['tracker', 'manual', 'auto_detected']),
+	zoneMinutes: z.number().optional(),
+	effort: z.array(EffortSchema).optional(),
+	calories: z.number().optional(),
+	averageHeartRate: z.number().optional(),
+	steps: z.number().optional(),
+});
+
+// Combined day workout (lifting + cardio for same day)
+export const DayWorkoutSchema = z.object({
+	date: z.date(),
+	liftingWorkouts: z.array(WorkoutSchema),
+	cardioWorkouts: z.array(CardioWorkoutSchema),
+});
+
+// Slider items are now day-based
+export const SliderWorkoutItemSchema = DayWorkoutSchema;
+
 export type RawWorkout = z.infer<typeof RawWorkoutSchema>;
 export type ExerciseMetadata = z.infer<typeof ExerciseMetadataSchema>;
 export type BaseSet = z.infer<typeof BaseSetSchema>;
@@ -120,3 +162,8 @@ export type ExerciseMap = Map<string, ExerciseMetadata>;
 export type MappedWorkout = z.infer<typeof MappedWorkoutSchema>;
 export type Cycle = z.infer<typeof CycleSchema>;
 export type MappedCycle = z.infer<typeof MappedCycleSchema>;
+export type Effort = z.infer<typeof EffortSchema>;
+export type CardioType = z.infer<typeof CardioTypeEnum>;
+export type CardioWorkout = z.infer<typeof CardioWorkoutSchema>;
+export type DayWorkout = z.infer<typeof DayWorkoutSchema>;
+export type SliderWorkoutItem = z.infer<typeof SliderWorkoutItemSchema>;
