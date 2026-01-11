@@ -1,11 +1,21 @@
 import fs from 'node:fs/promises';
+import fsSync from 'node:fs';
 import path from 'node:path';
 import qs from 'node:querystring';
 import { logger } from '@leeft/utils';
+import dotenv from 'dotenv';
 import { z } from 'zod';
+
+dotenv.config();
 
 const API_BASE = 'https://api.fitbit.com/1/user/-/activities';
 const LIMIT = 100; // max per Fitbit docs
+const FITBIT_CLIENT_ID = process.env.FITBIT_CLIENT_ID!;
+const FITBIT_CLIENT_SECRET = process.env.FITBIT_CLIENT_SECRET!;
+
+// Buffer time before expiration to trigger refresh (5 minutes)
+const EXPIRY_BUFFER_MS = 5 * 60 * 1000;
+
 export interface FetchActivitiesOptions {
     beforeDate?: string;
     afterDate?: string;
@@ -13,15 +23,92 @@ export interface FetchActivitiesOptions {
     maxResults?: number;
 }
 
-async function getAccessToken(): Promise<string> {
+interface Credentials {
+    access_token: string;
+    refresh_token: string;
+    expires_in: number;
+    expires_at?: number;
+}
+
+function getCredsPath(): string {
+    return path.join(__dirname, 'creds.json');
+}
+
+async function loadCredentials(): Promise<Credentials> {
     try {
-        const credsPath = path.join(__dirname, 'creds.json');
-        const content = await fs.readFile(credsPath, 'utf-8');
-        const creds = JSON.parse(content);
-        return creds.access_token;
+        const content = await fs.readFile(getCredsPath(), 'utf-8');
+        return JSON.parse(content);
     } catch (_e) {
-        throw new Error('Missing or invalid src/fitbit/creds.json. Please run authentication setup.');
+        throw new Error('Missing or invalid src/fitbit/creds.json. Please run: bun fitbit:auth');
     }
+}
+
+function saveCredentials(creds: Credentials): void {
+    fsSync.writeFileSync(getCredsPath(), JSON.stringify(creds, null, 4));
+}
+
+function isTokenExpired(creds: Credentials): boolean {
+    // If no expires_at, assume expired to trigger refresh
+    if (!creds.expires_at) {
+        return true;
+    }
+    // Check if token will expire within the buffer time
+    return Date.now() >= creds.expires_at - EXPIRY_BUFFER_MS;
+}
+
+async function refreshAccessToken(creds: Credentials): Promise<Credentials> {
+    logger.info('Access token expired, refreshing...');
+
+    const body = qs.stringify({
+        grant_type: 'refresh_token',
+        refresh_token: creds.refresh_token,
+    });
+
+    const authHeader = Buffer.from(`${FITBIT_CLIENT_ID}:${FITBIT_CLIENT_SECRET}`).toString('base64');
+
+    const response = await fetch('https://api.fitbit.com/oauth2/token', {
+        method: 'POST',
+        headers: {
+            Authorization: `Basic ${authHeader}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body,
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Token refresh failed (${response.status}): ${errorText}. Please run: bun fitbit:auth`);
+    }
+
+    const data = z
+        .object({
+            access_token: z.string(),
+            refresh_token: z.string(),
+            expires_in: z.number(),
+        })
+        .parse(await response.json());
+
+    const newCreds: Credentials = {
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+        expires_in: data.expires_in,
+        expires_at: Date.now() + data.expires_in * 1000,
+    };
+
+    saveCredentials(newCreds);
+    logger.success('Token refreshed successfully');
+
+    return newCreds;
+}
+
+async function getAccessToken(): Promise<string> {
+    let creds = await loadCredentials();
+
+    if (isTokenExpired(creds)) {
+        creds = await refreshAccessToken(creds);
+    }
+
+    return creds.access_token;
 }
 
 export const ActivityLevelSchema = z.array(

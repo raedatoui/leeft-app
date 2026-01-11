@@ -103,11 +103,12 @@ export async function main() {
 
     // Success!
     logger.success('OAuth Success!');
-    // Write credentials to a JSON file
+    // Write credentials to a JSON file with expiration timestamp
     const credentials = {
         access_token: data.access_token,
         refresh_token: data.refresh_token,
         expires_in: data.expires_in,
+        expires_at: Date.now() + data.expires_in * 1000,
     };
 
     fs.writeFileSync(`${__dirname}/creds.json`, JSON.stringify(credentials, null, 2));
