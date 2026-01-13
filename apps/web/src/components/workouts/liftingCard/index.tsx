@@ -4,11 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { AddExerciseButton, ExerciseEditRow, NewExerciseRow } from './edit';
-import type { EditedExercise, NewExercise, WorkoutTableProps } from './types';
+import type { EditedExercise, LiftingCardProps, NewExercise } from './types';
 import { initEditedExercise } from './utils';
 import { ExerciseViewRow } from './view';
 
-const WorkoutTable: FC<WorkoutTableProps> = ({
+const LiftingCard: FC<LiftingCardProps> = ({
     workout,
     exerciseMap,
     selectedExercise,
@@ -298,4 +298,4 @@ const WorkoutTable: FC<WorkoutTableProps> = ({
     );
 };
 
-export default WorkoutTable;
+export default LiftingCard;

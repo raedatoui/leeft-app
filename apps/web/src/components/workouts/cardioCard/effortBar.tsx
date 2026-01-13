@@ -3,7 +3,6 @@ import type { Effort } from '@/types';
 
 interface EffortBarProps {
     effort: Effort[];
-    totalMinutes: number;
 }
 
 // Zone colors matching fitness tracker zones
@@ -21,7 +20,7 @@ const zoneLabels: Record<string, string> = {
     very: 'Intense',
 };
 
-export const EffortBar: FC<EffortBarProps> = ({ effort, totalMinutes }) => {
+export const EffortBar: FC<EffortBarProps> = ({ effort }) => {
     // Filter out zones with 0 minutes
     const activeZones = effort.filter((e) => e.minutes > 0);
 

@@ -166,8 +166,8 @@ const LiftingSection: FC<{
                         <Dumbbell className="h-5 w-5" style={{ color: LIFTING_COLOR }} />
                     </div>
                     <div className="text-sm text-muted-foreground">
-                        Blocks: {workout.exercises.length} | Vol: {Math.round(includeWarmup ? workout.volume : workout.workVolume).toLocaleString()} | Dur: {workout.duration}m
-                        {workout.rpe && ` | RPE: ${workout.rpe}`}
+                        Blocks: {workout.exercises.length} | Vol: {Math.round(includeWarmup ? workout.volume : workout.workVolume).toLocaleString()} |
+                        Dur: {workout.duration}m{workout.rpe && ` | RPE: ${workout.rpe}`}
                     </div>
                 </div>
             )}
@@ -211,9 +211,7 @@ const CardioSection: FC<{ activity: CardioWorkout; miniMode: boolean; showIcon: 
                     )}
                 </div>
             )}
-            {!miniMode && activity.effort && activeEffortMinutes > 0 && (
-                <EffortBar effort={activity.effort} totalMinutes={activity.durationMin} />
-            )}
+            {!miniMode && activity.effort && activeEffortMinutes > 0 && <EffortBar effort={activity.effort} totalMinutes={activity.durationMin} />}
             {!miniMode && (activity.averageHeartRate || activity.calories || activity.steps) && (
                 <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
                     {activity.averageHeartRate && (
@@ -240,15 +238,7 @@ const CardioSection: FC<{ activity: CardioWorkout; miniMode: boolean; showIcon: 
     );
 };
 
-const DayCard: FC<DayCardProps> = ({
-    dayWorkout,
-    exerciseMap,
-    miniMode,
-    cycleId,
-    onExerciseClick,
-    muscleGroupFilter,
-    includeWarmup = true,
-}) => {
+const DayCard: FC<DayCardProps> = ({ dayWorkout, exerciseMap, miniMode, cycleId, onExerciseClick, muscleGroupFilter, includeWarmup = true }) => {
     const { date, liftingWorkouts, cardioWorkouts } = dayWorkout;
 
     // Check if we should filter out this card entirely
@@ -274,7 +264,7 @@ const DayCard: FC<DayCardProps> = ({
     const isMixed = hasLifting && hasCardio;
     const isSingleLifting = hasLifting && !hasCardio && liftingWorkouts.length === 1;
     const isSingleCardio = hasCardio && !hasLifting && cardioWorkouts.length === 1;
-    const totalWorkouts = liftingWorkouts.length + cardioWorkouts.length;
+    const _totalWorkouts = liftingWorkouts.length + cardioWorkouts.length;
 
     // Build unique header icons list
     type HeaderIconInfo = { icon: FC<{ className?: string }>; color: string; bg: string; key: string };
@@ -320,141 +310,143 @@ const DayCard: FC<DayCardProps> = ({
         <div className="relative w-full h-full min-w-0">
             <Card className="rounded-xl font-mono w-full h-full flex flex-col min-w-0">
                 <CardHeader className="p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                    {headerIcons.length > 0 ? (
-                        <div className="flex gap-1">
-                            {headerIcons.map(({ icon: Icon, color, bg, key }) => (
-                                <div key={key} className="p-2 rounded-lg" style={{ backgroundColor: bg }}>
-                                    <Icon className="h-5 w-5" style={{ color }} />
+                    <div className="flex items-center justify-between">
+                        {headerIcons.length > 0 ? (
+                            <div className="flex gap-1">
+                                {headerIcons.map(({ icon: Icon, color, bg, key }) => (
+                                    <div key={key} className="p-2 rounded-lg" style={{ backgroundColor: bg }}>
+                                        <Icon className="h-5 w-5" style={{ color }} />
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="w-8" />
+                        )}
+                        <h2 className="text-lg font-semibold text-center flex-1">{dateDisplay}</h2>
+                        <div className="w-8" />
+                    </div>
+
+                    {/* Stats row */}
+                    <div className="flex gap-2 text-sm text-muted-foreground flex-wrap justify-center">
+                        {liftingStats && (
+                            <>
+                                <span>Blocks: {liftingStats.exercises.length}</span>
+                                <span>|</span>
+                                <span>Vol: {Math.round(includeWarmup ? liftingStats.volume : liftingStats.workVolume).toLocaleString()}</span>
+                                <span>|</span>
+                                <span>Dur: {liftingStats.duration}m</span>
+                                {liftingStats.rpe && (
+                                    <>
+                                        <span>|</span>
+                                        <span>RPE: {liftingStats.rpe}</span>
+                                    </>
+                                )}
+                            </>
+                        )}
+                        {cardioStats && (
+                            <>
+                                <span className="font-bold" style={{ color: cardioColors[cardioStats.type] }}>
+                                    {cardioStats.type}
+                                </span>
+                                <span>|</span>
+                                <span>{Math.round(cardioStats.durationMin)}m</span>
+                                {cardioStats.zoneMinutes !== undefined && cardioStats.zoneMinutes > 0 && (
+                                    <>
+                                        <span>|</span>
+                                        <span>Zone: {cardioStats.zoneMinutes}m</span>
+                                    </>
+                                )}
+                            </>
+                        )}
+                        {isMixed && (
+                            <>
+                                <span>
+                                    {liftingWorkouts.length} lift{liftingWorkouts.length > 1 ? 's' : ''}
+                                </span>
+                                <span>|</span>
+                                <span>{cardioWorkouts.length} cardio</span>
+                            </>
+                        )}
+                    </div>
+                </CardHeader>
+
+                <CardContent className="overflow-y-auto flex-1 p-0 min-w-0">
+                    {/* Single lifting */}
+                    {isSingleLifting && (
+                        <LiftingSection
+                            workout={liftingWorkouts[0]}
+                            exerciseMap={exerciseMap}
+                            miniMode={miniMode}
+                            cycleId={cycleId}
+                            onExerciseClick={onExerciseClick}
+                            muscleGroupFilter={muscleGroupFilter}
+                            includeWarmup={includeWarmup}
+                            showIcon={false}
+                        />
+                    )}
+
+                    {/* Single cardio */}
+                    {isSingleCardio && (
+                        <div className="px-6 pb-3">
+                            {!miniMode && cardioWorkouts[0].effort && (
+                                <EffortBar effort={cardioWorkouts[0].effort} totalMinutes={cardioWorkouts[0].durationMin} />
+                            )}
+                            {!miniMode && (cardioWorkouts[0].averageHeartRate || cardioWorkouts[0].calories || cardioWorkouts[0].steps) && (
+                                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                                    {cardioWorkouts[0].averageHeartRate && (
+                                        <div className="flex items-center gap-2">
+                                            <Heart className="h-4 w-4 text-red-500" />
+                                            <span>{cardioWorkouts[0].averageHeartRate} bpm</span>
+                                        </div>
+                                    )}
+                                    {cardioWorkouts[0].calories && (
+                                        <div className="flex items-center gap-2">
+                                            <Flame className="h-4 w-4 text-orange-500" />
+                                            <span>{cardioWorkouts[0].calories} cal</span>
+                                        </div>
+                                    )}
+                                    {cardioWorkouts[0].steps && (
+                                        <div className="flex items-center gap-2">
+                                            <Footprints className="h-4 w-4 text-muted-foreground" />
+                                            <span className="text-muted-foreground">{cardioWorkouts[0].steps.toLocaleString()} steps</span>
+                                        </div>
+                                    )}
                                 </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Multiple cardio only */}
+                    {!hasLifting && cardioWorkouts.length > 1 && (
+                        <div className="divide-y">
+                            {cardioWorkouts.map((activity) => (
+                                <CardioSection key={activity.uuid} activity={activity} miniMode={miniMode} showIcon={true} />
                             ))}
                         </div>
-                    ) : (
-                        <div className="w-8" />
                     )}
-                    <h2 className="text-lg font-semibold text-center flex-1">{dateDisplay}</h2>
-                    <div className="w-8" />
-                </div>
 
-                {/* Stats row */}
-                <div className="flex gap-2 text-sm text-muted-foreground flex-wrap justify-center">
-                    {liftingStats && (
-                        <>
-                            <span>Blocks: {liftingStats.exercises.length}</span>
-                            <span>|</span>
-                            <span>Vol: {Math.round(includeWarmup ? liftingStats.volume : liftingStats.workVolume).toLocaleString()}</span>
-                            <span>|</span>
-                            <span>Dur: {liftingStats.duration}m</span>
-                            {liftingStats.rpe && (
-                                <>
-                                    <span>|</span>
-                                    <span>RPE: {liftingStats.rpe}</span>
-                                </>
-                            )}
-                        </>
-                    )}
-                    {cardioStats && (
-                        <>
-                            <span className="font-bold" style={{ color: cardioColors[cardioStats.type] }}>
-                                {cardioStats.type}
-                            </span>
-                            <span>|</span>
-                            <span>{Math.round(cardioStats.durationMin)}m</span>
-                            {cardioStats.zoneMinutes !== undefined && cardioStats.zoneMinutes > 0 && (
-                                <>
-                                    <span>|</span>
-                                    <span>Zone: {cardioStats.zoneMinutes}m</span>
-                                </>
-                            )}
-                        </>
-                    )}
+                    {/* Mixed day */}
                     {isMixed && (
-                        <>
-                            <span>{liftingWorkouts.length} lift{liftingWorkouts.length > 1 ? 's' : ''}</span>
-                            <span>|</span>
-                            <span>{cardioWorkouts.length} cardio</span>
-                        </>
+                        <div className="divide-y">
+                            {activities.map((activity) =>
+                                activity.type === 'lift' ? (
+                                    <LiftingSection
+                                        key={activity.data.uuid}
+                                        workout={activity.data}
+                                        exerciseMap={exerciseMap}
+                                        miniMode={miniMode}
+                                        cycleId={cycleId}
+                                        onExerciseClick={onExerciseClick}
+                                        muscleGroupFilter={muscleGroupFilter}
+                                        includeWarmup={includeWarmup}
+                                        showIcon={true}
+                                    />
+                                ) : (
+                                    <CardioSection key={activity.data.uuid} activity={activity.data} miniMode={miniMode} showIcon={true} />
+                                )
+                            )}
+                        </div>
                     )}
-                </div>
-            </CardHeader>
-
-            <CardContent className="overflow-y-auto flex-1 p-0 min-w-0">
-                {/* Single lifting */}
-                {isSingleLifting && (
-                    <LiftingSection
-                        workout={liftingWorkouts[0]}
-                        exerciseMap={exerciseMap}
-                        miniMode={miniMode}
-                        cycleId={cycleId}
-                        onExerciseClick={onExerciseClick}
-                        muscleGroupFilter={muscleGroupFilter}
-                        includeWarmup={includeWarmup}
-                        showIcon={false}
-                    />
-                )}
-
-                {/* Single cardio */}
-                {isSingleCardio && (
-                    <div className="px-6 pb-3">
-                        {!miniMode && cardioWorkouts[0].effort && (
-                            <EffortBar effort={cardioWorkouts[0].effort} totalMinutes={cardioWorkouts[0].durationMin} />
-                        )}
-                        {!miniMode && (cardioWorkouts[0].averageHeartRate || cardioWorkouts[0].calories || cardioWorkouts[0].steps) && (
-                            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-                                {cardioWorkouts[0].averageHeartRate && (
-                                    <div className="flex items-center gap-2">
-                                        <Heart className="h-4 w-4 text-red-500" />
-                                        <span>{cardioWorkouts[0].averageHeartRate} bpm</span>
-                                    </div>
-                                )}
-                                {cardioWorkouts[0].calories && (
-                                    <div className="flex items-center gap-2">
-                                        <Flame className="h-4 w-4 text-orange-500" />
-                                        <span>{cardioWorkouts[0].calories} cal</span>
-                                    </div>
-                                )}
-                                {cardioWorkouts[0].steps && (
-                                    <div className="flex items-center gap-2">
-                                        <Footprints className="h-4 w-4 text-muted-foreground" />
-                                        <span className="text-muted-foreground">{cardioWorkouts[0].steps.toLocaleString()} steps</span>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* Multiple cardio only */}
-                {!hasLifting && cardioWorkouts.length > 1 && (
-                    <div className="divide-y">
-                        {cardioWorkouts.map((activity) => (
-                            <CardioSection key={activity.uuid} activity={activity} miniMode={miniMode} showIcon={true} />
-                        ))}
-                    </div>
-                )}
-
-                {/* Mixed day */}
-                {isMixed && (
-                    <div className="divide-y">
-                        {activities.map((activity) =>
-                            activity.type === 'lift' ? (
-                                <LiftingSection
-                                    key={activity.data.uuid}
-                                    workout={activity.data}
-                                    exerciseMap={exerciseMap}
-                                    miniMode={miniMode}
-                                    cycleId={cycleId}
-                                    onExerciseClick={onExerciseClick}
-                                    muscleGroupFilter={muscleGroupFilter}
-                                    includeWarmup={includeWarmup}
-                                    showIcon={true}
-                                />
-                            ) : (
-                                <CardioSection key={activity.data.uuid} activity={activity.data} miniMode={miniMode} showIcon={true} />
-                            )
-                        )}
-                    </div>
-                )}
                 </CardContent>
             </Card>
         </div>

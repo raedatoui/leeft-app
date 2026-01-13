@@ -111,19 +111,19 @@ export const MappedCycleSchema = CycleSchema.extend({
 // Cardio workout types
 export const EffortSchema = z.object({
 	minutes: z.number(),
-	name: z.enum(['sedentary', 'lightly', 'fairly', 'very']),
+	name: z.enum(["sedentary", "lightly", "fairly", "very"]),
 });
 
 export const CardioTypeEnum = z.enum([
-	'Run',
-	'Swim',
-	'Treadmill run',
-	'HIIT',
-	'Aerobic Workout',
-	'Outdoor Bike',
-	'Rowing machine',
-	'Elliptical',
-	'Bike',
+	"Run",
+	"Swim",
+	"Treadmill run",
+	"HIIT",
+	"Aerobic Workout",
+	"Outdoor Bike",
+	"Rowing machine",
+	"Elliptical",
+	"Bike",
 ]);
 
 export const CardioWorkoutSchema = z.object({
@@ -132,7 +132,7 @@ export const CardioWorkoutSchema = z.object({
 	type: CardioTypeEnum,
 	durationMs: z.number(),
 	durationMin: z.number(),
-	loggedBy: z.enum(['tracker', 'manual', 'auto_detected']),
+	loggedBy: z.enum(["tracker", "manual", "auto_detected"]),
 	zoneMinutes: z.number().optional(),
 	effort: z.array(EffortSchema).optional(),
 	calories: z.number().optional(),

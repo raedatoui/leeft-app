@@ -64,7 +64,7 @@ const ActivityRow: FC<{ activity: CardioWorkout; miniMode: boolean }> = ({ activ
             {/* Effort Visualization */}
             {!miniMode && activity.effort && activity.effort.length > 0 && activeEffortMinutes > 0 && (
                 <div className="ml-9">
-                    <EffortBar effort={activity.effort} totalMinutes={activity.durationMin} />
+                    <EffortBar effort={activity.effort} />
                 </div>
             )}
 

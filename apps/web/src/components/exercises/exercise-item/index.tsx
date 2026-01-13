@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import WorkoutTable from '@/components/workouts/workoutTable';
+import LiftingCard from '@/components/workouts/liftingCard';
 import { maxCalculators, oneRepMaxCalculators } from '@/lib/calc';
 import { type ExerciseMetadata, type MappedWorkout, MappedWorkoutSchema, type RepRange, type Workout } from '@/types';
 
@@ -187,7 +187,7 @@ export default function ExerciseView({ workouts, exercise, exerciseMap, cycleId,
 
                 {/* Workout Detail Card - 1 column */}
                 {selectedWorkout && (
-                    <WorkoutTable
+                    <LiftingCard
                         workout={selectedWorkout}
                         exerciseMap={exerciseMap}
                         selectedExercise={exercise}

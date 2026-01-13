@@ -1,6 +1,6 @@
 import type { ExerciseMetadata, Workout } from '@/types';
 
-export interface WorkoutTableProps {
+export interface LiftingCardProps {
     workout: Workout;
     exerciseMap: Map<string, ExerciseMetadata>;
     selectedExercise?: ExerciseMetadata;

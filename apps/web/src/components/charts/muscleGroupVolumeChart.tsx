@@ -8,7 +8,7 @@ import { ControlCard } from '@/components/common/controlCard';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import WorkoutTable from '@/components/workouts/workoutTable';
+import LiftingCard from '@/components/workouts/liftingCard';
 import { chartColors as colors, chartFonts as fonts } from '@/lib/chart-theme';
 import { useWorkouts } from '@/lib/contexts';
 import type { ExerciseMap, Workout } from '@/types';
@@ -300,7 +300,7 @@ export default function MuscleGroupVolumeChart({ workouts, muscleGroup: muscleGr
                 </Card>
 
                 {selectedWorkout && (
-                    <WorkoutTable
+                    <LiftingCard
                         workout={selectedWorkout}
                         exerciseMap={exerciseMap}
                         muscleGroupFilter={muscleGroupId}

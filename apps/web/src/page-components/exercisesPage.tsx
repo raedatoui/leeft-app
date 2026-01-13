@@ -183,15 +183,14 @@ export default function ExercisesPage() {
                                         <Badge variant="secondary" className="text-xs text-primary">
                                             {ex.category}
                                         </Badge>
-                                        {ex.equipment && ex.equipment.length > 0 &&
+                                        {ex.equipment &&
+                                            ex.equipment.length > 0 &&
                                             ex.equipment.map((eq) => (
                                                 <Badge key={eq} variant="secondary">
                                                     {eq}
                                                 </Badge>
-                                            ))
-                                        }
+                                            ))}
                                     </div>
-
                                 </CardHeader>
                             </Card>
                         </Link>

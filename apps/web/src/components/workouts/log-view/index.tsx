@@ -113,9 +113,7 @@ export default function WorkoutLogView() {
         const reversedWorkouts = [...allWorkouts].reverse();
 
         // Find first day of the selected year AND month
-        const workoutIndex = reversedWorkouts.findIndex(
-            (day) => day.date.getFullYear() === activeYear && day.date.getMonth() === month
-        );
+        const workoutIndex = reversedWorkouts.findIndex((day) => day.date.getFullYear() === activeYear && day.date.getMonth() === month);
 
         if (workoutIndex !== -1) {
             const slideIndex = Math.floor(workoutIndex / effectiveSlidesToShow);

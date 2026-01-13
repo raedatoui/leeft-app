@@ -1,9 +1,5 @@
-import {
-    readFileSync
-} from 'fs';
-import {
-    join
-} from 'path';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 // Levenshtein distance implementation
 function levenshtein(a: string, b: string): number {
@@ -19,10 +15,7 @@ function levenshtein(a: string, b: string): number {
             if (b.charAt(i - 1) == a.charAt(j - 1)) {
                 matrix[i][j] = matrix[i - 1][j - 1];
             } else {
-                matrix[i][j] = Math.min(
-                    matrix[i - 1][j - 1] + 1,
-                    Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1)
-                );
+                matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1));
             }
         }
     }
@@ -36,13 +29,13 @@ try {
 
     const names = exercises.map((e: any) => e.name);
     const slugs = exercises.map((e: any) => e.slug);
-    
+
     console.log(`Total exercises: ${exercises.length}`);
 
     // 1. Exact Duplicates
     const nameCounts: Record<string, number> = {};
     const slugCounts: Record<string, number> = {};
-    
+
     exercises.forEach((e: any) => {
         nameCounts[e.name] = (nameCounts[e.name] || 0) + 1;
         slugCounts[e.slug] = (slugCounts[e.slug] || 0) + 1;
@@ -68,7 +61,7 @@ try {
     // 2. Similar Names (Fuzzy Matching)
     console.log('\n--- Similar Names (Potential Duplicates) ---');
     const processed = new Set<string>();
-    
+
     for (let i = 0; i < exercises.length; i++) {
         for (let j = i + 1; j < exercises.length; j++) {
             const name1 = exercises[i].name;
@@ -82,12 +75,12 @@ try {
 
             // Check if one contains the other
             if (lower1.includes(lower2) || lower2.includes(lower1)) {
-                 // Ignore if very short to avoid noise
-                 if (Math.min(lower1.length, lower2.length) > 5) {
+                // Ignore if very short to avoid noise
+                if (Math.min(lower1.length, lower2.length) > 5) {
                     console.log(`Substring match: "${name1}" <-> "${name2}"`);
                     processed.add(idKey);
                     continue;
-                 }
+                }
             }
 
             // Levenshtein distance
@@ -99,7 +92,6 @@ try {
             }
         }
     }
-
 } catch (e) {
-    console.error("Error reading or processing file:", e);
+    console.error('Error reading or processing file:', e);
 }
