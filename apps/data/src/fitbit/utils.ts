@@ -1,5 +1,5 @@
-import fs from 'node:fs/promises';
 import fsSync from 'node:fs';
+import fs from 'node:fs/promises';
 import path from 'node:path';
 import qs from 'node:querystring';
 import { logger } from '@leeft/utils';
@@ -429,4 +429,148 @@ export function getActivityStatistics(activities: FitbitActivity[]) {
         logMethodBreakdown: getLogMethodCounts(targetActivities),
         dateRange: getActivityDateRange(targetActivities),
     };
+}
+
+/**
+ * Calculate effort score (0-100) based on effort array
+ * Higher score = more time in "fairly" and "very" active zones
+ */
+export function calculateEffortScore(activity: FitbitActivity): number {
+    const { effort, durationMin } = activity;
+    if (!effort || effort.length === 0 || durationMin === 0) return 0;
+
+    const fairlyMin = effort.find((e) => e.name === 'fairly')?.minutes || 0;
+    const veryMin = effort.find((e) => e.name === 'very')?.minutes || 0;
+
+    // Active minutes as percentage of total duration
+    const activeMinutes = fairlyMin + veryMin;
+    return Math.round((activeMinutes / durationMin) * 100);
+}
+
+/**
+ * Determine why an activity might be questionable
+ */
+export type QuestionableReason = 'low_effort_auto_bike' | 'short_auto_aerobic' | 'auto_walk' | 'low_zone_minutes' | 'mostly_sedentary';
+
+export interface QuestionableActivity {
+    activity: FitbitActivity;
+    reasons: QuestionableReason[];
+    effortScore: number;
+}
+
+/**
+ * Identify questionable activities that may not be real workouts
+ */
+export function identifyQuestionableActivities(activities: FitbitActivity[]): QuestionableActivity[] {
+    const questionable: QuestionableActivity[] = [];
+
+    for (const activity of activities) {
+        const { type, loggedBy, durationMin, zoneMinutes, effort } = activity;
+        const reasons: QuestionableReason[] = [];
+        const effortScore = calculateEffortScore(activity);
+
+        // Only scrutinize auto_detected activities
+        if (loggedBy !== 'auto_detected') continue;
+
+        // Auto-detected bike with low effort
+        if ((type === 'Bike' || type === 'Outdoor Bike') && (zoneMinutes < 10 || effortScore < 50)) {
+            reasons.push('low_effort_auto_bike');
+        }
+
+        // Short auto-detected aerobic workout
+        const hiitTypes = ['HIIT', 'Aerobic Workout', 'Circuit Training', 'Interval Workout', 'Bootcamp', 'Aerobics'];
+        if (hiitTypes.includes(type) && durationMin < 15) {
+            reasons.push('short_auto_aerobic');
+        }
+
+        // All auto-detected walks are questionable (even if they pass the filter)
+        if (type === 'Walk') {
+            reasons.push('auto_walk');
+        }
+
+        // Very low zone minutes for any activity
+        if (zoneMinutes < 5 && durationMin >= 15) {
+            reasons.push('low_zone_minutes');
+        }
+
+        // Mostly sedentary effort
+        if (effort && effort.length > 0) {
+            const sedentaryMin = effort.find((e) => e.name === 'sedentary')?.minutes || 0;
+            const lightlyMin = effort.find((e) => e.name === 'lightly')?.minutes || 0;
+            if ((sedentaryMin + lightlyMin) / durationMin > 0.6) {
+                reasons.push('mostly_sedentary');
+            }
+        }
+
+        if (reasons.length > 0) {
+            questionable.push({ activity, reasons, effortScore });
+        }
+    }
+
+    return questionable;
+}
+
+/**
+ * STRICT filter for cardio activities - more aggressive filtering for auto_detected
+ * Trust hierarchy: tracker > manual > auto_detected
+ * Exception: Bikes always require high effort (50%+) since low-effort = e-bike commute
+ */
+export function filterCardioActivitiesByCriteriaStrict(activities: FitbitActivity[]): FitbitActivity[] {
+    return activities.filter((activity) => {
+        const { type, durationMin, zoneMinutes, loggedBy } = activity;
+        const effortScore = calculateEffortScore(activity);
+
+        // Bikes ALWAYS require high effort, even if tracker/manual logged
+        // Low effort bikes are likely e-bike commutes, not workouts
+        if (type === 'Bike' || type === 'Outdoor Bike') {
+            return durationMin >= 20 && effortScore >= 50;
+        }
+
+        // For tracker and manual logged activities, use the permissive filter logic
+        // These are intentional workouts started by the user
+        if (loggedBy === 'tracker' || loggedBy === 'manual') {
+            return filterCardioActivitiesByCriteria([activity]).length > 0;
+        }
+
+        // For auto_detected activities, apply stricter criteria
+
+        // 1. Runs - Fitbit is good at detecting these, keep permissive
+        if (type === 'Run' && durationMin >= 20) {
+            return true;
+        }
+
+        // 2. Swims - Fitbit is good at detecting these, keep permissive
+        if (type === 'Swim') {
+            return true;
+        }
+
+        // 3. HIIT/Aerobic - require longer duration AND decent effort for auto_detected
+        const hiitTypes = ['HIIT', 'Aerobic Workout', 'Circuit Training', 'Interval Workout', 'Bootcamp', 'Aerobics'];
+        if (hiitTypes.includes(type)) {
+            // Require 15+ min (up from 10) AND either good zone minutes OR good effort score
+            if (durationMin >= 15 && (zoneMinutes >= 10 || effortScore >= 50)) {
+                return true;
+            }
+            return false;
+        }
+
+        // 4. Treadmill - keep permissive (usually accurate)
+        if (type === 'Treadmill run' && durationMin >= 20) {
+            return true;
+        }
+
+        // 5. Elliptical - keep permissive
+        if (type === 'Elliptical' && durationMin >= 20) {
+            return true;
+        }
+
+        // 6. Bike rides handled at the top (always require high effort)
+
+        // 7. Walks - keep same strict filter (already requires high zone minutes)
+        if (type === 'Walk' && durationMin >= 15 && zoneMinutes >= 20) {
+            return true;
+        }
+
+        return false;
+    });
 }

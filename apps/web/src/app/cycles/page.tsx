@@ -1,4 +1,4 @@
-import CyclesPage from '@/page-components/cyclesPage';
+import CyclesPage from '@/pageComponents/cyclesPage';
 
 export default function Page() {
     return <CyclesPage />;

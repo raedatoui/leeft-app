@@ -1,13 +1,13 @@
 'use client';
 
-import { useReducedMotion } from 'framer-motion';
+// import { useReducedMotion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
 // const dataPoints = ['225 lbs', '405 lbs', '315 lbs', '5x5', '3x10', '1RM', 'RPE 7', 'RPE 8', 'RPE 9', '90%', '85%', '75%', 'PR', 'VOL', 'INT'];
 
 export default function Background() {
     const [mounted, setMounted] = useState(false);
-    const shouldReduceMotion = useReducedMotion();
+    // const shouldReduceMotion = useReducedMotion();
 
     useEffect(() => {
         setMounted(true);

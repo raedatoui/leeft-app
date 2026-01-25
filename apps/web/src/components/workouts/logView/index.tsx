@@ -5,7 +5,7 @@ import { useWorkouts } from '@/lib/contexts';
 import WorkoutLogViewJSX from './view';
 
 export default function WorkoutLogView() {
-    const { allWorkouts, exerciseMap, isLoading, error } = useWorkouts();
+    const { activeAllWorkouts: allWorkouts, exerciseMap, isLoading, error, useStrictCardio, setUseStrictCardio } = useWorkouts();
     const [miniMode, setMiniMode] = useState(true);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [slidesToShow, setSlidesToShow] = useState(4);
@@ -147,6 +147,8 @@ export default function WorkoutLogView() {
             slideRight={slideRight}
             jumpToYear={jumpToYear}
             jumpToMonth={jumpToMonth}
+            useStrictCardio={useStrictCardio}
+            setUseStrictCardio={setUseStrictCardio}
         />
     );
 }

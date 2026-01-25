@@ -38,6 +38,23 @@ export function loadCardioWorkouts(): CardioWorkout[] {
     return cardioWorkouts;
 }
 
+export function loadCardioWorkoutsStrict(): CardioWorkout[] {
+    logger.loading('Loading cardio workouts (strict)...');
+    const cardioLog = join(__dirname, '../../data/out/cardio-log-strict.json');
+    const cardioJson = JSON.parse(readFileSync(cardioLog, 'utf8'));
+    const cardioWorkouts = z
+        .array(z.any())
+        .parse(cardioJson)
+        .map((w) => ({
+            ...w,
+            date: new Date(w.date),
+        }))
+        .map((w) => CardioWorkoutSchema.parse(w));
+
+    logger.loaded(`Loaded ${cardioWorkouts.length} cardio workouts (strict)`);
+    return cardioWorkouts;
+}
+
 export function loadAllWorkouts(): AllWorkout[] {
     logger.loading('Loading combined workouts (lifting + cardio)...');
     const allWorkoutsPath = join(__dirname, '../../data/out/all-workouts-log.json');

@@ -2,34 +2,19 @@
 
 import Highcharts, { type Options } from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { cardioColors } from '@/lib/cardio-theme';
 import { chartColors, chartFonts } from '@/lib/chart-theme';
 import type { CardioType, CardioWorkout } from '@/types';
 
-// Cardio colors matching the card display
-const cardioTypeColors: Record<CardioType, string> = {
-    Run: '#FF5252',
-    'Treadmill run': '#FF5252',
-    Swim: '#2196F3',
-    Bike: '#4CAF50',
-    'Outdoor Bike': '#4CAF50',
-    Elliptical: '#9C27B0',
-    'Rowing machine': '#FF9800',
-    HIIT: '#E91E63',
-    'Aerobic Workout': '#00BCD4',
-    Walk: '#8BC34A',
-    'Circuit Training': '#673AB7',
-    'Interval Workout': '#FF5722',
-    Bootcamp: '#795548',
-    Aerobics: '#E91E63',
-};
-
 interface CardioDistributionChartProps {
     workouts: CardioWorkout[];
+    activeType?: CardioType | null;
+    onTypeSelect?: (type: CardioType | null) => void;
 }
 
-export default function CardioDistributionChart({ workouts }: CardioDistributionChartProps) {
+export default function CardioDistributionChart({ workouts, activeType, onTypeSelect }: CardioDistributionChartProps) {
     const chartData = useMemo(() => {
         // Count workouts by type
         const typeCounts: Record<string, number> = {};
@@ -37,15 +22,31 @@ export default function CardioDistributionChart({ workouts }: CardioDistribution
             typeCounts[workout.type] = (typeCounts[workout.type] || 0) + 1;
         }
 
-        // Convert to Highcharts format
+        // Convert to Highcharts format with selection state
         return Object.entries(typeCounts)
             .map(([type, count]) => ({
                 name: type,
                 y: count,
-                color: cardioTypeColors[type as CardioType] || '#888888',
+                color: cardioColors[type as CardioType] || '#888888',
+                sliced: activeType === type,
+                selected: activeType === type,
             }))
             .sort((a, b) => b.y - a.y);
-    }, [workouts]);
+    }, [workouts, activeType]);
+
+    const handlePointClick = useCallback(
+        (event: Highcharts.PointClickEventObject) => {
+            if (!onTypeSelect) return;
+            const clickedType = event.point.name as CardioType;
+            // Toggle: if already selected, deselect (set to null)
+            if (activeType === clickedType) {
+                onTypeSelect(null);
+            } else {
+                onTypeSelect(clickedType);
+            }
+        },
+        [onTypeSelect, activeType]
+    );
 
     if (workouts.length === 0) {
         return (
@@ -92,6 +93,11 @@ export default function CardioDistributionChart({ workouts }: CardioDistribution
                     },
                 },
                 borderWidth: 0,
+                point: {
+                    events: {
+                        click: handlePointClick,
+                    },
+                },
             },
         },
         series: [

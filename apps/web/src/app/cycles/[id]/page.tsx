@@ -1,5 +1,5 @@
 import { fetchCycles } from '@/lib/fetchData';
-import CycleDetailsPage from '@/page-components/cycleDetailsPage';
+import CycleDetailsPage from '@/pageComponents/cycleDetailsPage';
 
 export async function generateStaticParams() {
     try {

@@ -3,7 +3,7 @@
 import { X } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
-import ExerciseView from '@/components/exercises/exercise-item';
+import ExerciseView from '@/components/exercises/exerciseItem';
 import PageTemplate from '@/components/layout/pageTemplate';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

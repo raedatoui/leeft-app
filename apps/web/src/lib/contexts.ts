@@ -12,7 +12,9 @@ export interface MuscleGroup {
 interface WorkoutContextType {
     workouts: Workout[];
     cardioWorkouts: CardioWorkout[];
+    cardioWorkoutsStrict: CardioWorkout[];
     allWorkouts: DayWorkout[];
+    allWorkoutsStrict: DayWorkout[];
     exerciseMap: ExerciseMap;
     muscleGroups: MuscleGroup[];
     categories: string[];
@@ -20,6 +22,12 @@ interface WorkoutContextType {
     cycles: MappedCycle[];
     isLoading: boolean;
     error: Error | null;
+    // Strict mode toggle
+    useStrictCardio: boolean;
+    setUseStrictCardio: (value: boolean) => void;
+    // Computed values based on strict mode
+    activeCardioWorkouts: CardioWorkout[];
+    activeAllWorkouts: DayWorkout[];
 }
 
 const WorkoutContext = React.createContext<WorkoutContextType | undefined>(undefined);

@@ -44,6 +44,9 @@ timestamp=${1:-$(date +"%Y%m%d_%H%M%S")}
 
 upload_compressed_log "apps/data/data/out/lifting-log.json" "$timestamp" "$gsc_path"
 upload_compressed_log "apps/data/data/out/cardio-log.json" "$timestamp" "$gsc_path"
+upload_compressed_log "apps/data/data/out/cardio-log-strict.json" "$timestamp" "$gsc_path"
+upload_compressed_log "apps/data/data/out/all-workouts-log.json" "$timestamp" "$gsc_path"
+upload_compressed_log "apps/data/data/out/all-workouts-log-strict.json" "$timestamp" "$gsc_path"
 upload_compressed_log "apps/data/data/out/cycles-lifting.json" "$timestamp" "$gsc_path"
 upload_compressed_log "apps/data/data/out/cycles-all-workouts.json" "$timestamp" "$gsc_path"
 upload_compressed_log "apps/data/data/exercise-classified.json" "$timestamp" "$gsc_path"

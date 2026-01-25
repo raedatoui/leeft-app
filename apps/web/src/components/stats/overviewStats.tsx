@@ -2,8 +2,8 @@
 
 import { Activity, Calculator, Dumbbell, Heart, Scale, TrendingUp } from 'lucide-react';
 import { ControlCard } from '@/components/common/controlCard';
-import type { OverviewStats as OverviewStatsType } from '@/lib/overview-utils';
-import { formatNumber } from '@/lib/overview-utils';
+import type { OverviewStats as OverviewStatsType } from '@/lib/statsUtils';
+import { formatNumber } from '@/lib/statsUtils';
 
 interface OverviewStatsProps {
     stats: OverviewStatsType;

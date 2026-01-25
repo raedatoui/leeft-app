@@ -191,12 +191,12 @@ export function aggregateForChart(
     if (aggregateBy === 'week') {
         // Aggregate by 7-day chunks to match OverviewPage logic
         const data: ChartDataPoint[] = [];
-        
+
         // We assume dateRange starts at the beginning of a month for this logic to align with "Week 1", "Week 2"
         // If dateRange spans multiple months, this logic repeats per month or treats it as a continuum?
         // OverviewPage passes a specific month range when in 'month' view.
         // Let's implement robust 7-day chunking from the start of the range.
-        
+
         const rangeStart = new Date(dateRange.start);
         const rangeEnd = new Date(dateRange.end);
         let currentChunkStart = new Date(rangeStart);
@@ -206,7 +206,7 @@ export function aggregateForChart(
             // End of this 7-day chunk
             const chunkEnd = new Date(currentChunkStart);
             chunkEnd.setDate(currentChunkStart.getDate() + 6);
-            
+
             // Cap at rangeEnd (which should be end of month in OverviewPage)
             if (chunkEnd > rangeEnd) {
                 chunkEnd.setTime(rangeEnd.getTime());
@@ -262,7 +262,7 @@ export function aggregateForChart(
         const dayNum = currentDate.getDate();
         const monthName = MONTH_NAMES_SHORT[currentDate.getMonth()];
         const dateYear = currentDate.getFullYear();
-        
+
         const dayStart = new Date(currentDate);
         const dayEnd = new Date(currentDate);
         dayEnd.setHours(23, 59, 59, 999);
@@ -282,26 +282,22 @@ export function aggregateForChart(
     for (const workout of liftingWorkouts) {
         // Use exact date comparison or index map
         // Since we iterate days sequentially, we can just check range
-        // Optimization: create a map or just loop? 
-        // Data size is small (max 31 days usually), loop is fine. 
+        // Optimization: create a map or just loop?
+        // Data size is small (max 31 days usually), loop is fine.
         // Or mapping by day index.
-        const dayIndex = Math.floor((workout.date.getTime() - dateRange.start.getTime()) / (24 * 60 * 60 * 1000));
+        // const dayIndex = Math.floor((workout.date.getTime() - dateRange.start.getTime()) / (24 * 60 * 60 * 1000));
         // Need to be careful with day boundaries and timezones.
         // Let's use simple check against our generated data points to be safe.
-        
+
         // Find matching data point
-        const point = data.find(d => 
-            d.dateRange && workout.date >= d.dateRange.start && workout.date <= d.dateRange.end
-        );
+        const point = data.find((d) => d.dateRange && workout.date >= d.dateRange.start && workout.date <= d.dateRange.end);
         if (point) {
             point.liftingCount++;
         }
     }
 
     for (const workout of cardioWorkouts) {
-        const point = data.find(d => 
-            d.dateRange && workout.date >= d.dateRange.start && workout.date <= d.dateRange.end
-        );
+        const point = data.find((d) => d.dateRange && workout.date >= d.dateRange.start && workout.date <= d.dateRange.end);
         if (point) {
             point.cardioCount++;
         }

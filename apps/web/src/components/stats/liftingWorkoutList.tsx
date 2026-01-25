@@ -4,7 +4,7 @@ import { Dumbbell, Heart } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import DayCard from '@/components/workouts/dayCard';
-import { formatNumber } from '@/lib/overview-utils';
+import { formatNumber } from '@/lib/statsUtils';
 import { cn } from '@/lib/utils';
 import type { CardioWorkout, DayWorkout, ExerciseMap, Workout } from '@/types';
 
@@ -12,6 +12,7 @@ interface WorkoutListProps {
     liftingWorkouts: Workout[];
     cardioWorkouts: CardioWorkout[];
     exerciseMap: ExerciseMap;
+    dateRangeLabel?: string | null;
 }
 
 type CombinedWorkout = { type: 'lifting'; workout: Workout; date: Date } | { type: 'cardio'; workout: CardioWorkout; date: Date };
@@ -29,7 +30,7 @@ function formatDuration(minutes: number): string {
     return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
 }
 
-export default function WorkoutList({ liftingWorkouts, cardioWorkouts, exerciseMap }: WorkoutListProps) {
+export default function WorkoutList({ liftingWorkouts, cardioWorkouts, exerciseMap, dateRangeLabel }: WorkoutListProps) {
     const [selectedWorkout, setSelectedWorkout] = useState<CombinedWorkout | null>(null);
 
     const combinedWorkouts = useMemo(() => {
@@ -87,9 +88,10 @@ export default function WorkoutList({ liftingWorkouts, cardioWorkouts, exerciseM
                         <span className="text-sm font-normal text-muted-foreground ml-2">
                             {liftingWorkouts.length} lifting, {cardioWorkouts.length} cardio
                         </span>
+                        {dateRangeLabel && <span className="block text-sm font-medium text-primary mt-1">{dateRangeLabel}</span>}
                     </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-2">
                     <div className="divide-y divide-border">
                         {combinedWorkouts.map((item) => {
                             const selected = isSelected(item);
@@ -101,7 +103,7 @@ export default function WorkoutList({ liftingWorkouts, cardioWorkouts, exerciseM
                                         key={workout.uuid}
                                         onClick={() => setSelectedWorkout(selected ? null : item)}
                                         className={cn(
-                                            'flex items-center gap-4 py-3 first:pt-0 last:pb-0 w-full text-left transition-colors',
+                                            'flex items-center gap-4 py-3 w-full text-left transition-colors',
                                             'hover:bg-muted/50 -mx-2 px-2 rounded',
                                             selected && 'bg-primary/10 hover:bg-primary/15'
                                         )}
@@ -127,7 +129,7 @@ export default function WorkoutList({ liftingWorkouts, cardioWorkouts, exerciseM
                                     key={workout.uuid}
                                     onClick={() => setSelectedWorkout(selected ? null : item)}
                                     className={cn(
-                                        'flex items-center gap-4 py-3 first:pt-0 last:pb-0 w-full text-left transition-colors',
+                                        'flex items-center gap-4 py-3 w-full text-left transition-colors',
                                         'hover:bg-muted/50 -mx-2 px-2 rounded',
                                         selected && 'bg-primary/10 hover:bg-primary/15'
                                     )}

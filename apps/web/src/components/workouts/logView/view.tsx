@@ -1,4 +1,5 @@
 import { Calendar } from 'lucide-react';
+import { CardioModeToggle } from '@/components/common/cardioModeToggle';
 import PageTemplate from '@/components/layout/pageTemplate';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SliderControls, WorkoutSlider } from '@/components/workouts/slider';
@@ -109,6 +110,9 @@ export default function WorkoutLogViewJSX({
                                         </SelectContent>
                                     </Select>
                                 </div>
+
+                                {/* Cardio mode toggle */}
+                                <CardioModeToggle showCounts={false} />
                             </div>
                         )}
                     </SliderControls>

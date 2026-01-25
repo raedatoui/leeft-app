@@ -1,6 +1,6 @@
 'use client';
 
-import WorkoutLogView from '@/components/workouts/log-view';
+import WorkoutLogView from '@/components/workouts/logView';
 
 export default function HomePage() {
     return <WorkoutLogView />;

@@ -2,20 +2,21 @@
 
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { CardioModeToggle } from '@/components/common/cardioModeToggle';
 import { ControlCard } from '@/components/common/controlCard';
 import PageTemplate from '@/components/layout/pageTemplate';
-import WorkoutList from '@/components/overview/liftingWorkoutList';
-import OverviewStats from '@/components/overview/overviewStats';
-import WorkoutBreakdownChart from '@/components/overview/workoutBreakdownChart';
+import WorkoutList from '@/components/stats/liftingWorkoutList';
+import OverviewStats from '@/components/stats/overviewStats';
+import WorkoutBreakdownChart from '@/components/stats/workoutBreakdownChart';
 import { Button } from '@/components/ui/button';
 import { useWorkouts } from '@/lib/contexts';
-import { aggregateForChart, computeOverviewStats, filterCardioWorkoutsByDateRange, type AggregateBy } from '@/lib/overview-utils';
+import { type AggregateBy, aggregateForChart, computeOverviewStats, filterCardioWorkoutsByDateRange } from '@/lib/statsUtils';
 import { filterWorkoutsByDateRange } from '@/lib/utils';
 
 const MONTH_NAMES_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-export default function OverviewPage() {
-    const { workouts, cardioWorkouts, exerciseMap, isLoading, error } = useWorkouts();
+export default function StatsPage() {
+    const { workouts, activeCardioWorkouts: cardioWorkouts, exerciseMap, isLoading, error } = useWorkouts();
 
     // Date filter state
     const currentYear = new Date().getFullYear();
@@ -23,6 +24,7 @@ export default function OverviewPage() {
     const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
     const [selectedWeek, setSelectedWeek] = useState<number | null>(null);
     const [listFilter, setListFilter] = useState<{ start: Date; end: Date; label: string } | null>(null);
+    const [selectedBarIndex, setSelectedBarIndex] = useState<number | null>(null);
 
     // Chart aggregation state (separate from date filter)
     const [aggregateBy, setAggregateBy] = useState<AggregateBy>('month');
@@ -30,34 +32,38 @@ export default function OverviewPage() {
     // Compute available years from all workouts (descending)
     const years = useMemo(() => {
         const yearSet = new Set<number>();
-        workouts.forEach((w) => yearSet.add(w.date.getFullYear()));
-        cardioWorkouts.forEach((w) => yearSet.add(w.date.getFullYear()));
+        workouts.forEach((w) => {
+            yearSet.add(w.date.getFullYear());
+        });
+        cardioWorkouts.forEach((w) => {
+            yearSet.add(w.date.getFullYear());
+        });
         return Array.from(yearSet).sort((a, b) => b - a);
     }, [workouts, cardioWorkouts]);
 
     // Get months that have workouts for the selected year
-    const availableMonths = useMemo(() => {
-        const monthSet = new Set<number>();
-        workouts.forEach((w) => {
-            if (w.date.getFullYear() === selectedYear) {
-                monthSet.add(w.date.getMonth());
-            }
-        });
-        cardioWorkouts.forEach((w) => {
-            if (w.date.getFullYear() === selectedYear) {
-                monthSet.add(w.date.getMonth());
-            }
-        });
-        return Array.from(monthSet).sort((a, b) => a - b);
-    }, [workouts, cardioWorkouts, selectedYear]);
+    // const availableMonths = useMemo(() => {
+    //     const monthSet = new Set<number>();
+    //     workouts.forEach((w) => {
+    //         if (w.date.getFullYear() === selectedYear) {
+    //             monthSet.add(w.date.getMonth());
+    //         }
+    //     });
+    //     cardioWorkouts.forEach((w) => {
+    //         if (w.date.getFullYear() === selectedYear) {
+    //             monthSet.add(w.date.getMonth());
+    //         }
+    //     });
+    //     return Array.from(monthSet).sort((a, b) => a - b);
+    // }, [workouts, cardioWorkouts, selectedYear]);
 
     // Get weeks within selected month
-    const availableWeeks = useMemo(() => {
-        if (selectedMonth === null) return [];
-        const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
-        const totalWeeks = Math.ceil(daysInMonth / 7);
-        return Array.from({ length: totalWeeks }, (_, i) => i + 1);
-    }, [selectedYear, selectedMonth]);
+    // const availableWeeks = useMemo(() => {
+    //     if (selectedMonth === null) return [];
+    //     const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+    //     const totalWeeks = Math.ceil(daysInMonth / 7);
+    //     return Array.from({ length: totalWeeks }, (_, i) => i + 1);
+    // }, [selectedYear, selectedMonth]);
 
     // Determine current view level
     const viewLevel = useMemo(() => {
@@ -93,6 +99,7 @@ export default function OverviewPage() {
             setSelectedMonth(null);
             setSelectedWeek(null);
             setListFilter(null);
+            setSelectedBarIndex(null);
             setAggregateBy('month');
         }
     };
@@ -104,17 +111,24 @@ export default function OverviewPage() {
             setSelectedMonth(null);
             setSelectedWeek(null);
             setListFilter(null);
+            setSelectedBarIndex(null);
             setAggregateBy('month');
         }
     };
 
-    // Chart drill-down handler
+    // Chart drill-down handler - toggle bar selection
     const handleChartClick = (point: any, index: number) => {
-        if (point.dateRange) {
+        if (selectedBarIndex === index) {
+            // Clicking same bar - deselect
+            setSelectedBarIndex(null);
+            setListFilter(null);
+        } else if (point.dateRange) {
+            // Select new bar
+            setSelectedBarIndex(index);
             setListFilter({
                 start: point.dateRange.start,
                 end: point.dateRange.end,
-                label: point.label,
+                label: point.tooltip, // Use full date range from tooltip
             });
         }
     };
@@ -124,11 +138,13 @@ export default function OverviewPage() {
         // If we have a list filter, clear it first
         if (listFilter) {
             setListFilter(null);
+            setSelectedBarIndex(null);
             return;
         }
         // Otherwise reset drill-down
         setSelectedMonth(null);
         setSelectedWeek(null);
+        setSelectedBarIndex(null);
         setAggregateBy('month');
     };
 
@@ -195,7 +211,7 @@ export default function OverviewPage() {
     // Compute stats based on LIST range (but add averages based on year)
     const stats = useMemo(() => {
         const baseStats = computeOverviewStats(filteredLiftingWorkouts, filteredCardioWorkouts);
-        
+
         let averageWorkouts: { label: string; value: string } | undefined;
 
         if (aggregateBy === 'month') {
@@ -275,7 +291,11 @@ export default function OverviewPage() {
                                             {aggregationOptions.map((option) => (
                                                 <Button
                                                     key={option}
-                                                    onClick={() => setAggregateBy(option)}
+                                                    onClick={() => {
+                                                        setAggregateBy(option);
+                                                        setSelectedBarIndex(null);
+                                                        setListFilter(null);
+                                                    }}
                                                     variant={aggregateBy === option ? 'default' : 'outline'}
                                                     size="sm"
                                                     className="h-7 px-3 text-xs capitalize"
@@ -286,6 +306,9 @@ export default function OverviewPage() {
                                         </div>
                                     </div>
                                 )}
+
+                                {/* Cardio mode toggle */}
+                                <CardioModeToggle showCounts={false} />
 
                                 {/* Active Filter Display / Reset */}
                                 {(selectedMonth !== null || listFilter !== null) && (
@@ -316,10 +339,21 @@ export default function OverviewPage() {
         >
             <div className="space-y-6 mt-4">
                 {/* Chart */}
-                <WorkoutBreakdownChart data={chartData} aggregateBy={aggregateBy} dateRange={dateRange} onPointClick={handleChartClick} />
+                <WorkoutBreakdownChart
+                    data={chartData}
+                    aggregateBy={aggregateBy}
+                    dateRange={dateRange}
+                    onPointClick={handleChartClick}
+                    selectedIndex={selectedBarIndex}
+                />
 
                 {/* Workouts list */}
-                <WorkoutList liftingWorkouts={filteredLiftingWorkouts} cardioWorkouts={filteredCardioWorkouts} exerciseMap={exerciseMap} />
+                <WorkoutList
+                    liftingWorkouts={filteredLiftingWorkouts}
+                    cardioWorkouts={filteredCardioWorkouts}
+                    exerciseMap={exerciseMap}
+                    dateRangeLabel={listFilter?.label}
+                />
             </div>
         </PageTemplate>
     );

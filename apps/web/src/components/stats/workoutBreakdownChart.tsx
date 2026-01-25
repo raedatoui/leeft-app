@@ -5,29 +5,38 @@ import HighchartsReact from 'highcharts-react-official';
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { chartColors, chartFonts } from '@/lib/chart-theme';
-import type { AggregateBy, ChartDataPoint } from '@/lib/overview-utils';
+import type { AggregateBy, ChartDataPoint } from '@/lib/statsUtils';
 
 interface WorkoutBreakdownChartProps {
     data: ChartDataPoint[];
     aggregateBy: AggregateBy;
     dateRange: { start: Date; end: Date };
     onPointClick?: (point: ChartDataPoint, index: number) => void;
+    selectedIndex?: number | null;
 }
 
 const LIFTING_COLOR = '#F59E0B'; // Amber
 const CARDIO_COLOR = '#3B82F6'; // Blue
+const DESELECTED_OPACITY = 0.3;
 
-export default function WorkoutBreakdownChart({ data, aggregateBy, onPointClick }: WorkoutBreakdownChartProps) {
+export default function WorkoutBreakdownChart({ data, aggregateBy, onPointClick, selectedIndex }: WorkoutBreakdownChartProps) {
     const { categories, tooltips, liftingSeries, cardioSeries } = useMemo(() => {
+        const hasSelection = selectedIndex !== null && selectedIndex !== undefined;
         return {
             categories: data.map((d) => d.label),
             tooltips: data.map((d) => d.tooltip),
-            liftingSeries: data.map((d) => d.liftingCount),
-            cardioSeries: data.map((d) => d.cardioCount),
+            liftingSeries: data.map((d, i) => ({
+                y: d.liftingCount,
+                color: hasSelection && i !== selectedIndex ? `rgba(245, 158, 11, ${DESELECTED_OPACITY})` : LIFTING_COLOR,
+            })),
+            cardioSeries: data.map((d, i) => ({
+                y: d.cardioCount,
+                color: hasSelection && i !== selectedIndex ? `rgba(59, 130, 246, ${DESELECTED_OPACITY})` : CARDIO_COLOR,
+            })),
         };
-    }, [data]);
+    }, [data, selectedIndex]);
 
-    const hasData = liftingSeries.some((v) => v > 0) || cardioSeries.some((v) => v > 0);
+    const hasData = liftingSeries.some((v) => v.y > 0) || cardioSeries.some((v) => v.y > 0);
 
     if (!hasData) {
         return (
@@ -131,7 +140,9 @@ export default function WorkoutBreakdownChart({ data, aggregateBy, onPointClick 
                 const pointIndex = ctx.point.index;
                 const tooltipText = tooltips[pointIndex];
                 const total = (ctx.point.stackTotal as number) || 0;
-                return `<b>${tooltipText}</b><br/>${ctx.series.name}: ${ctx.y}<br/>Total: ${total}<br/><span style="font-size: 10px; color: #666">(Click to zoom)</span>`;
+                const isSelected = selectedIndex === pointIndex;
+                const clickHint = isSelected ? '(Click to deselect)' : '(Click to select)';
+                return `<b>${tooltipText}</b><br/>${ctx.series.name}: ${ctx.y}<br/>Total: ${total}<br/><span style="font-size: 10px; color: #666">${clickHint}</span>`;
             },
             backgroundColor: chartColors.background,
             borderColor: chartColors.border,
@@ -149,7 +160,7 @@ export default function WorkoutBreakdownChart({ data, aggregateBy, onPointClick 
                 pointPadding: data.length > 30 ? 0 : 0.1,
                 groupPadding: data.length > 30 ? 0.05 : 0.1,
                 events: {
-                    click: function (event) {
+                    click: (event) => {
                         if (onPointClick) {
                             const pointIndex = event.point.index;
                             if (pointIndex >= 0 && pointIndex < data.length) {

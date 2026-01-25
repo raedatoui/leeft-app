@@ -52,8 +52,8 @@ export default function Header({ title, children }: HeaderProps) {
                         <Link href="/cardio" className={getLinkClassName('/cardio')}>
                             Cardio
                         </Link>
-                        <Link href="/overview" className={getLinkClassName('/overview')}>
-                            Overview
+                        <Link href="/stats" className={getLinkClassName('/stats')}>
+                            Stats
                         </Link>
                         <Link href="/analysis" className={getLinkClassName('/analysis')}>
                             Monthly

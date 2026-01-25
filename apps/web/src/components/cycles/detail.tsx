@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import MuscleGroupVolumeChart from '@/components/charts/muscleGroupVolumeChart';
 import MuscleGroupWorkSetsChart from '@/components/charts/muscleGroupWorkSetsChart';
-import ExerciseView from '@/components/exercises/exercise-item';
+import ExerciseView from '@/components/exercises/exerciseItem';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { LiftingWorkoutSlider, SliderControls } from '@/components/workouts/slider';

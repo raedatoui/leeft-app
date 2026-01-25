@@ -4,26 +4,9 @@ import Highcharts, { type Options } from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { cardioColors } from '@/lib/cardio-theme';
 import { chartColors, chartFonts } from '@/lib/chart-theme';
 import type { CardioType, CardioWorkout } from '@/types';
-
-// Cardio colors
-const cardioTypeColors: Record<CardioType, string> = {
-    Run: '#FF5252',
-    'Treadmill run': '#FF5252',
-    Swim: '#2196F3',
-    Bike: '#4CAF50',
-    'Outdoor Bike': '#4CAF50',
-    Elliptical: '#9C27B0',
-    'Rowing machine': '#FF9800',
-    HIIT: '#E91E63',
-    'Aerobic Workout': '#00BCD4',
-    Walk: '#8BC34A',
-    'Circuit Training': '#673AB7',
-    'Interval Workout': '#FF5722',
-    Bootcamp: '#795548',
-    Aerobics: '#E91E63',
-};
 
 interface CardioTrendsChartProps {
     workouts: CardioWorkout[];
@@ -59,7 +42,7 @@ export default function CardioTrendsChart({ workouts, year }: CardioTrendsChartP
             name: type,
             type: 'column' as const,
             data: Array.from({ length: 12 }, (_, i) => monthlyData[i][type] || 0),
-            color: cardioTypeColors[type] || '#888888',
+            color: cardioColors[type] || '#888888',
         }));
 
         return {

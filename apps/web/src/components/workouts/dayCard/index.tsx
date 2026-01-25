@@ -1,10 +1,11 @@
-import { Activity, Bike, Dumbbell, Flame, Footprints, Heart, LucideProps, PersonStanding, Timer, Waves, Zap } from 'lucide-react';
+import { Dumbbell, Flame, Footprints, Heart, type LucideProps, Timer } from 'lucide-react';
 import Link from 'next/link';
 import type { FC } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { cardioColors, cardioIcons } from '@/lib/cardio-theme';
 import { cn, formatExerciseSets } from '@/lib/utils';
-import type { CardioType, CardioWorkout, DayWorkout, Exercise, ExerciseMetadata, Workout } from '@/types';
+import type { CardioWorkout, DayWorkout, Exercise, ExerciseMetadata, Workout } from '@/types';
 import { EffortBar } from '../cardioCard/effortBar';
 
 // Yellow/amber color for lifting icon
@@ -19,41 +20,6 @@ interface DayCardProps {
     muscleGroupFilter?: string | null;
     includeWarmup?: boolean;
 }
-
-// Cardio icons and colors
-const cardioIcons: Record<CardioType, FC<LucideProps>> = {
-    Run: Footprints,
-    'Treadmill run': Footprints,
-    Swim: Waves,
-    Bike: Bike,
-    'Outdoor Bike': Bike,
-    Elliptical: PersonStanding,
-    'Rowing machine': PersonStanding,
-    HIIT: Flame,
-    'Aerobic Workout': Heart,
-    Walk: Footprints,
-    'Circuit Training': Activity,
-    'Interval Workout': Timer,
-    Bootcamp: Zap,
-    Aerobics: Heart,
-};
-
-const cardioColors: Record<CardioType, string> = {
-    Run: '#FF5252',
-    'Treadmill run': '#FF5252',
-    Swim: '#2196F3',
-    Bike: '#4CAF50',
-    'Outdoor Bike': '#4CAF50',
-    Elliptical: '#9C27B0',
-    'Rowing machine': '#FF9800',
-    HIIT: '#E91E63',
-    'Aerobic Workout': '#00BCD4',
-    Walk: '#8BC34A',
-    'Circuit Training': '#673AB7',
-    'Interval Workout': '#FF5722',
-    Bootcamp: '#795548',
-    Aerobics: '#E91E63',
-};
 
 const formatExerciseName = (name: string) => {
     return name
@@ -215,10 +181,10 @@ const CardioSection: FC<{ activity: CardioWorkout; miniMode: boolean; showIcon: 
                     <span className="font-bold" style={{ color: accentColor }}>
                         {activity.type}
                     </span>
-                    <span className="text-sm text-muted-foreground">{Math.round(activity.durationMin)}m</span>
-                    {activity.zoneMinutes !== undefined && activity.zoneMinutes > 0 && (
-                        <span className="text-sm text-muted-foreground">| Zone: {activity.zoneMinutes}m</span>
-                    )}
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">
+                        {Math.round(activity.durationMin)}m
+                        {activity.zoneMinutes !== undefined && activity.zoneMinutes > 0 && ` | Zone: ${activity.zoneMinutes}m`}
+                    </span>
                 </div>
             )}
             {!miniMode && activity.effort && activeEffortMinutes > 0 && <EffortBar effort={activity.effort} />}
@@ -398,9 +364,7 @@ const DayCard: FC<DayCardProps> = ({ dayWorkout, exerciseMap, miniMode, cycleId,
                     {/* Single cardio */}
                     {isSingleCardio && (
                         <div className="px-6 pb-3">
-                            {!miniMode && cardioWorkouts[0].effort && (
-                                <EffortBar effort={cardioWorkouts[0].effort} />
-                            )}
+                            {!miniMode && cardioWorkouts[0].effort && <EffortBar effort={cardioWorkouts[0].effort} />}
                             {!miniMode && (cardioWorkouts[0].averageHeartRate || cardioWorkouts[0].calories || cardioWorkouts[0].steps) && (
                                 <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
                                     {cardioWorkouts[0].averageHeartRate && (

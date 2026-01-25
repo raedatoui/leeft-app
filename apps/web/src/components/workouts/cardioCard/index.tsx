@@ -1,49 +1,14 @@
-import { Activity, Bike, Flame, Footprints, Heart, LucideProps, PersonStanding, Timer, Waves, Zap } from 'lucide-react';
+import { Flame, Footprints, Heart, Timer } from 'lucide-react';
 import type { FC } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import type { CardioType, CardioWorkout, GroupedCardio } from '@/types';
+import { cardioColors, cardioIcons } from '@/lib/cardio-theme';
+import type { CardioWorkout, GroupedCardio } from '@/types';
 import { EffortBar } from './effortBar';
 
 interface CardioCardProps {
     workout: GroupedCardio;
     miniMode: boolean;
 }
-
-// Map cardio types to icons
-const cardioIcons: Record<CardioType, FC<LucideProps>> = {
-    Run: Footprints,
-    'Treadmill run': Footprints,
-    Swim: Waves,
-    Bike: Bike,
-    'Outdoor Bike': Bike,
-    Elliptical: PersonStanding,
-    'Rowing machine': PersonStanding,
-    HIIT: Flame,
-    'Aerobic Workout': Heart,
-    Walk: Footprints,
-    'Circuit Training': Activity,
-    'Interval Workout': Timer,
-    Bootcamp: Zap,
-    Aerobics: Heart,
-};
-
-// Map cardio types to accent colors
-const cardioColors: Record<CardioType, string> = {
-    Run: '#FF5252', // Red
-    'Treadmill run': '#FF5252',
-    Swim: '#2196F3', // Blue
-    Bike: '#4CAF50', // Green
-    'Outdoor Bike': '#4CAF50',
-    Elliptical: '#9C27B0', // Purple
-    'Rowing machine': '#FF9800', // Orange
-    HIIT: '#E91E63', // Pink
-    'Aerobic Workout': '#00BCD4', // Cyan
-    Walk: '#8BC34A',
-    'Circuit Training': '#673AB7',
-    'Interval Workout': '#FF5722',
-    Bootcamp: '#795548',
-    Aerobics: '#E91E63',
-};
 
 // Single activity row component
 const ActivityRow: FC<{ activity: CardioWorkout; miniMode: boolean }> = ({ activity, miniMode }) => {

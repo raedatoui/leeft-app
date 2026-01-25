@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import type { ViewMode } from '@/lib/overview-utils';
+import type { ViewMode } from '@/lib/statsUtils';
 
 interface ViewModeTabsProps {
     value: ViewMode;

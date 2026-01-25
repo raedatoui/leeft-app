@@ -25,7 +25,7 @@ const COMMON_ABBREVIATIONS: Record<string, string> = {
 };
 
 function normalizeName(name: string): string {
-    let normalized = name
+    const normalized = name
         .toLowerCase()
         .replace(/[^\w\s]/g, ' ') // Replace punctuation with space
         .replace(/\s+/g, ' ') // Collapse multiple spaces

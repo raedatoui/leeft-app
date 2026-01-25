@@ -64,3 +64,14 @@ export async function fetchCardioWorkouts(): Promise<CardioWorkout[]> {
         .parse(data)
         .map((w) => CardioWorkoutSchema.parse({ ...w, date: new Date(w.date) }));
 }
+
+export async function fetchCardioWorkoutsStrict(): Promise<CardioWorkout[]> {
+    const response = await fetch(`${CDN_BASE_URL}/cardio-log-strict_${TIMESTAMP}.json.gz`, {
+        cache: 'no-cache',
+    });
+    const data = await response.json();
+    return z
+        .array(z.object({ date: z.string() }).and(z.record(z.string(), z.unknown())))
+        .parse(data)
+        .map((w) => CardioWorkoutSchema.parse({ ...w, date: new Date(w.date) }));
+}

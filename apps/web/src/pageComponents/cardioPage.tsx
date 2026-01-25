@@ -1,52 +1,18 @@
 'use client';
 
-import { Activity, Bike, ChevronLeft, ChevronRight, Flame, Footprints, Heart, LucideProps, PersonStanding, Timer, Waves, Zap } from 'lucide-react';
-import type { FC } from 'react';
+import { ChevronLeft, ChevronRight, Timer } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import CardioDistributionChart from '@/components/cardio/distributionChart';
 import CardioStats from '@/components/cardio/stats';
 import CardioTrendsChart from '@/components/cardio/trendsChart';
 import CardioWorkoutCard from '@/components/cardio/workoutCard';
+import { CardioModeToggle } from '@/components/common/cardioModeToggle';
 import { ControlCard } from '@/components/common/controlCard';
 import PageTemplate from '@/components/layout/pageTemplate';
 import { Button } from '@/components/ui/button';
+import { cardioColors, cardioIcons } from '@/lib/cardio-theme';
 import { useWorkouts } from '@/lib/contexts';
 import type { CardioType, CardioWorkout } from '@/types';
-
-// Cardio icons and colors (shared with DayCard)
-export const cardioIcons: Record<CardioType, FC<LucideProps>> = {
-    Run: Footprints,
-    'Treadmill run': Footprints,
-    Swim: Waves,
-    Bike: Bike,
-    'Outdoor Bike': Bike,
-    Elliptical: PersonStanding,
-    'Rowing machine': PersonStanding,
-    HIIT: Flame,
-    'Aerobic Workout': Heart,
-    Walk: Footprints,
-    'Circuit Training': Activity,
-    'Interval Workout': Timer,
-    Bootcamp: Zap,
-    Aerobics: Heart,
-};
-
-export const cardioColors: Record<CardioType, string> = {
-    Run: '#FF5252',
-    'Treadmill run': '#FF5252',
-    Swim: '#2196F3',
-    Bike: '#4CAF50',
-    'Outdoor Bike': '#4CAF50',
-    Elliptical: '#9C27B0',
-    'Rowing machine': '#FF9800',
-    HIIT: '#E91E63',
-    'Aerobic Workout': '#00BCD4',
-    Walk: '#8BC34A',
-    'Circuit Training': '#673AB7',
-    'Interval Workout': '#FF5722',
-    Bootcamp: '#795548',
-    Aerobics: '#E91E63',
-};
 
 // Display names for cleaner UI
 const cardioTypeDisplayNames: Partial<Record<CardioType, string>> = {
@@ -61,7 +27,7 @@ export default function CardioPage() {
     const [selectedYear, setSelectedYear] = useState(currentYear);
     const [activeType, setActiveType] = useState<CardioType | null>(null);
 
-    const { cardioWorkouts, isLoading, error } = useWorkouts();
+    const { activeCardioWorkouts: cardioWorkouts, isLoading, error } = useWorkouts();
 
     // Group workouts by year
     const workoutsByYear = useMemo(() => {
@@ -166,6 +132,8 @@ export default function CardioPage() {
                                         <ChevronRight className="h-4 w-4" />
                                     </Button>
                                 </div>
+                                <div className="h-6 w-px bg-border mx-2" />
+                                <CardioModeToggle showCounts={false} />
                             </div>
 
                             {/* Type filters */}
@@ -211,7 +179,7 @@ export default function CardioPage() {
             <div className="space-y-8 mt-4">
                 {/* Charts for selected year */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <CardioDistributionChart workouts={yearWorkouts} />
+                    <CardioDistributionChart workouts={yearWorkouts} activeType={activeType} onTypeSelect={setActiveType} />
                     <CardioTrendsChart workouts={yearWorkouts} year={selectedYear} />
                 </div>
 
