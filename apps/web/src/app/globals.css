@@ -92,6 +92,6 @@
         background-image:
             linear-gradient(to right, hsl(var(--muted-foreground) / 0.2) 1px, transparent 1px),
             linear-gradient(to bottom, hsl(var(--muted-foreground) / 0.2) 1px, transparent 1px);
-        background-size: 4rem 4rem;
+        background-size:22px 22px;
     }
 }

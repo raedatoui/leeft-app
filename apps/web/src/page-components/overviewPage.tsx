@@ -22,6 +22,7 @@ export default function OverviewPage() {
     const [selectedYear, setSelectedYear] = useState(currentYear);
     const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
     const [selectedWeek, setSelectedWeek] = useState<number | null>(null);
+    const [listFilter, setListFilter] = useState<{ start: Date; end: Date; label: string } | null>(null);
 
     // Chart aggregation state (separate from date filter)
     const [aggregateBy, setAggregateBy] = useState<AggregateBy>('month');
@@ -91,6 +92,7 @@ export default function OverviewPage() {
             setSelectedYear(years[idx + 1]);
             setSelectedMonth(null);
             setSelectedWeek(null);
+            setListFilter(null);
             setAggregateBy('month');
         }
     };
@@ -101,71 +103,36 @@ export default function OverviewPage() {
             setSelectedYear(years[idx - 1]);
             setSelectedMonth(null);
             setSelectedWeek(null);
+            setListFilter(null);
             setAggregateBy('month');
         }
     };
 
-    // Month navigation
-    const goToPrevMonth = () => {
-        if (selectedMonth === null) {
-            if (availableMonths.length > 0) {
-                setSelectedMonth(availableMonths[availableMonths.length - 1]);
-                setSelectedWeek(null);
-                setAggregateBy('week');
-            }
-            return;
-        }
-        const idx = availableMonths.indexOf(selectedMonth);
-        if (idx > 0) {
-            setSelectedMonth(availableMonths[idx - 1]);
-            setSelectedWeek(null);
+    // Chart drill-down handler
+    const handleChartClick = (point: any, index: number) => {
+        if (point.dateRange) {
+            setListFilter({
+                start: point.dateRange.start,
+                end: point.dateRange.end,
+                label: point.label,
+            });
         }
     };
 
-    const goToNextMonth = () => {
-        if (selectedMonth === null) {
-            if (availableMonths.length > 0) {
-                setSelectedMonth(availableMonths[0]);
-                setSelectedWeek(null);
-                setAggregateBy('week');
-            }
+    // Reset view handler
+    const resetView = () => {
+        // If we have a list filter, clear it first
+        if (listFilter) {
+            setListFilter(null);
             return;
         }
-        const idx = availableMonths.indexOf(selectedMonth);
-        if (idx < availableMonths.length - 1) {
-            setSelectedMonth(availableMonths[idx + 1]);
-            setSelectedWeek(null);
-        }
+        // Otherwise reset drill-down
+        setSelectedMonth(null);
+        setSelectedWeek(null);
+        setAggregateBy('month');
     };
 
-    // Week navigation
-    const goToPrevWeek = () => {
-        if (selectedWeek === null) {
-            if (availableWeeks.length > 0) {
-                setSelectedWeek(availableWeeks[availableWeeks.length - 1]);
-                setAggregateBy('day');
-            }
-            return;
-        }
-        if (selectedWeek > 1) {
-            setSelectedWeek(selectedWeek - 1);
-        }
-    };
-
-    const goToNextWeek = () => {
-        if (selectedWeek === null) {
-            if (availableWeeks.length > 0) {
-                setSelectedWeek(1);
-                setAggregateBy('day');
-            }
-            return;
-        }
-        if (selectedWeek < availableWeeks.length) {
-            setSelectedWeek(selectedWeek + 1);
-        }
-    };
-
-    // Compute date range based on selections
+    // Compute date range for CHART (based on year/month/week selections)
     const dateRange = useMemo(() => {
         if (selectedMonth !== null && selectedWeek !== null) {
             const startDay = (selectedWeek - 1) * 7 + 1;
@@ -184,6 +151,14 @@ export default function OverviewPage() {
         return { start, end };
     }, [selectedYear, selectedMonth, selectedWeek]);
 
+    // Compute date range for LIST (respecting listFilter if set)
+    const listDateRange = useMemo(() => {
+        if (listFilter) {
+            return { start: listFilter.start, end: listFilter.end };
+        }
+        return dateRange;
+    }, [listFilter, dateRange]);
+
     // Format labels
     const monthLabel = useMemo(() => {
         if (selectedMonth === null) return null;
@@ -201,24 +176,59 @@ export default function OverviewPage() {
         return `${monthName} ${startDay}-${endDay}, ${selectedYear}`;
     }, [selectedYear, selectedMonth, selectedWeek]);
 
-    // Filter workouts by date range
+    // Filter workouts by LIST date range
     const filteredLiftingWorkouts = useMemo(() => {
+        return filterWorkoutsByDateRange(workouts, listDateRange.start, listDateRange.end);
+    }, [workouts, listDateRange]);
+
+    const filteredCardioWorkouts = useMemo(() => {
+        return filterCardioWorkoutsByDateRange(cardioWorkouts, listDateRange.start, listDateRange.end);
+    }, [cardioWorkouts, listDateRange]);
+
+    // Compute total workouts for the CURRENT SELECTED YEAR (for averages)
+    const yearStats = useMemo(() => {
+        const lifting = workouts.filter((w) => w.date.getFullYear() === selectedYear).length;
+        const cardio = cardioWorkouts.filter((w) => w.date.getFullYear() === selectedYear).length;
+        return { total: lifting + cardio };
+    }, [workouts, cardioWorkouts, selectedYear]);
+
+    // Compute stats based on LIST range (but add averages based on year)
+    const stats = useMemo(() => {
+        const baseStats = computeOverviewStats(filteredLiftingWorkouts, filteredCardioWorkouts);
+        
+        let averageWorkouts: { label: string; value: string } | undefined;
+
+        if (aggregateBy === 'month') {
+            averageWorkouts = {
+                label: 'Avg / Month',
+                value: (yearStats.total / 12).toFixed(1),
+            };
+        } else if (aggregateBy === 'week') {
+            averageWorkouts = {
+                label: 'Avg / Week',
+                value: (yearStats.total / 52).toFixed(1),
+            };
+        }
+
+        return {
+            ...baseStats,
+            averageWorkouts,
+        };
+    }, [filteredLiftingWorkouts, filteredCardioWorkouts, aggregateBy, yearStats]);
+
+    // Chart data uses the CHART date range (so it shows the whole week even if a day is selected)
+    // But we need to filter the workouts passed to aggregateForChart to match the chart range
+    const chartLiftingWorkouts = useMemo(() => {
         return filterWorkoutsByDateRange(workouts, dateRange.start, dateRange.end);
     }, [workouts, dateRange]);
 
-    const filteredCardioWorkouts = useMemo(() => {
+    const chartCardioWorkouts = useMemo(() => {
         return filterCardioWorkoutsByDateRange(cardioWorkouts, dateRange.start, dateRange.end);
     }, [cardioWorkouts, dateRange]);
 
-    // Compute stats and chart data
-    const stats = useMemo(
-        () => computeOverviewStats(filteredLiftingWorkouts, filteredCardioWorkouts),
-        [filteredLiftingWorkouts, filteredCardioWorkouts]
-    );
-
     const chartData = useMemo(() => {
-        return aggregateForChart(filteredLiftingWorkouts, filteredCardioWorkouts, aggregateBy, dateRange);
-    }, [filteredLiftingWorkouts, filteredCardioWorkouts, aggregateBy, dateRange]);
+        return aggregateForChart(chartLiftingWorkouts, chartCardioWorkouts, aggregateBy, dateRange);
+    }, [chartLiftingWorkouts, chartCardioWorkouts, aggregateBy, dateRange]);
 
     if (isLoading) return <div className="p-8 text-center">Loading...</div>;
     if (error) return <div className="p-8 text-center text-red-500">Error: {error.message}</div>;
@@ -230,128 +240,72 @@ export default function OverviewPage() {
                 <div className="flex flex-col gap-4">
                     <ControlCard className="w-full">
                         <div className="flex flex-col gap-4">
-                            {/* Year selector */}
-                            <div className="flex items-center gap-3">
-                                <h2 className="text-3xl font-black tracking-tight text-primary">{selectedYear}</h2>
-                                <div className="h-6 w-px bg-border mx-2" />
-                                <div className="flex items-center gap-2">
-                                    <Button
-                                        onClick={goToPrevYear}
-                                        disabled={selectedYear === Math.min(...years)}
-                                        size="icon"
-                                        variant="outline"
-                                        className="h-8 w-8 rounded-full"
-                                    >
-                                        <ChevronLeft className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                        onClick={goToNextYear}
-                                        disabled={selectedYear === Math.max(...years)}
-                                        size="icon"
-                                        variant="outline"
-                                        className="h-8 w-8 rounded-full"
-                                    >
-                                        <ChevronRight className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            </div>
-
-                            {/* Month filter */}
-                            <div className="flex items-center gap-3">
-                                <span className="text-sm font-medium text-muted-foreground w-14">Month</span>
-                                <Button
-                                    onClick={() => {
-                                        setSelectedMonth(null);
-                                        setSelectedWeek(null);
-                                        setAggregateBy('month');
-                                    }}
-                                    variant={selectedMonth === null ? 'default' : 'outline'}
-                                    size="sm"
-                                    className="h-7 px-3 text-xs"
-                                >
-                                    All
-                                </Button>
-                                <div className="flex items-center gap-2">
-                                    <Button
-                                        onClick={goToPrevMonth}
-                                        disabled={availableMonths.length === 0 || (selectedMonth !== null && availableMonths.indexOf(selectedMonth) === 0)}
-                                        size="icon"
-                                        variant="outline"
-                                        className="h-7 w-7 rounded-full"
-                                    >
-                                        <ChevronLeft className="h-3 w-3" />
-                                    </Button>
-                                    <Button
-                                        onClick={goToNextMonth}
-                                        disabled={availableMonths.length === 0 || (selectedMonth !== null && availableMonths.indexOf(selectedMonth) === availableMonths.length - 1)}
-                                        size="icon"
-                                        variant="outline"
-                                        className="h-7 w-7 rounded-full"
-                                    >
-                                        <ChevronRight className="h-3 w-3" />
-                                    </Button>
-                                </div>
-                                {monthLabel && <span className="text-sm font-medium">{monthLabel}</span>}
-                            </div>
-
-                            {/* Week filter (only when month is selected) */}
-                            {selectedMonth !== null && (
-                                <div className="flex items-center gap-3">
-                                    <span className="text-sm font-medium text-muted-foreground w-14">Week</span>
-                                    <Button
-                                        onClick={() => {
-                                            setSelectedWeek(null);
-                                            setAggregateBy('week');
-                                        }}
-                                        variant={selectedWeek === null ? 'default' : 'outline'}
-                                        size="sm"
-                                        className="h-7 px-3 text-xs"
-                                    >
-                                        All
-                                    </Button>
+                            <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
+                                {/* Year selector */}
+                                <div className="flex items-center gap-3 shrink-0">
+                                    <h2 className="text-3xl font-black tracking-tight text-primary leading-none">{selectedYear}</h2>
+                                    <div className="h-6 w-px bg-border mx-2" />
                                     <div className="flex items-center gap-2">
                                         <Button
-                                            onClick={goToPrevWeek}
-                                            disabled={availableWeeks.length === 0 || (selectedWeek !== null && selectedWeek === 1)}
+                                            onClick={goToPrevYear}
+                                            disabled={selectedYear === Math.min(...years)}
                                             size="icon"
                                             variant="outline"
-                                            className="h-7 w-7 rounded-full"
+                                            className="h-8 w-8 rounded-full"
                                         >
-                                            <ChevronLeft className="h-3 w-3" />
+                                            <ChevronLeft className="h-4 w-4" />
                                         </Button>
                                         <Button
-                                            onClick={goToNextWeek}
-                                            disabled={availableWeeks.length === 0 || (selectedWeek !== null && selectedWeek === availableWeeks.length)}
+                                            onClick={goToNextYear}
+                                            disabled={selectedYear === Math.max(...years)}
                                             size="icon"
                                             variant="outline"
-                                            className="h-7 w-7 rounded-full"
+                                            className="h-8 w-8 rounded-full"
                                         >
-                                            <ChevronRight className="h-3 w-3" />
+                                            <ChevronRight className="h-4 w-4" />
                                         </Button>
                                     </div>
-                                    {weekLabel && <span className="text-sm font-medium">{weekLabel}</span>}
                                 </div>
-                            )}
 
-                            {/* Chart aggregation control */}
-                            {aggregationOptions.length > 1 && (
-                                <div className="flex items-center gap-3">
-                                    <span className="text-sm font-medium text-muted-foreground w-14">Group</span>
-                                    <div className="flex items-center gap-1">
-                                        {aggregationOptions.map((option) => (
-                                            <Button
-                                                key={option}
-                                                onClick={() => setAggregateBy(option)}
-                                                variant={aggregateBy === option ? 'default' : 'outline'}
-                                                size="sm"
-                                                className="h-7 px-3 text-xs capitalize"
-                                            >
-                                                {option}s
-                                            </Button>
-                                        ))}
+                                {/* Chart aggregation control */}
+                                {aggregationOptions.length > 1 && (
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-sm font-medium text-muted-foreground">Group</span>
+                                        <div className="flex items-center gap-1">
+                                            {aggregationOptions.map((option) => (
+                                                <Button
+                                                    key={option}
+                                                    onClick={() => setAggregateBy(option)}
+                                                    variant={aggregateBy === option ? 'default' : 'outline'}
+                                                    size="sm"
+                                                    className="h-7 px-3 text-xs capitalize"
+                                                >
+                                                    {option}s
+                                                </Button>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
+
+                                {/* Active Filter Display / Reset */}
+                                {(selectedMonth !== null || listFilter !== null) && (
+                                    <div className="flex items-center gap-2 ml-auto">
+                                        <span className="text-sm font-medium text-muted-foreground bg-muted/50 px-2 py-1 rounded-md">
+                                            {monthLabel}
+                                            {weekLabel ? ` • ${weekLabel.split(',')[0]}` : ''}
+                                            {listFilter ? ` • ${listFilter.label}` : ''}
+                                        </span>
+                                        <Button
+                                            onClick={resetView}
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                                        >
+                                            Reset
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </ControlCard>
 
@@ -362,7 +316,7 @@ export default function OverviewPage() {
         >
             <div className="space-y-6 mt-4">
                 {/* Chart */}
-                <WorkoutBreakdownChart data={chartData} aggregateBy={aggregateBy} dateRange={dateRange} />
+                <WorkoutBreakdownChart data={chartData} aggregateBy={aggregateBy} dateRange={dateRange} onPointClick={handleChartClick} />
 
                 {/* Workouts list */}
                 <WorkoutList liftingWorkouts={filteredLiftingWorkouts} cardioWorkouts={filteredCardioWorkouts} exerciseMap={exerciseMap} />

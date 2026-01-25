@@ -11,12 +11,13 @@ interface WorkoutBreakdownChartProps {
     data: ChartDataPoint[];
     aggregateBy: AggregateBy;
     dateRange: { start: Date; end: Date };
+    onPointClick?: (point: ChartDataPoint, index: number) => void;
 }
 
 const LIFTING_COLOR = '#F59E0B'; // Amber
 const CARDIO_COLOR = '#3B82F6'; // Blue
 
-export default function WorkoutBreakdownChart({ data, aggregateBy }: WorkoutBreakdownChartProps) {
+export default function WorkoutBreakdownChart({ data, aggregateBy, onPointClick }: WorkoutBreakdownChartProps) {
     const { categories, tooltips, liftingSeries, cardioSeries } = useMemo(() => {
         return {
             categories: data.map((d) => d.label),
@@ -47,6 +48,33 @@ export default function WorkoutBreakdownChart({ data, aggregateBy }: WorkoutBrea
                 fontFamily: chartFonts.sans,
             },
             height: 300,
+            zooming: {
+                type: 'x',
+                resetButton: {
+                    position: {
+                        align: 'right',
+                        verticalAlign: 'bottom',
+                        y: -30,
+                    },
+                    theme: {
+                        fill: chartColors.primary,
+                        style: {
+                            color: chartColors.background,
+                            border: `1px solid ${chartColors.primary}`,
+                            fontFamily: chartFonts.sans,
+                        },
+                        states: {
+                            hover: {
+                                fill: chartColors.primaryDark,
+                                style: {
+                                    border: `1px solid ${chartColors.primaryDark}`,
+                                    fontFamily: chartFonts.sans,
+                                },
+                            },
+                        },
+                    },
+                },
+            },
         },
         title: {
             text: undefined,
@@ -99,10 +127,11 @@ export default function WorkoutBreakdownChart({ data, aggregateBy }: WorkoutBrea
         },
         tooltip: {
             formatter: function () {
-                const pointIndex = this.point.index;
+                const ctx = this as any;
+                const pointIndex = ctx.point.index;
                 const tooltipText = tooltips[pointIndex];
-                const total = (this.point.stackTotal as number) || 0;
-                return `<b>${tooltipText}</b><br/>${this.series.name}: ${this.y}<br/>Total: ${total}`;
+                const total = (ctx.point.stackTotal as number) || 0;
+                return `<b>${tooltipText}</b><br/>${ctx.series.name}: ${ctx.y}<br/>Total: ${total}<br/><span style="font-size: 10px; color: #666">(Click to zoom)</span>`;
             },
             backgroundColor: chartColors.background,
             borderColor: chartColors.border,
@@ -119,6 +148,17 @@ export default function WorkoutBreakdownChart({ data, aggregateBy }: WorkoutBrea
                 borderWidth: 0,
                 pointPadding: data.length > 30 ? 0 : 0.1,
                 groupPadding: data.length > 30 ? 0.05 : 0.1,
+                events: {
+                    click: function (event) {
+                        if (onPointClick) {
+                            const pointIndex = event.point.index;
+                            if (pointIndex >= 0 && pointIndex < data.length) {
+                                onPointClick(data[pointIndex], pointIndex);
+                            }
+                        }
+                    },
+                },
+                cursor: 'pointer',
             },
         },
         series: [

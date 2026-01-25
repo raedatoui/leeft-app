@@ -1,6 +1,6 @@
 'use client';
 
-import { Activity, Dumbbell, Heart, Scale, TrendingUp } from 'lucide-react';
+import { Activity, Calculator, Dumbbell, Heart, Scale, TrendingUp } from 'lucide-react';
 import { ControlCard } from '@/components/common/controlCard';
 import type { OverviewStats as OverviewStatsType } from '@/lib/overview-utils';
 import { formatNumber } from '@/lib/overview-utils';
@@ -29,6 +29,16 @@ export default function OverviewStats({ stats }: OverviewStatsProps) {
             icon: Heart,
             color: '#3B82F6',
         },
+        ...(stats.averageWorkouts
+            ? [
+                  {
+                      label: stats.averageWorkouts.label,
+                      value: stats.averageWorkouts.value,
+                      icon: Calculator,
+                      color: '#EC4899',
+                  },
+              ]
+            : []),
         {
             label: 'Volume',
             value: `${formatNumber(stats.totalVolume)} lbs`,

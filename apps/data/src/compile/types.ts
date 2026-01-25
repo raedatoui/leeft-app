@@ -47,7 +47,7 @@ export const EffortSchema = z.object({
 export const CardioWorkoutSchema = z.object({
     uuid: z.uuid(),
     date: z.date(),
-    type: z.enum(['Run', 'Swim', 'Treadmill run', 'HIIT', 'Aerobic Workout', 'Outdoor Bike', 'Rowing machine', 'Elliptical', 'Bike']),
+    type: z.string(), // Use string to be more flexible with activity types
     durationMs: z.number(),
     durationMin: z.number(),
     loggedBy: z.enum(['tracker', 'manual', 'auto_detected']),

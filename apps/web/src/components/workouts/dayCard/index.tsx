@@ -1,4 +1,4 @@
-import { Bike, Dumbbell, Flame, Footprints, Heart, PersonStanding, Timer, Waves } from 'lucide-react';
+import { Activity, Bike, Dumbbell, Flame, Footprints, Heart, LucideProps, PersonStanding, Timer, Waves, Zap } from 'lucide-react';
 import Link from 'next/link';
 import type { FC } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -21,7 +21,7 @@ interface DayCardProps {
 }
 
 // Cardio icons and colors
-const cardioIcons: Record<CardioType, FC<{ className?: string }>> = {
+const cardioIcons: Record<CardioType, FC<LucideProps>> = {
     Run: Footprints,
     'Treadmill run': Footprints,
     Swim: Waves,
@@ -31,6 +31,11 @@ const cardioIcons: Record<CardioType, FC<{ className?: string }>> = {
     'Rowing machine': PersonStanding,
     HIIT: Flame,
     'Aerobic Workout': Heart,
+    Walk: Footprints,
+    'Circuit Training': Activity,
+    'Interval Workout': Timer,
+    Bootcamp: Zap,
+    Aerobics: Heart,
 };
 
 const cardioColors: Record<CardioType, string> = {
@@ -43,6 +48,11 @@ const cardioColors: Record<CardioType, string> = {
     'Rowing machine': '#FF9800',
     HIIT: '#E91E63',
     'Aerobic Workout': '#00BCD4',
+    Walk: '#8BC34A',
+    'Circuit Training': '#673AB7',
+    'Interval Workout': '#FF5722',
+    Bootcamp: '#795548',
+    Aerobics: '#E91E63',
 };
 
 const formatExerciseName = (name: string) => {
@@ -211,7 +221,7 @@ const CardioSection: FC<{ activity: CardioWorkout; miniMode: boolean; showIcon: 
                     )}
                 </div>
             )}
-            {!miniMode && activity.effort && activeEffortMinutes > 0 && <EffortBar effort={activity.effort} totalMinutes={activity.durationMin} />}
+            {!miniMode && activity.effort && activeEffortMinutes > 0 && <EffortBar effort={activity.effort} />}
             {!miniMode && (activity.averageHeartRate || activity.calories || activity.steps) && (
                 <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
                     {activity.averageHeartRate && (
@@ -267,7 +277,7 @@ const DayCard: FC<DayCardProps> = ({ dayWorkout, exerciseMap, miniMode, cycleId,
     const _totalWorkouts = liftingWorkouts.length + cardioWorkouts.length;
 
     // Build unique header icons list
-    type HeaderIconInfo = { icon: FC<{ className?: string }>; color: string; bg: string; key: string };
+    type HeaderIconInfo = { icon: FC<LucideProps>; color: string; bg: string; key: string };
     const headerIcons: HeaderIconInfo[] = [];
 
     if (hasLifting) {
@@ -389,7 +399,7 @@ const DayCard: FC<DayCardProps> = ({ dayWorkout, exerciseMap, miniMode, cycleId,
                     {isSingleCardio && (
                         <div className="px-6 pb-3">
                             {!miniMode && cardioWorkouts[0].effort && (
-                                <EffortBar effort={cardioWorkouts[0].effort} totalMinutes={cardioWorkouts[0].durationMin} />
+                                <EffortBar effort={cardioWorkouts[0].effort} />
                             )}
                             {!miniMode && (cardioWorkouts[0].averageHeartRate || cardioWorkouts[0].calories || cardioWorkouts[0].steps) && (
                                 <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">

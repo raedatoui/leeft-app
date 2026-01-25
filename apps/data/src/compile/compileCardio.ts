@@ -14,6 +14,7 @@ function convertFitbitToCardioWorkout(activity: FitbitActivity): CardioWorkout {
         loggedBy: activity.loggedBy,
         zoneMinutes: activity.zoneMinutes,
         effort: activity.effort,
+        averageHeartRate: activity.averageHeartRate,
     });
 }
 

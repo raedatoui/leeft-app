@@ -1,6 +1,6 @@
 'use client';
 
-import { Bike, ChevronLeft, ChevronRight, Flame, Footprints, Heart, PersonStanding, Timer, Waves } from 'lucide-react';
+import { Activity, Bike, ChevronLeft, ChevronRight, Flame, Footprints, Heart, LucideProps, PersonStanding, Timer, Waves, Zap } from 'lucide-react';
 import type { FC } from 'react';
 import { useMemo, useState } from 'react';
 import CardioDistributionChart from '@/components/cardio/distributionChart';
@@ -14,7 +14,7 @@ import { useWorkouts } from '@/lib/contexts';
 import type { CardioType, CardioWorkout } from '@/types';
 
 // Cardio icons and colors (shared with DayCard)
-export const cardioIcons: Record<CardioType, FC<{ className?: string }>> = {
+export const cardioIcons: Record<CardioType, FC<LucideProps>> = {
     Run: Footprints,
     'Treadmill run': Footprints,
     Swim: Waves,
@@ -24,6 +24,11 @@ export const cardioIcons: Record<CardioType, FC<{ className?: string }>> = {
     'Rowing machine': PersonStanding,
     HIIT: Flame,
     'Aerobic Workout': Heart,
+    Walk: Footprints,
+    'Circuit Training': Activity,
+    'Interval Workout': Timer,
+    Bootcamp: Zap,
+    Aerobics: Heart,
 };
 
 export const cardioColors: Record<CardioType, string> = {
@@ -36,6 +41,11 @@ export const cardioColors: Record<CardioType, string> = {
     'Rowing machine': '#FF9800',
     HIIT: '#E91E63',
     'Aerobic Workout': '#00BCD4',
+    Walk: '#8BC34A',
+    'Circuit Training': '#673AB7',
+    'Interval Workout': '#FF5722',
+    Bootcamp: '#795548',
+    Aerobics: '#E91E63',
 };
 
 // Display names for cleaner UI

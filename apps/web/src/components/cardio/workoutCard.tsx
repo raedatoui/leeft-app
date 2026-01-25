@@ -1,13 +1,13 @@
 'use client';
 
-import { Bike, Flame, Footprints, Heart, PersonStanding, Timer, Waves } from 'lucide-react';
+import { Activity, Bike, Flame, Footprints, Heart, LucideProps, PersonStanding, Timer, Waves, Zap } from 'lucide-react';
 import type { FC } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import type { CardioType, CardioWorkout } from '@/types';
 import { EffortBar } from '../workouts/cardioCard/effortBar';
 
 // Cardio icons and colors
-const cardioIcons: Record<CardioType, FC<{ className?: string }>> = {
+const cardioIcons: Record<CardioType, FC<LucideProps>> = {
     Run: Footprints,
     'Treadmill run': Footprints,
     Swim: Waves,
@@ -17,6 +17,11 @@ const cardioIcons: Record<CardioType, FC<{ className?: string }>> = {
     'Rowing machine': PersonStanding,
     HIIT: Flame,
     'Aerobic Workout': Heart,
+    Walk: Footprints,
+    'Circuit Training': Activity,
+    'Interval Workout': Timer,
+    Bootcamp: Zap,
+    Aerobics: Heart,
 };
 
 const cardioColors: Record<CardioType, string> = {
@@ -29,6 +34,11 @@ const cardioColors: Record<CardioType, string> = {
     'Rowing machine': '#FF9800',
     HIIT: '#E91E63',
     'Aerobic Workout': '#00BCD4',
+    Walk: '#8BC34A',
+    'Circuit Training': '#673AB7',
+    'Interval Workout': '#FF5722',
+    Bootcamp: '#795548',
+    Aerobics: '#E91E63',
 };
 
 interface CardioWorkoutCardProps {
@@ -53,7 +63,7 @@ const CardioWorkoutCard: FC<CardioWorkoutCardProps> = ({ workout }) => {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <div className="p-2 rounded-lg" style={{ backgroundColor: `${accentColor}20` }}>
-                            <Icon className="h-5 w-5" style={{ color: accentColor }} />
+                            <Icon className="h-5 w-5" />
                         </div>
                         <span className="font-bold" style={{ color: accentColor }}>
                             {workout.type}

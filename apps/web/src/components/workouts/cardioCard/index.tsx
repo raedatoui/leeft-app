@@ -1,4 +1,4 @@
-import { Bike, Flame, Footprints, Heart, PersonStanding, Timer, Waves } from 'lucide-react';
+import { Activity, Bike, Flame, Footprints, Heart, LucideProps, PersonStanding, Timer, Waves, Zap } from 'lucide-react';
 import type { FC } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import type { CardioType, CardioWorkout, GroupedCardio } from '@/types';
@@ -10,7 +10,7 @@ interface CardioCardProps {
 }
 
 // Map cardio types to icons
-const cardioIcons: Record<CardioType, FC<{ className?: string }>> = {
+const cardioIcons: Record<CardioType, FC<LucideProps>> = {
     Run: Footprints,
     'Treadmill run': Footprints,
     Swim: Waves,
@@ -20,6 +20,11 @@ const cardioIcons: Record<CardioType, FC<{ className?: string }>> = {
     'Rowing machine': PersonStanding,
     HIIT: Flame,
     'Aerobic Workout': Heart,
+    Walk: Footprints,
+    'Circuit Training': Activity,
+    'Interval Workout': Timer,
+    Bootcamp: Zap,
+    Aerobics: Heart,
 };
 
 // Map cardio types to accent colors
@@ -33,6 +38,11 @@ const cardioColors: Record<CardioType, string> = {
     'Rowing machine': '#FF9800', // Orange
     HIIT: '#E91E63', // Pink
     'Aerobic Workout': '#00BCD4', // Cyan
+    Walk: '#8BC34A',
+    'Circuit Training': '#673AB7',
+    'Interval Workout': '#FF5722',
+    Bootcamp: '#795548',
+    Aerobics: '#E91E63',
 };
 
 // Single activity row component

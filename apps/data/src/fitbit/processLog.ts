@@ -42,6 +42,7 @@ function transformEntries(raw: RawActivity[]): FitbitActivity[] {
             date: entry.startTime,
             zoneMinutes: entry.activeZoneMinutes.totalMinutes,
             effort: entry.activityLevel,
+            averageHeartRate: entry.averageHeartRate,
         };
         return FitbitActivitySchema.parse(parsed);
     });

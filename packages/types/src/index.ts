@@ -124,6 +124,11 @@ export const CardioTypeEnum = z.enum([
 	"Rowing machine",
 	"Elliptical",
 	"Bike",
+	"Walk",
+	"Circuit Training",
+	"Interval Workout",
+	"Bootcamp",
+	"Aerobics",
 ]);
 
 export const CardioWorkoutSchema = z.object({
@@ -150,6 +155,11 @@ export const DayWorkoutSchema = z.object({
 // Slider items are now day-based
 export const SliderWorkoutItemSchema = DayWorkoutSchema;
 
+export const GroupedCardioSchema = z.object({
+	date: z.string(),
+	workouts: z.array(CardioWorkoutSchema),
+});
+
 export type RawWorkout = z.infer<typeof RawWorkoutSchema>;
 export type ExerciseMetadata = z.infer<typeof ExerciseMetadataSchema>;
 export type BaseSet = z.infer<typeof BaseSetSchema>;
@@ -165,5 +175,6 @@ export type MappedCycle = z.infer<typeof MappedCycleSchema>;
 export type Effort = z.infer<typeof EffortSchema>;
 export type CardioType = z.infer<typeof CardioTypeEnum>;
 export type CardioWorkout = z.infer<typeof CardioWorkoutSchema>;
+export type GroupedCardio = z.infer<typeof GroupedCardioSchema>;
 export type DayWorkout = z.infer<typeof DayWorkoutSchema>;
 export type SliderWorkoutItem = z.infer<typeof SliderWorkoutItemSchema>;

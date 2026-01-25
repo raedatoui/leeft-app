@@ -138,6 +138,7 @@ export const RawActivitySchema = z.object({
     startTime: z.string(),
     activityLevel: ActivityLevelSchema,
     activeZoneMinutes: ActiveZoneMinutesSchema,
+    averageHeartRate: z.number().optional(),
 });
 export const FitbitActivitySchema = z.object({
     id: z.string(),
@@ -148,6 +149,7 @@ export const FitbitActivitySchema = z.object({
     date: z.string(),
     zoneMinutes: z.number(),
     effort: ActivityLevelSchema,
+    averageHeartRate: z.number().optional(),
 });
 export type RawActivity = z.infer<typeof RawActivitySchema>;
 export type FitbitActivity = z.infer<typeof FitbitActivitySchema>;
@@ -250,15 +252,21 @@ export const TARGET_CARDIO_ACTIVITIES = [
     'Outdoor Bike',
     'Rowing machine',
     'Elliptical',
+    'Circuit Training',
+    'Interval Workout',
+    'Bootcamp',
+    'Aerobics',
+    'Bike',
+    'Walk',
 ] as const;
 
 // Activity type groupings for detailed analysis
 export const ACTIVITY_GROUPS = {
     runs: ['Run', 'Treadmill run'],
     swims: ['Swim'],
-    hiit: ['HIIT'],
-    cycling: ['Outdoor Bike'],
-    indoor: ['Aerobic Workout', 'Rowing machine', 'Elliptical'],
+    hiit: ['HIIT', 'Aerobic Workout', 'Circuit Training', 'Interval Workout', 'Bootcamp', 'Aerobics'],
+    cycling: ['Outdoor Bike', 'Bike'],
+    indoor: ['Rowing machine', 'Elliptical'],
 } as const;
 
 /**
@@ -340,14 +348,15 @@ export function filterActivitiesByLogMethod(activities: FitbitActivity[], logMet
  * Filter activities based on specific cardio criteria
  * 1. Outdoor runs, >= 20 min
  * 2. All swims (no duration limit)
- * 3. HIIT or Aerobic workouts, >= 15 min
+ * 3. HIIT, Aerobic workouts, Circuit Training, etc., >= 10 min
  * 4. Treadmill runs, >= 20 min
  * 5. Elliptical, >= 20 min
  * 6. Bike rides, >= 20 min
+ * 7. Walks that are high intensity (avg HR >= 115 OR Zone Minutes >= 20), >= 15 min
  */
 export function filterCardioActivitiesByCriteria(activities: FitbitActivity[]): FitbitActivity[] {
     return activities.filter((activity) => {
-        const { type, durationMin } = activity;
+        const { type, durationMin, zoneMinutes } = activity;
 
         // 1. All outdoor runs, north of 20 min
         if (type === 'Run' && durationMin >= 20) {
@@ -359,8 +368,9 @@ export function filterCardioActivitiesByCriteria(activities: FitbitActivity[]): 
             return true;
         }
 
-        // 3. HIIT or Aerobic workouts, north of 15min
-        if ((type === 'HIIT' || type === 'Aerobic Workout') && durationMin >= 15) {
+        // 3. HIIT or Aerobic-style workouts, north of 10min
+        const hiitTypes = ['HIIT', 'Aerobic Workout', 'Circuit Training', 'Interval Workout', 'Bootcamp', 'Aerobics'];
+        if (hiitTypes.includes(type) && durationMin >= 10) {
             return true;
         }
 
@@ -376,6 +386,13 @@ export function filterCardioActivitiesByCriteria(activities: FitbitActivity[]): 
 
         // 6. Bike rides, north of 20 min
         if ((type === 'Bike' || type === 'Outdoor Bike') && durationMin >= 20) {
+            return true;
+        }
+
+        // 7. High intensity walks (likely misclassified HIIT)
+        // We don't have avgHR in the simplified FitbitActivity, but we have zoneMinutes.
+        // If it's a 15+ min walk with 20+ zone minutes, it's a workout.
+        if (type === 'Walk' && durationMin >= 15 && zoneMinutes >= 20) {
             return true;
         }
 
