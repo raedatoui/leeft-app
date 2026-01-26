@@ -1,16 +1,36 @@
 #!/bin/bash
 
-# Leeft Full Update & Deploy Pipeline
-# Runs data pipeline, uploads to GCS, builds and deploys to Firebase
+# Leeft Data Pipeline
+# Consolidated script for data sync and optional deployment
+#
+# Usage:
+#   ./pipeline.sh              - Full pipeline + deploy (default)
+#   ./pipeline.sh --sync-only  - Data sync only (no deploy)
+#   ./pipeline.sh --deploy     - Full pipeline + deploy (explicit)
 
 set -e  # Exit on any error
 
+# Parse arguments
+DEPLOY=true
+for arg in "$@"; do
+    case $arg in
+        --sync-only)
+            DEPLOY=false
+            shift
+            ;;
+        --deploy)
+            DEPLOY=true
+            shift
+            ;;
+    esac
+done
+
 # Get the project root directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 cd "$PROJECT_ROOT"
 
-# Load environment variables (only the ones we need)
+# Load environment variables
 if [ -f "apps/data/.env" ]; then
     TRAINHEROIC_SESSION_TOKEN=$(grep '^TRAINHEROIC_SESSION_TOKEN=' apps/data/.env | cut -d'=' -f2)
 fi
@@ -54,20 +74,25 @@ validate_date() {
     return 1
 }
 
-echo -e "${BLUE}Leeft Full Update & Deploy Pipeline${NC}"
-echo "========================================"
+echo -e "${BLUE}Leeft Data Pipeline${NC}"
+echo "===================="
+if [ "$DEPLOY" = true ]; then
+    echo "Mode: Full pipeline + deploy"
+else
+    echo "Mode: Sync only (no deploy)"
+fi
 echo ""
 echo "Enter the date range for TrainHeroic data download:"
 echo ""
 
-# Prompt for start date (required)
-while true; do
-    read -p "Start date (YYYY-MM-DD): " START_DATE
+# Default values
+DEFAULT_START=$(date -d '-30 days' '+%Y-%m-%d' 2>/dev/null || date -v-30d '+%Y-%m-%d' 2>/dev/null)
+DEFAULT_END=$(date '+%Y-%m-%d')
 
-    if [ -z "$START_DATE" ]; then
-        error "Start date is required."
-        continue
-    fi
+# Prompt for start date
+while true; do
+    read -p "Start date (YYYY-MM-DD) [default: $DEFAULT_START]: " START_DATE
+    START_DATE=${START_DATE:-$DEFAULT_START}
 
     if validate_date "$START_DATE"; then
         break
@@ -76,14 +101,10 @@ while true; do
     fi
 done
 
-# Prompt for end date (required)
+# Prompt for end date
 while true; do
-    read -p "End date (YYYY-MM-DD): " END_DATE
-
-    if [ -z "$END_DATE" ]; then
-        error "End date is required."
-        continue
-    fi
+    read -p "End date (YYYY-MM-DD) [default: $DEFAULT_END]: " END_DATE
+    END_DATE=${END_DATE:-$DEFAULT_END}
 
     if validate_date "$END_DATE"; then
         if [[ "$END_DATE" > "$START_DATE" ]] || [[ "$END_DATE" == "$START_DATE" ]]; then
@@ -97,14 +118,21 @@ while true; do
 done
 
 echo ""
-log "Starting full update pipeline for date range: ${START_DATE} to ${END_DATE}"
+log "Starting pipeline for date range: ${START_DATE} to ${END_DATE}"
 echo ""
+
+# Calculate total steps based on mode
+if [ "$DEPLOY" = true ]; then
+    TOTAL_STEPS=10
+else
+    TOTAL_STEPS=8
+fi
 
 # Change to apps/data for data pipeline commands
 cd apps/data
 
 # Step 1: Download TrainHeroic data
-log "Step 1/10: Downloading TrainHeroic data..."
+log "Step 1/${TOTAL_STEPS}: Downloading TrainHeroic data..."
 if bun trainheroic:download "startDate=${START_DATE}&endDate=${END_DATE}" "$TRAINHEROIC_SESSION_TOKEN"; then
     success "TrainHeroic data downloaded"
 else
@@ -113,7 +141,7 @@ else
 fi
 
 # Step 2: Compile lifting data
-log "Step 2/10: Compiling lifting data..."
+log "Step 2/${TOTAL_STEPS}: Compiling lifting data..."
 if bun compile:lifting; then
     success "Lifting data compiled"
 else
@@ -122,7 +150,7 @@ else
 fi
 
 # Step 3: Combine lifting data
-log "Step 3/10: Combining lifting data..."
+log "Step 3/${TOTAL_STEPS}: Combining lifting data..."
 if bun combine:lifting; then
     success "Lifting data combined"
 else
@@ -131,7 +159,7 @@ else
 fi
 
 # Step 4: Download Fitbit data (auto-refreshes token if expired)
-log "Step 4/10: Downloading Fitbit data..."
+log "Step 4/${TOTAL_STEPS}: Downloading Fitbit data..."
 if bun fitbit:download; then
     success "Fitbit data downloaded"
 else
@@ -139,7 +167,7 @@ else
 fi
 
 # Step 5: Process Fitbit data
-log "Step 5/10: Processing Fitbit data..."
+log "Step 5/${TOTAL_STEPS}: Processing Fitbit data..."
 if bun fitbit:process; then
     success "Fitbit data processed"
 else
@@ -147,7 +175,7 @@ else
 fi
 
 # Step 6: Compile cardio data
-log "Step 6/10: Compiling cardio data..."
+log "Step 6/${TOTAL_STEPS}: Compiling cardio data..."
 if bun compile:cardio; then
     success "Cardio data compiled"
 else
@@ -156,7 +184,7 @@ else
 fi
 
 # Step 7: Compile all data
-log "Step 7/10: Compiling all data..."
+log "Step 7/${TOTAL_STEPS}: Compiling all data..."
 if bun compile:all; then
     success "All data compiled"
 else
@@ -165,7 +193,7 @@ else
 fi
 
 # Step 8: Combine all data
-log "Step 8/10: Combining all data..."
+log "Step 8/${TOTAL_STEPS}: Combining all data..."
 if bun combine:all; then
     success "All data combined"
 else
@@ -176,24 +204,31 @@ fi
 # Return to project root for upload and deploy
 cd "$PROJECT_ROOT"
 
-# Step 9: Upload to Google Cloud Storage
-log "Step 9/10: Uploading to Google Cloud Storage..."
-if ./scripts/upload.sh; then
-    success "Data uploaded to GCS"
-else
-    error "Failed to upload to GCS"
-    exit 1
-fi
+if [ "$DEPLOY" = true ]; then
+    # Step 9: Upload to Google Cloud Storage
+    log "Step 9/${TOTAL_STEPS}: Uploading to Google Cloud Storage..."
+    if ./scripts/shell/upload.sh; then
+        success "Data uploaded to GCS"
+    else
+        error "Failed to upload to GCS"
+        exit 1
+    fi
 
-# Step 10: Build and deploy to Firebase
-log "Step 10/10: Building and deploying to Firebase..."
-if pnpm deploy:web; then
-    success "Deployed to Firebase"
-else
-    error "Failed to deploy"
-    exit 1
+    # Step 10: Build and deploy to Firebase
+    log "Step 10/${TOTAL_STEPS}: Building and deploying to Firebase..."
+    if pnpm deploy:web; then
+        success "Deployed to Firebase"
+    else
+        error "Failed to deploy"
+        exit 1
+    fi
 fi
 
 echo ""
-success "Full update & deploy pipeline completed!"
+success "Pipeline completed successfully!"
 log "Data range processed: ${START_DATE} to ${END_DATE}"
+if [ "$DEPLOY" = true ]; then
+    log "Deployed to Firebase"
+else
+    log "Run with --deploy to upload and deploy"
+fi
