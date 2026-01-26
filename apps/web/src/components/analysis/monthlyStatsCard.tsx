@@ -3,7 +3,7 @@ import { TopExercisesList } from '@/components/analysis/topExercisesList';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { WorkoutStatsGrid } from '@/components/workouts/workoutStatsGrid';
 import { cardioColors, cardioIcons } from '@/lib/cardio-theme';
-import { cn, computeStats } from '@/lib/utils';
+import { cn, computeStats, formatYearMonth } from '@/lib/utils';
 import type { CardioType, CardioWorkout, ExerciseMap, Workout } from '@/types';
 
 interface MonthlyStatsCardProps {
@@ -14,12 +14,6 @@ interface MonthlyStatsCardProps {
     includeWarmup: boolean;
     className?: string;
 }
-
-const formatMonthYear = (yearMonth: string) => {
-    const [year, month] = yearMonth.split('-');
-    const date = new Date(Number.parseInt(year, 10), Number.parseInt(month, 10) - 1);
-    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-};
 
 function computeCardioStats(cardioWorkouts: CardioWorkout[]) {
     if (cardioWorkouts.length === 0) {
@@ -70,7 +64,7 @@ export function MonthlyStatsCard({ yearMonth, workouts, cardioWorkouts = [], exe
                 <div className="flex flex-col gap-3">
                     <div className="flex items-start justify-between gap-2">
                         <CardTitle className="text-primary text-lg sm:text-xl font-bold flex items-center gap-2 group-hover:text-primary transition-colors">
-                            {formatMonthYear(yearMonth)}
+                            {formatYearMonth(yearMonth)}
                         </CardTitle>
                     </div>
                 </div>

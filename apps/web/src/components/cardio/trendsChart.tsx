@@ -23,15 +23,37 @@ export default function CardioTrendsChart({ workouts, year }: CardioTrendsChartP
 
         // Count workouts by month and type
         const typesSet = new Set<CardioType>();
-        const monthlyData: Record<string, Record<CardioType, number>> = {};
-
-        // Initialize all months
-        for (let i = 0; i < 12; i++) {
-            monthlyData[i] = {} as Record<CardioType, number>;
-        }
+        type MonthData = Record<CardioType, number>;
+        const monthlyData: [
+            MonthData,
+            MonthData,
+            MonthData,
+            MonthData,
+            MonthData,
+            MonthData,
+            MonthData,
+            MonthData,
+            MonthData,
+            MonthData,
+            MonthData,
+            MonthData,
+        ] = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}] as [
+            MonthData,
+            MonthData,
+            MonthData,
+            MonthData,
+            MonthData,
+            MonthData,
+            MonthData,
+            MonthData,
+            MonthData,
+            MonthData,
+            MonthData,
+            MonthData,
+        ];
 
         for (const workout of workouts) {
-            const month = workout.date.getMonth();
+            const month = workout.date.getMonth() as 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
             const type = workout.type;
             typesSet.add(type);
             monthlyData[month][type] = (monthlyData[month][type] || 0) + 1;
@@ -41,7 +63,7 @@ export default function CardioTrendsChart({ workouts, year }: CardioTrendsChartP
         const chartSeries = Array.from(typesSet).map((type) => ({
             name: type,
             type: 'column' as const,
-            data: Array.from({ length: 12 }, (_, i) => monthlyData[i][type] || 0),
+            data: monthlyData.map((m) => m[type] || 0),
             color: cardioColors[type] || '#888888',
         }));
 
@@ -136,6 +158,7 @@ export default function CardioTrendsChart({ workouts, year }: CardioTrendsChartP
                 borderWidth: 0,
             },
         },
+        // biome-ignore lint/suspicious/noExplicitAny: Highcharts series type mismatch
         series: series as any,
         credits: {
             enabled: false,

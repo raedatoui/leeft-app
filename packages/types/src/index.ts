@@ -86,14 +86,14 @@ export type RepRange = {
 	max: number;
 };
 
+const DatePreprocess = z.preprocess((val) => new Date(val as string), z.date());
+
 export const CycleSchema = z.object({
 	type: z.enum(["strength", "break", "hypertrophy", "maintenance"]),
 	uuid: z.uuid(),
 	name: z.string(),
 	location: z.string().optional(),
-	dates: z
-		.array(z.preprocess((val) => new Date(val as string), z.date()))
-		.length(2),
+	dates: z.tuple([DatePreprocess, DatePreprocess]),
 	workouts: z.array(z.uuid()).optional(),
 	note: z.string().optional(),
 });
@@ -101,9 +101,7 @@ export const CycleSchema = z.object({
 export const MappedCycleSchema = CycleSchema.extend({
 	name: z.string(),
 	location: z.string().optional(),
-	dates: z
-		.array(z.preprocess((val) => new Date(val as string), z.date()))
-		.length(2),
+	dates: z.tuple([DatePreprocess, DatePreprocess]),
 	note: z.string().optional(),
 	workouts: z.array(WorkoutSchema),
 });

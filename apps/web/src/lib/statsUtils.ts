@@ -177,12 +177,14 @@ export function aggregateForChart(
 
         for (const workout of liftingWorkouts) {
             const month = workout.date.getMonth();
-            data[month].liftingCount++;
+            const point = data[month];
+            if (point) point.liftingCount++;
         }
 
         for (const workout of cardioWorkouts) {
             const month = workout.date.getMonth();
-            data[month].cardioCount++;
+            const point = data[month];
+            if (point) point.cardioCount++;
         }
 
         return data;
@@ -216,24 +218,25 @@ export function aggregateForChart(
             }
 
             const tooltip = formatWeekRange(currentChunkStart, chunkEnd);
-            data.push({
+            const point: ChartDataPoint = {
                 label: `W${weekNum}`,
                 tooltip,
                 liftingCount: 0,
                 cardioCount: 0,
                 dateRange: { start: new Date(currentChunkStart), end: new Date(chunkEnd) },
-            });
+            };
+            data.push(point);
 
             // Count workouts in this chunk
             for (const workout of liftingWorkouts) {
                 if (workout.date >= currentChunkStart && workout.date <= chunkEnd) {
-                    data[data.length - 1].liftingCount++;
+                    point.liftingCount++;
                 }
             }
 
             for (const workout of cardioWorkouts) {
                 if (workout.date >= currentChunkStart && workout.date <= chunkEnd) {
-                    data[data.length - 1].cardioCount++;
+                    point.cardioCount++;
                 }
             }
 

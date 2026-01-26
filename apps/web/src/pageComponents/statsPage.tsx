@@ -10,7 +10,7 @@ import OverviewStats from '@/components/stats/overviewStats';
 import WorkoutBreakdownChart from '@/components/stats/workoutBreakdownChart';
 import { Button } from '@/components/ui/button';
 import { useWorkouts } from '@/lib/contexts';
-import { type AggregateBy, aggregateForChart, computeOverviewStats, filterCardioWorkoutsByDateRange } from '@/lib/statsUtils';
+import { type AggregateBy, aggregateForChart, type ChartDataPoint, computeOverviewStats, filterCardioWorkoutsByDateRange } from '@/lib/statsUtils';
 import { filterWorkoutsByDateRange } from '@/lib/utils';
 
 const MONTH_NAMES_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -86,16 +86,18 @@ export default function StatsPage() {
 
     // Reset aggregation when it's no longer valid for the view level
     useMemo(() => {
-        if (!aggregationOptions.includes(aggregateBy)) {
-            setAggregateBy(aggregationOptions[0]);
+        const defaultOption = aggregationOptions[0];
+        if (!aggregationOptions.includes(aggregateBy) && defaultOption) {
+            setAggregateBy(defaultOption);
         }
     }, [aggregationOptions, aggregateBy]);
 
     // Year navigation
     const goToPrevYear = () => {
         const idx = years.indexOf(selectedYear);
-        if (idx < years.length - 1) {
-            setSelectedYear(years[idx + 1]);
+        const prevYear = years[idx + 1];
+        if (prevYear !== undefined) {
+            setSelectedYear(prevYear);
             setSelectedMonth(null);
             setSelectedWeek(null);
             setListFilter(null);
@@ -106,8 +108,9 @@ export default function StatsPage() {
 
     const goToNextYear = () => {
         const idx = years.indexOf(selectedYear);
-        if (idx > 0) {
-            setSelectedYear(years[idx - 1]);
+        const nextYear = years[idx - 1];
+        if (nextYear !== undefined) {
+            setSelectedYear(nextYear);
             setSelectedMonth(null);
             setSelectedWeek(null);
             setListFilter(null);
@@ -117,7 +120,7 @@ export default function StatsPage() {
     };
 
     // Chart drill-down handler - toggle bar selection
-    const handleChartClick = (point: any, index: number) => {
+    const handleChartClick = (point: ChartDataPoint, index: number) => {
         if (selectedBarIndex === index) {
             // Clicking same bar - deselect
             setSelectedBarIndex(null);

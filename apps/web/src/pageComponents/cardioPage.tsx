@@ -85,16 +85,18 @@ export default function CardioPage() {
     // Navigate to previous year
     const goToPrevYear = () => {
         const idx = years.indexOf(selectedYear);
-        if (idx < years.length - 1) {
-            setSelectedYear(years[idx + 1]);
+        const prevYear = years[idx + 1];
+        if (prevYear !== undefined) {
+            setSelectedYear(prevYear);
         }
     };
 
     // Navigate to next year
     const goToNextYear = () => {
         const idx = years.indexOf(selectedYear);
-        if (idx > 0) {
-            setSelectedYear(years[idx - 1]);
+        const nextYear = years[idx - 1];
+        if (nextYear !== undefined) {
+            setSelectedYear(nextYear);
         }
     };
 

@@ -30,8 +30,9 @@ export default function TrainingTimeline() {
 
                 // Add cycle to all years it spans
                 for (let year = startYear; year <= endYear; year++) {
-                    if (!acc[year]) acc[year] = [];
-                    acc[year].push(cycle);
+                    const yearCycles = acc[year] ?? [];
+                    yearCycles.push(cycle);
+                    acc[year] = yearCycles;
                 }
                 return acc;
             },

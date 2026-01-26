@@ -15,6 +15,8 @@ interface ViewProps extends WorkoutLogViewProps {
     responsiveColumns: number;
     includeWarmup: boolean;
     setIncludeWarmup: (val: boolean) => void;
+    useStrictCardio: boolean;
+    setUseStrictCardio: (val: boolean) => void;
     selectedYear: string | undefined;
     activeYear: number | undefined;
     selectedMonth: string | undefined;
@@ -42,6 +44,8 @@ export default function WorkoutLogViewJSX({
     responsiveColumns,
     includeWarmup,
     setIncludeWarmup,
+    useStrictCardio: _useStrictCardio,
+    setUseStrictCardio: _setUseStrictCardio,
     activeYear,
     selectedMonth,
     availableYears,

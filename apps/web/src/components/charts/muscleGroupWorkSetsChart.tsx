@@ -29,8 +29,8 @@ export default function MuscleGroupWorkSetsChart({ workouts, exerciseMap, classN
         });
 
         // 2. Aggregate data
-        // Structure: { [muscleGroupId]: [count_day1, count_day2, ...] }
-        const data: Record<string, number[]> = {};
+        // Structure: Map<muscleGroupId, [count_day1, count_day2, ...]>
+        const data = new Map<string, number[]>();
 
         sortedWorkouts.forEach((workout, dateIndex) => {
             workout.exercises.forEach((exercise) => {
@@ -38,9 +38,11 @@ export default function MuscleGroupWorkSetsChart({ workouts, exerciseMap, classN
                 const groupId = metadata?.primaryMuscleGroup || 'other';
                 muscleGroupIds.add(groupId);
 
-                if (!data[groupId]) {
-                    data[groupId] = new Array(sortedWorkouts.length).fill(0);
+                if (!data.has(groupId)) {
+                    data.set(groupId, new Array<number>(sortedWorkouts.length).fill(0));
                 }
+                const groupData = data.get(groupId);
+                if (!groupData) return;
 
                 let workSets = 0;
                 exercise.sets.forEach((set) => {
@@ -49,7 +51,7 @@ export default function MuscleGroupWorkSetsChart({ workouts, exerciseMap, classN
                     }
                 });
 
-                data[groupId][dateIndex] += workSets;
+                groupData[dateIndex] = (groupData[dateIndex] ?? 0) + workSets;
             });
         });
 
@@ -58,7 +60,7 @@ export default function MuscleGroupWorkSetsChart({ workouts, exerciseMap, classN
             const mg = canonicalGroups.find((m) => m.id === groupId);
             return {
                 name: mg?.name || groupId,
-                data: data[groupId],
+                data: data.get(groupId) ?? [],
                 color: mg?.color || '#888888',
                 type: 'column' as const,
             };
@@ -149,16 +151,20 @@ export default function MuscleGroupWorkSetsChart({ workouts, exerciseMap, classN
                 events: {
                     legendItemClick: function (e) {
                         e.preventDefault();
+                        // biome-ignore lint/suspicious/noExplicitAny: Highcharts series context typing
                         const series = this as any;
                         const chart = series.chart;
 
+                        // biome-ignore lint/suspicious/noExplicitAny: Highcharts series array typing
                         const isSolo = series.visible && chart.series.every((s: any) => s === series || !s.visible);
 
                         if (isSolo) {
+                            // biome-ignore lint/suspicious/noExplicitAny: Highcharts series array typing
                             chart.series.forEach((s: any) => {
                                 s.setVisible(true, false);
                             });
                         } else {
+                            // biome-ignore lint/suspicious/noExplicitAny: Highcharts series array typing
                             chart.series.forEach((s: any) => {
                                 s.setVisible(s === series, false);
                             });
@@ -168,6 +174,7 @@ export default function MuscleGroupWorkSetsChart({ workouts, exerciseMap, classN
                 },
             },
         },
+        // biome-ignore lint/suspicious/noExplicitAny: Highcharts series type mismatch
         series: series as any,
     };
 

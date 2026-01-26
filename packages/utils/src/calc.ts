@@ -98,13 +98,15 @@ const createOneRepMaxCalculator =
 		return oneRepMax(set.weight, set.reps);
 	};
 
+export const defaultMaxCalculator: CalculationMethod = {
+	name: "Max Weight",
+	description: "Max weight",
+	formula: "max(weight)",
+	calculator: getMaxWeight,
+};
+
 export const maxCalculators: CalculationMethod[] = [
-	{
-		name: "Max Weight",
-		description: "Max weight",
-		formula: "max(weight)",
-		calculator: getMaxWeight,
-	},
+	defaultMaxCalculator,
 	{
 		name: "Max Volume",
 		description: "Max total volume",

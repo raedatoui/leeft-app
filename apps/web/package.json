@@ -11,7 +11,7 @@
         "start": "next start",
         "lint": "biome lint",
         "format": "biome format --write",
-        "check": "biome check .",
+        "check": "biome check . && tsc --noEmit",
         "check:fix": "biome check --write ."
     },
     "dependencies": {

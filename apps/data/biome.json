@@ -7,7 +7,7 @@
     },
     "files": {
         "ignoreUnknown": false,
-        "includes": ["**", "!dist", "!node_modules", "!data/embeddings/anthropic-embeddings.json", "!data/embeddings/json-embeddings.json"],
+        "includes": ["**", "!dist", "!node_modules", "!data"],
         "maxSize": 26214400
     },
     "formatter": {

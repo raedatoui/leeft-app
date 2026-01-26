@@ -1,12 +1,12 @@
 import { readExerciseMap, readLog } from '../compile/readFiles';
-import type { ExerciseMetadata, SetDetail, Workout } from '../compile/types';
+import type { BaseSet, BaseWorkout, ExerciseMetadata } from '../compile/types';
 
-function calculateExerciseVolume(sets: SetDetail[]): number {
+function calculateExerciseVolume(sets: BaseSet[]): number {
     return sets.reduce((sum, set) => sum + (set.reps ?? 0) * set.weight, 0);
 }
 const CONTENT_WIDTH = 45;
 
-function formatWorkout(workout: Workout, exerciseMap: Map<string, ExerciseMetadata>): string {
+function formatWorkout(workout: BaseWorkout, exerciseMap: Map<string, ExerciseMetadata>): string {
     const date = workout.date;
     const dayStr = `${date.toLocaleDateString('en-US', {
         month: 'short',
@@ -67,7 +67,7 @@ function formatWorkout(workout: Workout, exerciseMap: Map<string, ExerciseMetada
     return output;
 }
 
-function formatWorkoutReduced(workout: Workout, exerciseMap: Map<string, ExerciseMetadata>): string {
+function formatWorkoutReduced(workout: BaseWorkout, exerciseMap: Map<string, ExerciseMetadata>): string {
     const date = workout.date;
     const dayStr = `${date.toLocaleDateString('en-US', {
         month: 'short',

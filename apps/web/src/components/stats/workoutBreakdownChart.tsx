@@ -136,6 +136,7 @@ export default function WorkoutBreakdownChart({ data, aggregateBy, onPointClick,
         },
         tooltip: {
             formatter: function () {
+                // biome-ignore lint/suspicious/noExplicitAny: Highcharts tooltip context typing
                 const ctx = this as any;
                 const pointIndex = ctx.point.index;
                 const tooltipText = tooltips[pointIndex];
@@ -163,8 +164,9 @@ export default function WorkoutBreakdownChart({ data, aggregateBy, onPointClick,
                     click: (event) => {
                         if (onPointClick) {
                             const pointIndex = event.point.index;
-                            if (pointIndex >= 0 && pointIndex < data.length) {
-                                onPointClick(data[pointIndex], pointIndex);
+                            const point = data[pointIndex];
+                            if (point) {
+                                onPointClick(point, pointIndex);
                             }
                         }
                     },

@@ -35,7 +35,7 @@ function groupWorkoutsByDay(liftingWorkouts: Workout[], cardioWorkouts: CardioWo
 
     // Add lifting workouts
     for (const w of liftingWorkouts) {
-        const dateKey = w.date.toISOString().split('T')[0]; // YYYY-MM-DD
+        const dateKey = w.date.toISOString().slice(0, 10); // YYYY-MM-DD
         const existing = dayWorkoutsMap.get(dateKey) || { lifting: [], cardio: [] };
         existing.lifting.push(w);
         dayWorkoutsMap.set(dateKey, existing);
@@ -43,7 +43,7 @@ function groupWorkoutsByDay(liftingWorkouts: Workout[], cardioWorkouts: CardioWo
 
     // Add cardio workouts
     for (const c of cardioWorkouts) {
-        const dateKey = c.date.toISOString().split('T')[0]; // YYYY-MM-DD
+        const dateKey = c.date.toISOString().slice(0, 10); // YYYY-MM-DD
         const existing = dayWorkoutsMap.get(dateKey) || { lifting: [], cardio: [] };
         existing.cardio.push(c);
         dayWorkoutsMap.set(dateKey, existing);
@@ -95,7 +95,7 @@ export function WorkoutProvider({ children }: WorkoutProviderProps) {
                 const canonicalMuscleGroups = uniqueGroups.map((name, index) => ({
                     id: name.toLowerCase().replace(/\s+/g, '-'),
                     name,
-                    color: PALETTE[index % PALETTE.length],
+                    color: PALETTE[index % PALETTE.length] ?? '#888888',
                 }));
 
                 // 2. Update exerciseMap with originalMuscleGroup and primaryMuscleGroup as ID

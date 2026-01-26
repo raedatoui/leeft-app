@@ -198,7 +198,8 @@ export default function ExerciseVolumeChart({
                 point: {
                     events: {
                         mouseOver(this: Point) {
-                            onPointMouseOver(mappedWorkouts[this.index]);
+                            const workout = mappedWorkouts[this.index];
+                            if (workout) onPointMouseOver(workout);
                         },
                         click(e: PointClickEventObject) {
                             if (e.point.series && e.point.x !== undefined) {

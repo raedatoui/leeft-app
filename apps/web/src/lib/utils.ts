@@ -3,7 +3,7 @@ import { twMerge } from 'tailwind-merge';
 import type { Exercise, Workout } from '@/types';
 
 // Re-export shared utilities
-export { dateFromTitle, formatDate, getLastNDaysRange, isWithinInterval, normalizeToMidnightUTC, parseDate } from '@leeft/utils';
+export { dateFromTitle, formatDate, formatYearMonth, getLastNDaysRange, isWithinInterval, normalizeToMidnightUTC, parseDate } from '@leeft/utils';
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -53,7 +53,7 @@ export const computeStats = (workouts: Workout[] = []) => {
                     });
                 } else {
                     stats.occurrences += 1;
-                    const currentMaxWeight = Number.parseFloat(stats.maxWeight.split(' x ')[1]);
+                    const currentMaxWeight = Number.parseFloat(stats.maxWeight.split(' x ')[1] ?? '0');
                     if (bestSet.weight > currentMaxWeight) {
                         stats.maxWeight = formatted;
                     }

@@ -37,7 +37,7 @@ export function generateCombinedCommand(workoutTitle: string, exercise: Exercise
         for (let i = 0; i < exercise.sets.length; i++) {
             const s = exercise.sets[i];
             const e = editedExercise.sets[i];
-            if (s.reps !== e.reps || s.weight !== e.weight) {
+            if (!s || !e || s.reps !== e.reps || s.weight !== e.weight) {
                 setsChanged = true;
                 break;
             }

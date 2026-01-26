@@ -67,10 +67,12 @@ const LiftingCard: FC<LiftingCardProps> = ({
             prev.map((ex) => {
                 if (ex.tempId !== tempId) return ex;
                 const newSets = [...ex.sets];
+                const currentSet = newSets[setIndex];
+                if (!currentSet) return ex;
                 if (field === 'reps') {
-                    newSets[setIndex] = { ...newSets[setIndex], reps: value === '' ? undefined : Number.parseInt(value, 10) };
+                    newSets[setIndex] = { ...currentSet, reps: value === '' ? undefined : Number.parseInt(value, 10) };
                 } else {
-                    newSets[setIndex] = { ...newSets[setIndex], weight: Number.parseFloat(value) || 0 };
+                    newSets[setIndex] = { ...currentSet, weight: Number.parseFloat(value) || 0 };
                 }
                 return { ...ex, sets: newSets };
             })
@@ -89,10 +91,12 @@ const LiftingCard: FC<LiftingCardProps> = ({
             const edited = newMap.get(exerciseId);
             if (edited) {
                 const newSets = [...edited.sets];
+                const currentSet = newSets[setIndex];
+                if (!currentSet) return prev;
                 if (field === 'reps') {
-                    newSets[setIndex] = { ...newSets[setIndex], reps: value === '' ? undefined : Number.parseInt(value, 10) };
+                    newSets[setIndex] = { ...currentSet, reps: value === '' ? undefined : Number.parseInt(value, 10) };
                 } else {
-                    newSets[setIndex] = { ...newSets[setIndex], weight: Number.parseFloat(value) || 0 };
+                    newSets[setIndex] = { ...currentSet, weight: Number.parseFloat(value) || 0 };
                 }
                 newMap.set(exerciseId, { ...edited, sets: newSets });
             }

@@ -348,9 +348,9 @@ const DayCard: FC<DayCardProps> = ({ dayWorkout, exerciseMap, miniMode, cycleId,
 
                 <CardContent className="overflow-y-auto flex-1 p-0 min-w-0">
                     {/* Single lifting */}
-                    {isSingleLifting && (
+                    {liftingStats && (
                         <LiftingSection
-                            workout={liftingWorkouts[0]}
+                            workout={liftingStats}
                             exerciseMap={exerciseMap}
                             miniMode={miniMode}
                             cycleId={cycleId}
@@ -362,27 +362,27 @@ const DayCard: FC<DayCardProps> = ({ dayWorkout, exerciseMap, miniMode, cycleId,
                     )}
 
                     {/* Single cardio */}
-                    {isSingleCardio && (
+                    {cardioStats && (
                         <div className="px-6 pb-3">
-                            {!miniMode && cardioWorkouts[0].effort && <EffortBar effort={cardioWorkouts[0].effort} />}
-                            {!miniMode && (cardioWorkouts[0].averageHeartRate || cardioWorkouts[0].calories || cardioWorkouts[0].steps) && (
+                            {!miniMode && cardioStats.effort && <EffortBar effort={cardioStats.effort} />}
+                            {!miniMode && (cardioStats.averageHeartRate || cardioStats.calories || cardioStats.steps) && (
                                 <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-                                    {cardioWorkouts[0].averageHeartRate && (
+                                    {cardioStats.averageHeartRate && (
                                         <div className="flex items-center gap-2">
                                             <Heart className="h-4 w-4 text-red-500" />
-                                            <span>{cardioWorkouts[0].averageHeartRate} bpm</span>
+                                            <span>{cardioStats.averageHeartRate} bpm</span>
                                         </div>
                                     )}
-                                    {cardioWorkouts[0].calories && (
+                                    {cardioStats.calories && (
                                         <div className="flex items-center gap-2">
                                             <Flame className="h-4 w-4 text-orange-500" />
-                                            <span>{cardioWorkouts[0].calories} cal</span>
+                                            <span>{cardioStats.calories} cal</span>
                                         </div>
                                     )}
-                                    {cardioWorkouts[0].steps && (
+                                    {cardioStats.steps && (
                                         <div className="flex items-center gap-2">
                                             <Footprints className="h-4 w-4 text-muted-foreground" />
-                                            <span className="text-muted-foreground">{cardioWorkouts[0].steps.toLocaleString()} steps</span>
+                                            <span className="text-muted-foreground">{cardioStats.steps.toLocaleString()} steps</span>
                                         </div>
                                     )}
                                 </div>

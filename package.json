@@ -12,7 +12,7 @@
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "format": "pnpm -r format",
-    "check": "pnpm -r check",
+    "check": "pnpm -r --no-bail check",
     "check:fix": "pnpm -r check:fix",
     "deploy:web": "pnpm --filter @leeft/web build && cd apps/web && firebase deploy",
     "pipeline": "bun scripts/pipeline.ts",

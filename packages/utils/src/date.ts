@@ -2,7 +2,11 @@
  * Parse a date string with a specified format
  */
 export function parseDate(dateStr: string, format: string): Date {
-	const parts = dateStr.split(format.includes("-") ? "-" : "/");
+	const parts = dateStr.split(format.includes("-") ? "-" : "/") as [
+		string,
+		string,
+		string,
+	];
 	if (format === "yyyy-MM-dd") {
 		return new Date(
 			Number.parseInt(parts[0], 10),
@@ -60,7 +64,11 @@ export function formatDate(date: Date): string {
  * Parse a date from a workout title format (YYYY-MM-DD)
  */
 export function dateFromTitle(title: string): Date {
-	const [year, month, day] = title.split("-").map(Number);
+	const [year, month, day] = title.split("-").map(Number) as [
+		number,
+		number,
+		number,
+	];
 	return new Date(year, month - 1, day);
 }
 
@@ -76,4 +84,22 @@ export function getLastNDaysRange(days: number): { start: Date; end: Date } {
 	end.setHours(23, 59, 59, 999);
 
 	return { start, end };
+}
+
+/**
+ * Parse a year-month string (YYYY-MM) into a Date
+ */
+export function parseYearMonth(yearMonth: string): Date {
+	const [year, month] = yearMonth.split("-") as [string, string];
+	return new Date(Number.parseInt(year, 10), Number.parseInt(month, 10) - 1);
+}
+
+/**
+ * Format a year-month string (YYYY-MM) as a localized month/year
+ */
+export function formatYearMonth(yearMonth: string): string {
+	return parseYearMonth(yearMonth).toLocaleDateString("en-US", {
+		month: "long",
+		year: "numeric",
+	});
 }

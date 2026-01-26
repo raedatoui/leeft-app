@@ -130,10 +130,12 @@ export const WorkoutSliderList: FC<WorkoutSliderProps> = ({
                         }}
                     >
                         {({ index, style }) => {
+                            const slide = slides[index];
+                            if (!slide) return null;
                             return (
                                 <div style={style} className="px-2 snap-start py-2">
                                     <div className={`grid ${gridCols} gap-4 h-full`}>
-                                        {slides[index].map((dayWorkout) => (
+                                        {slide.map((dayWorkout) => (
                                             <div key={`day-${dayWorkout.date.toISOString()}`} className="overflow-hidden min-h-0">
                                                 <DayCard
                                                     dayWorkout={dayWorkout}

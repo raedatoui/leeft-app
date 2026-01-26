@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import LiftingCard from '@/components/workouts/liftingCard';
-import { maxCalculators, oneRepMaxCalculators } from '@/lib/calc';
+import { defaultMaxCalculator, maxCalculators, oneRepMaxCalculators } from '@/lib/calc';
 import { type ExerciseMetadata, type MappedWorkout, MappedWorkoutSchema, type RepRange, type Workout } from '@/types';
 
 interface Props {
@@ -28,7 +28,7 @@ const workoutDate = (w: Workout): string =>
     });
 
 export default function ExerciseView({ workouts, exercise, exerciseMap, cycleId, hideSelector = false }: Props) {
-    const [selectedMethod, setSelectedMethod] = useState(maxCalculators[0]);
+    const [selectedMethod, setSelectedMethod] = useState(defaultMaxCalculator);
     const [selectedWorkout, setSelectedWorkout] = useState<MappedWorkout | null>(null);
     const [isExpanded, setIsExpanded] = useState(false);
     const [repRange, setRepRange] = useState<RepRange>({ min: 1, max: 50 });
@@ -57,7 +57,7 @@ export default function ExerciseView({ workouts, exercise, exerciseMap, cycleId,
     const minWeight = Math.min(...weights);
     const maxWeight = Math.max(...weights);
 
-    const handleRepRangeChange = (values: number[]) => {
+    const handleRepRangeChange = (values: [number, number]) => {
         setRepRange({
             min: values[0],
             max: values[1],
@@ -70,9 +70,9 @@ export default function ExerciseView({ workouts, exercise, exerciseMap, cycleId,
     };
 
     const handlePointClick = (date: string) => {
-        const filtered = mappedWorkouts.filter((w) => workoutDate(w) === date);
-        if (filtered.length > 0) {
-            setSelectedWorkout(filtered[0]);
+        const workout = mappedWorkouts.find((w) => workoutDate(w) === date);
+        if (workout) {
+            setSelectedWorkout(workout);
             setIsExpanded(true);
         }
     };
