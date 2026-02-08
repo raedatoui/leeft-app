@@ -4,8 +4,7 @@ import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { getUniqueValues } from '@/lib/exercises';
 import { fetchCardioWorkouts, fetchCardioWorkoutsStrict, fetchCycles, fetchExerciseMap, fetchWorkouts } from '@/lib/fetchData';
-import type { CardioWorkout, DayWorkout, ExerciseMap, MappedCycle, Workout } from '@/types';
-import { type MuscleGroup, WorkoutContext } from './contexts';
+import { CardioSettingsContext, type MuscleGroup, WorkoutDataContext, type WorkoutDataContextType } from './contexts';
 
 interface ProvidersProps {
     children: React.ReactNode;
@@ -29,58 +28,14 @@ const PALETTE = [
     '#009688', // Teal
 ];
 
-// Helper to group workouts by day
-function groupWorkoutsByDay(liftingWorkouts: Workout[], cardioWorkouts: CardioWorkout[]): DayWorkout[] {
-    const dayWorkoutsMap = new Map<string, { lifting: Workout[]; cardio: CardioWorkout[] }>();
-
-    // Add lifting workouts
-    for (const w of liftingWorkouts) {
-        const dateKey = w.date.toISOString().slice(0, 10); // YYYY-MM-DD
-        const existing = dayWorkoutsMap.get(dateKey) || { lifting: [], cardio: [] };
-        existing.lifting.push(w);
-        dayWorkoutsMap.set(dateKey, existing);
-    }
-
-    // Add cardio workouts
-    for (const c of cardioWorkouts) {
-        const dateKey = c.date.toISOString().slice(0, 10); // YYYY-MM-DD
-        const existing = dayWorkoutsMap.get(dateKey) || { lifting: [], cardio: [] };
-        existing.cardio.push(c);
-        dayWorkoutsMap.set(dateKey, existing);
-    }
-
-    // Convert to DayWorkout array and sort
-    return Array.from(dayWorkoutsMap.entries())
-        .map(([dateKey, { lifting, cardio: cardioList }]) => ({
-            date: new Date(dateKey),
-            liftingWorkouts: lifting.sort((a, b) => a.date.getTime() - b.date.getTime()),
-            cardioWorkouts: cardioList.sort((a, b) => a.date.getTime() - b.date.getTime()),
-        }))
-        .sort((a, b) => a.date.getTime() - b.date.getTime());
-}
-
 export function WorkoutProvider({ children }: WorkoutProviderProps) {
-    const [workouts, setWorkouts] = useState<Workout[]>([]);
-    const [cardioWorkouts, setCardioWorkouts] = useState<CardioWorkout[]>([]);
-    const [cardioWorkoutsStrict, setCardioWorkoutsStrict] = useState<CardioWorkout[]>([]);
-    const [allWorkouts, setAllWorkouts] = useState<DayWorkout[]>([]);
-    const [allWorkoutsStrict, setAllWorkoutsStrict] = useState<DayWorkout[]>([]);
-    const [exerciseMap, setExerciseMap] = useState<ExerciseMap>(new Map());
-    const [cycles, setCycles] = useState<MappedCycle[]>([]);
-    const [muscleGroups, setMuscleGroups] = useState<MuscleGroup[]>([]);
-    const [categories, setCategories] = useState<string[]>([]);
-    const [equipmentList, setEquipmentList] = useState<string[]>([]);
-
-    const [isLoading, setIsLoading] = useState(true);
+    const [data, setData] = useState<WorkoutDataContextType | null>(null);
     const [error, setError] = useState<Error | null>(null);
-
-    // Strict mode toggle - default to strict (more accurate)
     const [useStrictCardio, setUseStrictCardio] = useState(true);
 
     useEffect(() => {
         async function fetchData() {
             try {
-                // Fetch all data in parallel (including both cardio versions)
                 const [wo, cardio, cardioStrict, m, cy] = await Promise.all([
                     fetchWorkouts(),
                     fetchCardioWorkouts(),
@@ -89,16 +44,14 @@ export function WorkoutProvider({ children }: WorkoutProviderProps) {
                     fetchCycles(),
                 ]);
 
-                // 1. Extract unique values and canonicalize muscle groups
                 const { muscleGroups: uniqueGroups, categories: uniqueCategories, equipmentList: uniqueEquipment } = getUniqueValues(m);
 
-                const canonicalMuscleGroups = uniqueGroups.map((name, index) => ({
+                const canonicalMuscleGroups: MuscleGroup[] = uniqueGroups.map((name, index) => ({
                     id: name.toLowerCase().replace(/\s+/g, '-'),
                     name,
                     color: PALETTE[index % PALETTE.length] ?? '#888888',
                 }));
 
-                // 2. Update exerciseMap with originalMuscleGroup and primaryMuscleGroup as ID
                 const updatedExerciseMap = new Map();
                 for (const [id, ex] of m.entries()) {
                     const muscleGroupName = ex.primaryMuscleGroup;
@@ -110,66 +63,39 @@ export function WorkoutProvider({ children }: WorkoutProviderProps) {
                     });
                 }
 
-                // Map cycles
                 const mappedCycles = cy.map((i) => ({
                     ...i,
                     workouts: wo.filter((w) => i.workouts?.includes(w.uuid)),
                 }));
 
-                // Group workouts by day for both permissive and strict
-                const combined = groupWorkoutsByDay(wo, cardio);
-                const combinedStrict = groupWorkoutsByDay(wo, cardioStrict);
-
-                setWorkouts(wo);
-                setCardioWorkouts(cardio);
-                setCardioWorkoutsStrict(cardioStrict);
-                setAllWorkouts(combined);
-                setAllWorkoutsStrict(combinedStrict);
-                setExerciseMap(updatedExerciseMap);
-                setMuscleGroups(canonicalMuscleGroups);
-                setCategories(uniqueCategories);
-                setEquipmentList(uniqueEquipment);
-                setCycles(mappedCycles);
-                setIsLoading(false);
+                setData({
+                    workouts: wo,
+                    cardioWorkouts: cardio,
+                    cardioWorkoutsStrict: cardioStrict,
+                    exerciseMap: updatedExerciseMap,
+                    muscleGroups: canonicalMuscleGroups,
+                    categories: uniqueCategories,
+                    equipmentList: uniqueEquipment,
+                    cycles: mappedCycles,
+                });
             } catch (e) {
                 setError(e instanceof Error ? e : new Error('An error occurred fetching data'));
-                setIsLoading(false);
             }
         }
 
         fetchData();
-    }, []); // Empty dependency array means this runs once on mount
+    }, []);
 
-    // Compute active workouts based on strict mode toggle
-    const activeCardioWorkouts = useMemo(() => {
-        return useStrictCardio ? cardioWorkoutsStrict : cardioWorkouts;
-    }, [useStrictCardio, cardioWorkouts, cardioWorkoutsStrict]);
+    const cardioSettingsValue = useMemo(() => ({ useStrictCardio, setUseStrictCardio }), [useStrictCardio]);
 
-    const activeAllWorkouts = useMemo(() => {
-        return useStrictCardio ? allWorkoutsStrict : allWorkouts;
-    }, [useStrictCardio, allWorkouts, allWorkoutsStrict]);
+    if (error) return <div className="p-8 text-center text-red-500">Error: {error.message}</div>;
+    if (!data) return <div className="p-8 text-center">Loading...</div>;
 
-    const value = {
-        workouts,
-        cardioWorkouts,
-        cardioWorkoutsStrict,
-        allWorkouts,
-        allWorkoutsStrict,
-        exerciseMap,
-        muscleGroups,
-        categories,
-        equipmentList,
-        cycles,
-        isLoading,
-        error,
-        // Strict mode
-        useStrictCardio,
-        setUseStrictCardio,
-        activeCardioWorkouts,
-        activeAllWorkouts,
-    };
-
-    return <WorkoutContext.Provider value={value}>{children}</WorkoutContext.Provider>;
+    return (
+        <WorkoutDataContext.Provider value={data}>
+            <CardioSettingsContext.Provider value={cardioSettingsValue}>{children}</CardioSettingsContext.Provider>
+        </WorkoutDataContext.Provider>
+    );
 }
 
 export default function Providers({ children }: ProvidersProps) {

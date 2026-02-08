@@ -9,14 +9,15 @@ import WorkoutList from '@/components/stats/liftingWorkoutList';
 import OverviewStats from '@/components/stats/overviewStats';
 import WorkoutBreakdownChart from '@/components/stats/workoutBreakdownChart';
 import { Button } from '@/components/ui/button';
-import { useWorkouts } from '@/lib/contexts';
+import { useActiveCardio, useWorkoutData } from '@/lib/contexts';
 import { type AggregateBy, aggregateForChart, type ChartDataPoint, computeOverviewStats, filterCardioWorkoutsByDateRange } from '@/lib/statsUtils';
 import { filterWorkoutsByDateRange } from '@/lib/utils';
 
 const MONTH_NAMES_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 export default function StatsPage() {
-    const { workouts, activeCardioWorkouts: cardioWorkouts, exerciseMap, isLoading, error } = useWorkouts();
+    const { workouts, exerciseMap } = useWorkoutData();
+    const cardioWorkouts = useActiveCardio();
 
     // Date filter state
     const currentYear = new Date().getFullYear();
@@ -248,9 +249,6 @@ export default function StatsPage() {
     const chartData = useMemo(() => {
         return aggregateForChart(chartLiftingWorkouts, chartCardioWorkouts, aggregateBy, dateRange);
     }, [chartLiftingWorkouts, chartCardioWorkouts, aggregateBy, dateRange]);
-
-    if (isLoading) return <div className="p-8 text-center">Loading...</div>;
-    if (error) return <div className="p-8 text-center text-red-500">Error: {error.message}</div>;
 
     return (
         <PageTemplate

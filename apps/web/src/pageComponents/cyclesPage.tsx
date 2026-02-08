@@ -8,7 +8,7 @@ import CycleDetailView from '@/components/cycles/detail';
 import CycleHeader from '@/components/cycles/header';
 import PageTemplate from '@/components/layout/pageTemplate';
 import { Button } from '@/components/ui/button';
-import { useWorkouts } from '@/lib/contexts';
+import { useWorkoutData } from '@/lib/contexts';
 import { cn } from '@/lib/utils';
 import type { MappedCycle } from '@/types';
 
@@ -18,7 +18,7 @@ export default function TrainingTimeline() {
     const [activeType, setActiveType] = useState<string | null>(null);
     const [selectedCycleUuid, setSelectedCycleUuid] = useState<string | null>(null);
 
-    const { cycles: rawCycles, exerciseMap, isLoading, error } = useWorkouts();
+    const { cycles: rawCycles, exerciseMap } = useWorkoutData();
 
     // Group cycles by year (cycles spanning multiple years appear in each year)
     const cyclesByYear = useMemo(() => {
@@ -88,9 +88,6 @@ export default function TrainingTimeline() {
 
     const totalWorkouts = yearStats.workoutUuids.size;
     const totalBreakDays = yearStats.breakDays;
-
-    if (isLoading) return <div>Loading...</div>;
-    if (error) return <div>Error: {error.message}</div>;
 
     // Generate months for the visible year
     const baseMonths = Array.from({ length: 12 }, (_, i) => {

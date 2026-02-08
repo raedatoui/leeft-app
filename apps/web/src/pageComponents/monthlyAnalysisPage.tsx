@@ -8,7 +8,7 @@ import { ControlCard } from '@/components/common/controlCard';
 import PageTemplate from '@/components/layout/pageTemplate';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { useWorkouts } from '@/lib/contexts';
+import { useActiveCardio, useWorkoutData } from '@/lib/contexts';
 
 const groupByMonth = <T extends { date: Date }>(items: T[]) => {
     return items.reduce(
@@ -23,7 +23,8 @@ const groupByMonth = <T extends { date: Date }>(items: T[]) => {
 };
 
 export default function WorkoutAnalysis() {
-    const { workouts, activeCardioWorkouts, exerciseMap, isLoading, error } = useWorkouts();
+    const { workouts, exerciseMap } = useWorkoutData();
+    const activeCardioWorkouts = useActiveCardio();
     const [includeWarmup, setIncludeWarmup] = useState(true);
 
     // Compute grouped data
@@ -60,10 +61,6 @@ export default function WorkoutAnalysis() {
             dateRange: range,
         };
     }, [workouts, activeCardioWorkouts, includeWarmup]);
-
-    if (isLoading) return <div>Loading...</div>;
-
-    if (error) return <div>Error: {error.message}</div>;
 
     return (
         <PageTemplate

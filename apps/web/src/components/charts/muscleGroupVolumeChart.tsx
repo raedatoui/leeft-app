@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import LiftingCard from '@/components/workouts/liftingCard';
 import { chartColors as colors, chartFonts as fonts } from '@/lib/chart-theme';
-import { useWorkouts } from '@/lib/contexts';
+import { useWorkoutData } from '@/lib/contexts';
 import type { ExerciseMap, Workout } from '@/types';
 
 interface MuscleGroupVolumeChartProps {
@@ -28,7 +28,7 @@ const workoutDate = (w: Workout): string =>
     });
 
 export default function MuscleGroupVolumeChart({ workouts, muscleGroup: muscleGroupId, exerciseMap }: MuscleGroupVolumeChartProps) {
-    const { muscleGroups } = useWorkouts();
+    const { muscleGroups } = useWorkoutData();
     const [includeWarmup, setIncludeWarmup] = useState(true);
     const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
     const [isExpanded, setIsExpanded] = useState(false);

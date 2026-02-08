@@ -1,10 +1,10 @@
 'use client';
 
+import { BarChart3, Calendar, ClipboardList, Dumbbell, Heart, ListTree } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, type ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { ClipboardList, Dumbbell, Heart, BarChart3, Calendar, ListTree } from 'lucide-react';
 
 interface HeaderProps {
     title: string;
@@ -29,12 +29,7 @@ function HamburgerIcon({ open }: { open: boolean }) {
                     open ? 'translate-y-[3px] rotate-45' : '-translate-y-1'
                 )}
             />
-            <span
-                className={cn(
-                    'block h-0.5 w-5 bg-current transition-all duration-300 ease-in-out',
-                    open ? 'opacity-0 scale-0' : 'opacity-100'
-                )}
-            />
+            <span className={cn('block h-0.5 w-5 bg-current transition-all duration-300 ease-in-out', open ? 'opacity-0 scale-0' : 'opacity-100')} />
             <span
                 className={cn(
                     'block h-0.5 w-5 bg-current transition-all duration-300 ease-in-out',
@@ -54,12 +49,8 @@ export default function Header({ title, children }: HeaderProps) {
         const base = mobile
             ? 'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors'
             : 'flex items-center gap-1.5 transition-colors hover:text-foreground';
-        const activeClass = mobile
-            ? 'bg-primary/10 text-primary font-medium'
-            : 'text-primary font-medium';
-        const inactiveClass = mobile
-            ? 'text-muted-foreground hover:bg-muted'
-            : 'text-muted-foreground';
+        const activeClass = mobile ? 'bg-primary/10 text-primary font-medium' : 'text-primary font-medium';
+        const inactiveClass = mobile ? 'text-muted-foreground hover:bg-muted' : 'text-muted-foreground';
         return cn(base, isActive ? activeClass : inactiveClass);
     };
 
@@ -103,12 +94,7 @@ export default function Header({ title, children }: HeaderProps) {
                     >
                         <nav className="p-2 flex flex-col gap-1">
                             {navItems.map(({ href, label, icon: Icon }) => (
-                                <Link
-                                    key={href}
-                                    href={href}
-                                    className={getLinkClassName(href, true)}
-                                    onClick={() => setMenuOpen(false)}
-                                >
+                                <Link key={href} href={href} className={getLinkClassName(href, true)} onClick={() => setMenuOpen(false)}>
                                     <Icon className="w-5 h-5" />
                                     {label}
                                 </Link>

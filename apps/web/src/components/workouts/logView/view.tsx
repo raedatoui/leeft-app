@@ -33,8 +33,6 @@ interface ViewProps extends WorkoutLogViewProps {
 export default function WorkoutLogViewJSX({
     workouts,
     exerciseMap,
-    isLoading,
-    error,
     miniMode,
     setMiniMode,
     currentIndex,
@@ -57,9 +55,6 @@ export default function WorkoutLogViewJSX({
     jumpToYear,
     jumpToMonth,
 }: ViewProps) {
-    if (isLoading) return <div>Loading...</div>;
-    if (error) return <div>Error: {error.message}</div>;
-
     return (
         <PageTemplate
             title="Workouts Log"

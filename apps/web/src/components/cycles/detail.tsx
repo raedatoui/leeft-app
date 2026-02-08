@@ -7,7 +7,7 @@ import ExerciseView from '@/components/exercises/exerciseItem';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { LiftingWorkoutSlider, SliderControls } from '@/components/workouts/slider';
-import { useWorkouts } from '@/lib/contexts';
+import { useWorkoutData } from '@/lib/contexts';
 import { cn } from '@/lib/utils';
 import type { ExerciseMap, MappedCycle } from '@/types';
 
@@ -17,7 +17,7 @@ interface CycleDetailViewProps {
 }
 
 export default function CycleDetailView({ cycle, exerciseMap }: CycleDetailViewProps) {
-    const { muscleGroups } = useWorkouts();
+    const { muscleGroups } = useWorkoutData();
     const [miniMode, setMiniMode] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [slidesToShow, setSlidesToShow] = useState(4);

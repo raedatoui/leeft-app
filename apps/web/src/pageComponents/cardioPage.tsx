@@ -11,7 +11,7 @@ import { ControlCard } from '@/components/common/controlCard';
 import PageTemplate from '@/components/layout/pageTemplate';
 import { Button } from '@/components/ui/button';
 import { cardioColors, cardioIcons } from '@/lib/cardio-theme';
-import { useWorkouts } from '@/lib/contexts';
+import { useActiveCardio } from '@/lib/contexts';
 import type { CardioType, CardioWorkout } from '@/types';
 
 // Display names for cleaner UI
@@ -27,7 +27,7 @@ export default function CardioPage() {
     const [selectedYear, setSelectedYear] = useState(currentYear);
     const [activeType, setActiveType] = useState<CardioType | null>(null);
 
-    const { activeCardioWorkouts: cardioWorkouts, isLoading, error } = useWorkouts();
+    const cardioWorkouts = useActiveCardio();
 
     // Group workouts by year
     const workoutsByYear = useMemo(() => {
@@ -99,9 +99,6 @@ export default function CardioPage() {
             setSelectedYear(nextYear);
         }
     };
-
-    if (isLoading) return <div className="p-8 text-center">Loading...</div>;
-    if (error) return <div className="p-8 text-center text-red-500">Error: {error.message}</div>;
 
     return (
         <PageTemplate

@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useWorkouts } from '@/lib/contexts';
+import { useActiveAllWorkouts, useCardioSettings, useWorkoutData } from '@/lib/contexts';
 import WorkoutLogViewJSX from './view';
 
 export default function WorkoutLogView() {
-    const { activeAllWorkouts: allWorkouts, exerciseMap, isLoading, error, useStrictCardio, setUseStrictCardio } = useWorkouts();
+    const allWorkouts = useActiveAllWorkouts();
+    const { exerciseMap } = useWorkoutData();
+    const { useStrictCardio, setUseStrictCardio } = useCardioSettings();
     const [miniMode, setMiniMode] = useState(true);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [slidesToShow, setSlidesToShow] = useState(4);
@@ -125,8 +127,6 @@ export default function WorkoutLogView() {
         <WorkoutLogViewJSX
             workouts={allWorkouts}
             exerciseMap={exerciseMap}
-            isLoading={isLoading}
-            error={error}
             miniMode={miniMode}
             setMiniMode={setMiniMode}
             currentIndex={currentIndex}

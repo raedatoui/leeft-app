@@ -5,7 +5,7 @@ import HighchartsReact from 'highcharts-react-official';
 import { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { chartColors, chartFonts } from '@/lib/chart-theme';
-import { useWorkouts } from '@/lib/contexts';
+import { useWorkoutData } from '@/lib/contexts';
 import type { ExerciseMap, Workout } from '@/types';
 
 interface MuscleGroupWorkSetsChartProps {
@@ -15,7 +15,7 @@ interface MuscleGroupWorkSetsChartProps {
 }
 
 export default function MuscleGroupWorkSetsChart({ workouts, exerciseMap, className }: MuscleGroupWorkSetsChartProps) {
-    const { muscleGroups: canonicalGroups } = useWorkouts();
+    const { muscleGroups: canonicalGroups } = useWorkoutData();
     const { categories, series } = useMemo(() => {
         // 1. Collect all muscle group IDs and dates
         const muscleGroupIds = new Set<string>();

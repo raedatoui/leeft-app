@@ -2,14 +2,15 @@
 
 import { Heart, HeartOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useWorkouts } from '@/lib/contexts';
+import { useCardioSettings, useWorkoutData } from '@/lib/contexts';
 
 interface CardioModeToggleProps {
     showCounts?: boolean;
 }
 
 export function CardioModeToggle({ showCounts = true }: CardioModeToggleProps) {
-    const { useStrictCardio, setUseStrictCardio, cardioWorkouts, cardioWorkoutsStrict } = useWorkouts();
+    const { cardioWorkouts, cardioWorkoutsStrict } = useWorkoutData();
+    const { useStrictCardio, setUseStrictCardio } = useCardioSettings();
 
     const permissiveCount = cardioWorkouts.length;
     const strictCount = cardioWorkoutsStrict.length;

@@ -8,10 +8,10 @@ import PageTemplate from '@/components/layout/pageTemplate';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useWorkouts } from '@/lib/contexts';
+import { useWorkoutData } from '@/lib/contexts';
 
 export default function ExercisesPage() {
-    const { exerciseMap, muscleGroups: canonicalMuscleGroups, categories, equipmentList, isLoading } = useWorkouts();
+    const { exerciseMap, muscleGroups: canonicalMuscleGroups, categories, equipmentList } = useWorkoutData();
     const [muscleFilter, setMuscleFilter] = useState<string>('all');
     const [categoryFilter, setCategoryFilter] = useState<string>('all');
     const [equipmentFilter, setEquipmentFilter] = useState<string>('all');
@@ -51,21 +51,6 @@ export default function ExercisesPage() {
             equipmentCount: equips.size,
         };
     }, [filteredExercises]);
-
-    if (isLoading) {
-        return (
-            <PageTemplate
-                title="Exercises"
-                stickyHeader={
-                    <div className="flex flex-col gap-6">
-                        <div className="mt-6">Loading...</div>
-                    </div>
-                }
-            >
-                <div />
-            </PageTemplate>
-        );
-    }
 
     return (
         <PageTemplate

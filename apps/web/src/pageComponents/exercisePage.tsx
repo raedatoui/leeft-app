@@ -7,14 +7,12 @@ import ExerciseView from '@/components/exercises/exerciseItem';
 import PageTemplate from '@/components/layout/pageTemplate';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useWorkouts } from '@/lib/contexts';
+import { useWorkoutData } from '@/lib/contexts';
 
 export default function ExercisePage() {
     const params = useParams();
     const searchParams = useSearchParams();
-    const { workouts, exerciseMap, cycles, isLoading, error } = useWorkouts();
-    if (isLoading) return <div>Loading...</div>;
-    if (error) return <div>Error: {error.message}</div>;
+    const { workouts, exerciseMap, cycles } = useWorkoutData();
 
     const exerciseId = params?.id;
     const exercise = exerciseMap.get(exerciseId?.toString() ?? '');
