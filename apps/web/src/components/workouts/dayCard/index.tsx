@@ -21,15 +21,6 @@ interface DayCardProps {
     includeWarmup?: boolean;
 }
 
-const formatExerciseName = (name: string) => {
-    return name
-        .replace(/^TH:\s*/i, '')
-        .replace(/\s*-\s*Barbell$/i, ' (BB)')
-        .replace(/\s*-\s*Dumbbell$/i, ' (DB)')
-        .replace(/\s*-\s*Cable$/i, ' (Cable)')
-        .replace(/\s*-\s*Machine$/i, ' (Mach)');
-};
-
 // Exercise row component
 const ExerciseRow: FC<{
     exercise: Exercise;
@@ -52,7 +43,7 @@ const ExerciseRow: FC<{
                         )}
                         onClick={() => onExerciseClick(exercise.exerciseId.toString())}
                     >
-                        {formatExerciseName(metadata?.name ?? `Exercise ${exercise.exerciseId}`)}
+                        {metadata?.name ?? `Exercise ${exercise.exerciseId}`}
                     </button>
                 ) : (
                     <Link
@@ -62,7 +53,7 @@ const ExerciseRow: FC<{
                             isFocused ? 'text-primary' : 'text-primary/80'
                         )}
                     >
-                        {formatExerciseName(metadata?.name ?? `Exercise ${exercise.exerciseId}`)}
+                        {metadata?.name ?? `Exercise ${exercise.exerciseId}`}
                     </Link>
                 )}
                 {miniMode && <div className="text-sm text-muted-foreground">{formatExerciseSets(exercise, includeWarmup)}</div>}
@@ -286,20 +277,17 @@ const DayCard: FC<DayCardProps> = ({ dayWorkout, exerciseMap, miniMode, cycleId,
         <div className="relative w-full h-full min-w-0">
             <Card className="rounded-xl font-mono w-full h-full flex flex-col min-w-0">
                 <CardHeader className="p-3 space-y-2">
-                    <div className="flex items-center justify-between">
-                        {headerIcons.length > 0 ? (
-                            <div className="flex gap-1">
+                    <div className="relative flex items-center justify-center">
+                        {headerIcons.length > 0 && (
+                            <div className="absolute left-0 flex gap-1">
                                 {headerIcons.map(({ icon: Icon, color, bg, key }) => (
-                                    <div key={key} className="p-2 rounded-lg" style={{ backgroundColor: bg }}>
-                                        <Icon className="h-5 w-5" style={{ color }} />
+                                    <div key={key} className="p-1.5 rounded-md" style={{ backgroundColor: bg }}>
+                                        <Icon className="h-3.5 w-3.5" style={{ color }} />
                                     </div>
                                 ))}
                             </div>
-                        ) : (
-                            <div className="w-8" />
                         )}
-                        <h2 className="text-lg font-semibold text-center flex-1">{dateDisplay}</h2>
-                        <div className="w-8" />
+                        <h2 className="text-lg font-semibold text-center">{dateDisplay}</h2>
                     </div>
 
                     {/* Stats row */}
