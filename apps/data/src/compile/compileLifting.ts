@@ -37,7 +37,7 @@ function compileTrainHeroicWorkouts(): BaseWorkout[] {
 
             raw.saved_workout.workoutSets.forEach((ws) => {
                 const ex = ws.workoutSetExercises[0];
-                if (!exerciseMap.has(ex.exercise_id)) {
+                if (ex && !exerciseMap.has(ex.exercise_id)) {
                     const metadata = ExerciseMetadataSchema.parse({
                         id: ex.exercise_id,
                         slug: ex.exercise_title.toLowerCase().replace(/[^a-z0-9]+/g, '_'),

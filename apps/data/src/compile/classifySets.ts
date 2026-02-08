@@ -14,12 +14,14 @@ interface ClassifyOptions {
  */
 function isStillWarmingUp(sets: BaseSet[], currentIndex: number): boolean {
     const current = sets[currentIndex];
-    const currentReps = current.reps ?? 0;
+    const currentReps = current?.reps ?? 0;
 
     for (let i = currentIndex + 1; i < sets.length; i++) {
         const futureSet = sets[i];
-        const futureReps = futureSet.reps ?? 0;
-
+        const futureReps = futureSet?.reps ?? 0;
+        if (!futureSet || !current) {
+            continue;
+        }
         // If a future set has both higher weight AND higher reps, we're still warming up
         if (futureSet.weight > current.weight && futureReps > currentReps) {
             return true;

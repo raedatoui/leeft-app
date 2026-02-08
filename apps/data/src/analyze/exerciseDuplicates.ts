@@ -68,8 +68,8 @@ export function fuzzy() {
 
     for (let i = 0; i < exercises.length; i++) {
         for (let j = i + 1; j < exercises.length; j++) {
-            const name1 = exercises[i].name;
-            const name2 = exercises[j].name;
+            const name1 = exercises[i]?.name ?? '';
+            const name2 = exercises[j]?.name ?? '';
             const idKey = [name1, name2].sort().join('|');
 
             if (processed.has(idKey)) continue;
@@ -114,7 +114,7 @@ export function full() {
         for (let j = i + 1; j < exercises.length; j++) {
             const ex1 = exercises[i];
             const ex2 = exercises[j];
-
+            if (!ex1 || !ex2) continue;
             const name1 = ex1.name.toLowerCase();
             const name2 = ex2.name.toLowerCase();
 
@@ -231,7 +231,7 @@ export function semantic() {
             for (let j = i + 1; j < groupExercises.length; j++) {
                 const ex1 = groupExercises[i];
                 const ex2 = groupExercises[j];
-
+                if (!ex1 || !ex2) continue;
                 const norm1 = normalizeName(ex1.name);
                 const norm2 = normalizeName(ex2.name);
 

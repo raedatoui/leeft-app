@@ -64,7 +64,9 @@ export async function runClassifyExercise(exerciseName: string): Promise<Classif
 
     const rawResponse = await response.json();
     const data = ClaudeResponseSchema.parse(rawResponse);
-
+    if (!data.content[0] || data.content.length === 0) {
+        throw new Error(`No content in Claude's response for exercise "${exerciseName}"`);
+    }
     try {
         const parsedResult = JSON.parse(data.content[0].text);
         return ClassificationResultSchema.parse(parsedResult);

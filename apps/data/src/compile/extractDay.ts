@@ -24,17 +24,22 @@ export function parseAbr(abr: string): ParsedSet[] {
     if (repsSetsPart.includes(':')) {
         // Handle time format, e.g., "1 x 11:00"
         const [setsCount, time] = repsSetsPart.split('x').map((part) => part.trim());
-        const defaultWeight = weights.length > 0 ? weights[0] : 0;
-        for (let i = 0; i < Number.parseInt(setsCount, 10); i++) {
-            sets.push({ time, weight: weights[i % weights.length] || defaultWeight });
-        }
+        if (setsCount) {
+            const defaultWeight = weights.length > 0 ? weights[0] : 0;
+            for (let i = 0; i < Number.parseInt(setsCount, 10); i++) {
+                const weight = (weights.length > 0 ? weights[i % weights.length] : defaultWeight) ?? 0;
+                sets.push({ time, weight });
+            }
+        } else throw new Error(`Invalid sets count in abr: ${abr}`);
     } else if (repsSetsPart.includes('x')) {
         // Format like "nxm"
         const [setsCount, reps] = repsSetsPart.split('x').map(Number);
-        for (let i = 0; i < setsCount; i++) {
-            const weight = weights.length > 0 ? weights[i % weights.length] : 0;
-            sets.push({ reps, weight });
-        }
+        if (setsCount) {
+            for (let i = 0; i < setsCount; i++) {
+                const weight = (weights.length > 0 ? weights[i % weights.length] : 0) ?? 0;
+                sets.push({ reps, weight });
+            }
+        } else throw new Error(`Invalid sets count in abr: ${abr}`);
     } else {
         // Explicit list of reps
         const repsList = repsSetsPart.split(',').map(Number);
