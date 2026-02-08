@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import ExerciseVolumeChart from '@/components/charts/exerciseVolumeChart';
+import dynamic from 'next/dynamic';
+
+const ExerciseVolumeChart = dynamic(() => import('@/components/charts/exerciseVolumeChart'), { ssr: false });
 import { ControlCard } from '@/components/common/controlCard';
 import ExerciseSelector from '@/components/exercises/exerciseSelector';
 import { Button } from '@/components/ui/button';

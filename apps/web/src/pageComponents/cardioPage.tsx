@@ -2,9 +2,11 @@
 
 import { ChevronLeft, ChevronRight, Timer } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import CardioDistributionChart from '@/components/cardio/distributionChart';
+import dynamic from 'next/dynamic';
 import CardioStats from '@/components/cardio/stats';
-import CardioTrendsChart from '@/components/cardio/trendsChart';
+
+const CardioDistributionChart = dynamic(() => import('@/components/cardio/distributionChart'), { ssr: false });
+const CardioTrendsChart = dynamic(() => import('@/components/cardio/trendsChart'), { ssr: false });
 import CardioWorkoutCard from '@/components/cardio/workoutCard';
 import { CardioModeToggle } from '@/components/common/cardioModeToggle';
 import { ControlCard } from '@/components/common/controlCard';

@@ -7,7 +7,9 @@ import { ControlCard } from '@/components/common/controlCard';
 import PageTemplate from '@/components/layout/pageTemplate';
 import WorkoutList from '@/components/stats/liftingWorkoutList';
 import OverviewStats from '@/components/stats/overviewStats';
-import WorkoutBreakdownChart from '@/components/stats/workoutBreakdownChart';
+import dynamic from 'next/dynamic';
+
+const WorkoutBreakdownChart = dynamic(() => import('@/components/stats/workoutBreakdownChart'), { ssr: false });
 import { Button } from '@/components/ui/button';
 import { useActiveCardio, useWorkoutData } from '@/lib/contexts';
 import { type AggregateBy, aggregateForChart, type ChartDataPoint, computeOverviewStats, filterCardioWorkoutsByDateRange } from '@/lib/statsUtils';

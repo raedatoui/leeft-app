@@ -1,8 +1,10 @@
 import { X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
-import MuscleGroupVolumeChart from '@/components/charts/muscleGroupVolumeChart';
-import MuscleGroupWorkSetsChart from '@/components/charts/muscleGroupWorkSetsChart';
+import dynamic from 'next/dynamic';
+
+const MuscleGroupVolumeChart = dynamic(() => import('@/components/charts/muscleGroupVolumeChart'), { ssr: false });
+const MuscleGroupWorkSetsChart = dynamic(() => import('@/components/charts/muscleGroupWorkSetsChart'), { ssr: false });
 import ExerciseView from '@/components/exercises/exerciseItem';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
