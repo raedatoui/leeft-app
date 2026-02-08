@@ -19,10 +19,12 @@
     "pipeline:sync": "bun scripts/pipeline.ts --sync-only",
     "pipeline:sh": "./scripts/shell/pipeline.sh",
     "upload": "bun scripts/upload.ts",
-    "upload:sh": "./scripts/shell/upload.sh"
+    "upload:sh": "./scripts/shell/upload.sh",
+    "knip": "knip"
   },
   "devDependencies": {
     "@types/node": "^25.0.6",
+    "knip": "^5.66.0",
     "typescript": "catalog:"
   }
 }

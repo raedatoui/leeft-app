@@ -23,6 +23,12 @@ importers:
       '@types/node':
         specifier: ^25.0.6
         version: 25.0.6
+      knip:
+        specifier: ^5.66.0
+        version: 5.78.0(@types/node@25.0.6)(typescript@5.9.3)
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
   apps/data:
     dependencies:
@@ -81,9 +87,6 @@ importers:
       '@types/uuid':
         specifier: ^10.0.0
         version: 10.0.0
-      knip:
-        specifier: ^5.66.0
-        version: 5.78.0(@types/node@24.10.4)(typescript@5.9.3)
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -3180,10 +3183,10 @@ snapshots:
       jwa: 2.0.1
       safe-buffer: 5.2.1
 
-  knip@5.78.0(@types/node@24.10.4)(typescript@5.9.3):
+  knip@5.78.0(@types/node@25.0.6)(typescript@5.9.3):
     dependencies:
       '@nodelib/fs.walk': 1.2.8
-      '@types/node': 24.10.4
+      '@types/node': 25.0.6
       fast-glob: 3.3.3
       formatly: 0.3.0
       jiti: 2.6.1
