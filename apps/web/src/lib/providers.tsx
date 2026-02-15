@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { getUniqueValues } from '@/lib/exercises';
 import { fetchCardioWorkouts, fetchCardioWorkoutsStrict, fetchCycles, fetchExerciseMap, fetchWorkouts } from '@/lib/fetchData';
 import { CardioSettingsContext, type MuscleGroup, WorkoutDataContext, type WorkoutDataContextType } from './contexts';
+import Loader from '@/components/common/loader';
 
 interface ProvidersProps {
     children: React.ReactNode;
@@ -89,7 +90,7 @@ export function WorkoutProvider({ children }: WorkoutProviderProps) {
     const cardioSettingsValue = useMemo(() => ({ useStrictCardio, setUseStrictCardio }), [useStrictCardio]);
 
     if (error) return <div className="p-8 text-center text-red-500">Error: {error.message}</div>;
-    if (!data) return <div className="p-8 text-center">Loading...</div>;
+    if (!data) return <Loader />;
 
     return (
         <WorkoutDataContext.Provider value={data}>

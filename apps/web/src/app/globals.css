@@ -88,6 +88,14 @@
         @apply text-center md:text-left;
     }
 
+    @keyframes loader-bar {
+        0%, 100% { height: 12px; opacity: 0.4; }
+        50% { height: 36px; opacity: 1; }
+    }
+    .animate-loader-bar {
+        animation: loader-bar 0.8s ease-in-out infinite;
+    }
+
     .bg-grid-pattern {
         background-image:
             linear-gradient(to right, hsl(var(--muted-foreground) / 0.2) 1px, transparent 1px),
