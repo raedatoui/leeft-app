@@ -23,8 +23,8 @@
     "knip": "knip"
   },
   "devDependencies": {
-    "@types/node": "^25.0.6",
-    "knip": "^5.66.0",
+    "@types/node": "^25.3.0",
+    "knip": "^5.85.0",
     "typescript": "catalog:"
   }
 }

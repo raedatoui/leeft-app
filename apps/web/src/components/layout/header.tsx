@@ -26,14 +26,14 @@ function HamburgerIcon({ open }: { open: boolean }) {
             <span
                 className={cn(
                     'block h-0.5 w-5 bg-current transition-all duration-300 ease-in-out',
-                    open ? 'translate-y-[3px] rotate-45' : '-translate-y-1'
+                    open ? 'translate-y-[2px] rotate-45' : '-translate-y-1'
                 )}
             />
             <span className={cn('block h-0.5 w-5 bg-current transition-all duration-300 ease-in-out', open ? 'opacity-0 scale-0' : 'opacity-100')} />
             <span
                 className={cn(
                     'block h-0.5 w-5 bg-current transition-all duration-300 ease-in-out',
-                    open ? '-translate-y-[3px] -rotate-45' : 'translate-y-1'
+                    open ? '-translate-y-[2px] -rotate-45' : 'translate-y-1'
                 )}
             />
         </div>
@@ -88,8 +88,8 @@ export default function Header({ title, children }: HeaderProps) {
                     {/* Dropdown menu */}
                     <div
                         className={cn(
-                            'absolute right-0 top-full mt-2 z-50 min-w-[180px] rounded-lg border border-primary/50 bg-background/80 backdrop-blur-md shadow-lg transition-all duration-300 ease-in-out origin-top-right',
-                            menuOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0 pointer-events-none'
+                            'absolute right-0 top-full mt-2 z-50 min-w-[180px] rounded-lg border border-primary/50 bg-background/80 backdrop-blur-md shadow-lg origin-top-right',
+                            menuOpen ? 'block' : 'hidden'
                         )}
                     >
                         <nav className="p-2 flex flex-col gap-1">

@@ -61,6 +61,16 @@ bun combine:all             # Aggregate all data
 bun classify:claude-all     # Run LLM classification
 ```
 
+### Refreshing Data (minimum steps by input)
+
+Pipeline dependency chain: `download → compile → combine → upload`
+
+| Input changed | Minimum re-run (from `apps/data`) | Then |
+|---|---|---|
+| `data/in/cycles.json` | `bun combine:lifting` and/or `bun combine:all` | `pnpm upload` + update timestamp |
+| TrainHeroic workouts | `bun compile:lifting` → `bun combine:lifting` → `bun combine:all` | `pnpm upload` + update timestamp |
+| Fitbit raw data | `bun fitbit:process` → `bun compile:cardio` → `bun compile:all` → `bun combine:all` | `pnpm upload` + update timestamp |
+
 ### Analysis Scripts (run from apps/data)
 ```bash
 bun analyze:workouts             # Check TrainHeroic workout file duplicates
