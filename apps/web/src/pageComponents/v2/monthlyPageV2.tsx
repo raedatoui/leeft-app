@@ -4,12 +4,11 @@ import { useMemo, useState } from 'react';
 import MonthCellV2 from '@/components/analysis/v2/monthCellV2';
 import PageTemplateV2 from '@/components/layout/v2/pageTemplateV2';
 import { useActiveCardio, useCardioSettings, useWorkoutData } from '@/lib/contexts';
+import { MONTHS_SHORT } from '@/lib/dateFormatters';
 import { formatNumber } from '@/lib/statsUtils';
 import type { CardioWorkout, Workout } from '@/types';
 
 type RangeFilter = 'all' | 'last12' | string;
-
-const MONTH_NAMES_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 function yearMonthKey(d: Date): string {
     return `${d.getUTCFullYear()}-${(d.getUTCMonth() + 1).toString().padStart(2, '0')}`;
@@ -27,7 +26,7 @@ function groupByMonth<T extends { date: Date }>(items: T[]): Record<string, T[]>
 }
 
 function formatDateLong(d: Date): string {
-    return `${MONTH_NAMES_SHORT[d.getUTCMonth()]} ${d.getUTCDate().toString().padStart(2, '0')}, ${d.getUTCFullYear()}`;
+    return `${MONTHS_SHORT[d.getUTCMonth()]} ${d.getUTCDate().toString().padStart(2, '0')}, ${d.getUTCFullYear()}`;
 }
 
 function compareYearMonthDesc(a: string, b: string): number {
@@ -181,9 +180,7 @@ export default function MonthlyPageV2() {
             ) : (
                 <>
                     <div className="panel-label">
-                        <span>
-                            Months · {visibleMonths.length} shown
-                        </span>
+                        <span>Months · {visibleMonths.length} shown</span>
                         <span className="hint">{rangeLabel}</span>
                     </div>
                     <section className="month-grid">

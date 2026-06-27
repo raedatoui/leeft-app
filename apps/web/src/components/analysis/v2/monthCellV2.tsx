@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { useMemo } from 'react';
 import { cardioColors } from '@/lib/cardio-theme';
 import type { MuscleGroup } from '@/lib/contexts';
+import { MONTHS_LONG } from '@/lib/dateFormatters';
 import type { CardioType, CardioWorkout, ExerciseMap, Workout } from '@/types';
 
 interface MonthCellV2Props {
@@ -13,8 +14,6 @@ interface MonthCellV2Props {
     includeWarmup: boolean;
     isCurrent: boolean;
 }
-
-const MONTH_NAMES_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 interface TopExerciseRow {
     id: number;
@@ -62,7 +61,7 @@ function formatVolumeShort(n: number): { value: string; unit?: string } {
 export default function MonthCellV2({ yearMonth, workouts, cardioWorkouts, exerciseMap, muscleGroups, includeWarmup, isCurrent }: MonthCellV2Props) {
     const [yearStr, monthStr] = yearMonth.split('-');
     const monthIdx = Math.max(0, Math.min(11, Number(monthStr) - 1));
-    const monthName = MONTH_NAMES_FULL[monthIdx];
+    const monthName = MONTHS_LONG[monthIdx];
 
     const muscleColor = useMemo(() => {
         const lookup = new Map(muscleGroups.map((mg) => [mg.id, mg.color]));

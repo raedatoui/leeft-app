@@ -38,6 +38,7 @@
         "fitbit:process": "bun src/fitbit/index.ts process",
         "format": "biome format --write .",
         "lint": "biome lint .",
+        "refresh": "bun compile:lifting && bun combine:lifting && bun compile:cardio && bun compile:all && bun combine:all",
         "test": "bun test",
         "trainheroic:compare": "bun src/trainheroic/compare.ts",
         "trainheroic:download": "bun src/trainheroic/index.ts download",

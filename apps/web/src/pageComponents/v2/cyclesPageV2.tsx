@@ -2,44 +2,14 @@
 
 import Link from 'next/link';
 import PageTemplateV2 from '@/components/layout/v2/pageTemplateV2';
+import { CYCLE_TYPE_DATA, CYCLE_TYPE_LABEL, CYCLE_TYPE_LABEL_SHORT, cycleDays } from '@/lib/cycleTypes';
+import { formatDayMonth, MONTHS_SHORT } from '@/lib/dateFormatters';
 import { useCyclesPageState } from '@/lib/hooks/useCyclesPageState';
+import { formatVolume } from '@/lib/statsUtils';
 import { computeStats } from '@/lib/utils';
 import type { ExerciseMap, MappedCycle } from '@/types';
 
-const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-const TYPE_TO_DATA: Record<MappedCycle['type'], 'strength' | 'hyper' | 'break' | 'maint'> = {
-    strength: 'strength',
-    hypertrophy: 'hyper',
-    break: 'break',
-    maintenance: 'maint',
-};
-
-const TYPE_LABEL: Record<MappedCycle['type'], string> = {
-    strength: 'Strength',
-    hypertrophy: 'Hypertrophy',
-    break: 'Break',
-    maintenance: 'Maintenance',
-};
-
-const FILTER_TYPES: { type: MappedCycle['type']; label: string }[] = [
-    { type: 'strength', label: 'Strength' },
-    { type: 'hypertrophy', label: 'Hyper' },
-    { type: 'break', label: 'Break' },
-    { type: 'maintenance', label: 'Maint' },
-];
-
-const formatDayMonth = (date: Date) => date.toLocaleString('en-US', { month: 'short', day: '2-digit', timeZone: 'UTC' });
-
-const formatVolumeShort = (n: number) => {
-    if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-    return Math.round(n).toString();
-};
-
-const cycleDuration = (cycle: MappedCycle) => {
-    const diff = Math.abs(cycle.dates[1].getTime() - cycle.dates[0].getTime());
-    return Math.max(1, Math.ceil(diff / (1000 * 60 * 60 * 24)));
-};
+const FILTER_TYPES: MappedCycle['type'][] = ['strength', 'hypertrophy', 'break', 'maintenance'];
 
 interface CycleCardV2Props {
     cycle: MappedCycle;
@@ -48,11 +18,11 @@ interface CycleCardV2Props {
 }
 
 function CycleCardV2({ cycle, index, exerciseMap }: CycleCardV2Props) {
-    const dataType = TYPE_TO_DATA[cycle.type];
+    const dataType = CYCLE_TYPE_DATA[cycle.type];
     const { workoutCount, avgExercises, topExercises } = computeStats(cycle.workouts);
     const totalVolume = cycle.workouts.reduce((sum, w) => sum + (w.volume || 0), 0);
     const avgVolume = workoutCount > 0 ? totalVolume / workoutCount : 0;
-    const days = cycleDuration(cycle);
+    const days = cycleDays(cycle);
     const isBreak = cycle.type === 'break';
 
     return (
@@ -60,7 +30,7 @@ function CycleCardV2({ cycle, index, exerciseMap }: CycleCardV2Props) {
             <div className="stripe" />
             <div className="body">
                 <div className="type-tag" data-type={dataType}>
-                    {TYPE_LABEL[cycle.type]} · Cycle {String(index + 1).padStart(2, '0')}
+                    {CYCLE_TYPE_LABEL[cycle.type]} · Cycle {String(index + 1).padStart(2, '0')}
                 </div>
                 <h3>{cycle.name}</h3>
                 <div className="meta">
@@ -87,7 +57,7 @@ function CycleCardV2({ cycle, index, exerciseMap }: CycleCardV2Props) {
                                 <span className="l">Avg Ex</span>
                             </div>
                             <div className="stat sm">
-                                <span className="v">{formatVolumeShort(avgVolume)}</span>
+                                <span className="v">{formatVolume(avgVolume)}</span>
                                 <span className="l">Avg Vol</span>
                             </div>
                         </>
@@ -153,7 +123,6 @@ export default function CyclesPageV2() {
                         </span>
                     </div>
                 </div>
-
             </section>
 
             <div className="toolbar u-mb-8">
@@ -187,8 +156,8 @@ export default function CyclesPageV2() {
                         <button type="button" className={`filter-pill${activeType === null ? ' active' : ''}`} onClick={() => setActiveType(null)}>
                             All <span className="count">{visibleCycles.length}</span>
                         </button>
-                        {FILTER_TYPES.map(({ type, label }) => {
-                            const dataType = TYPE_TO_DATA[type];
+                        {FILTER_TYPES.map((type) => {
+                            const dataType = CYCLE_TYPE_DATA[type];
                             const count = yearStats.typeCounts[type] ?? 0;
                             const isActive = activeType === type;
                             return (
@@ -200,7 +169,7 @@ export default function CyclesPageV2() {
                                     onClick={() => setActiveType(isActive ? null : type)}
                                 >
                                     <span className="swatch" style={{ background: `var(--${dataType})` }} />
-                                    {label} <span className="count">{count}</span>
+                                    {CYCLE_TYPE_LABEL_SHORT[type]} <span className="count">{count}</span>
                                 </button>
                             );
                         })}
@@ -215,7 +184,7 @@ export default function CyclesPageV2() {
             <section className="timeline-hero">
                 <div className="tl-track-wrap">
                     <div className="tl-months">
-                        {MONTH_LABELS.map((m) => (
+                        {MONTHS_SHORT.map((m) => (
                             <div key={m} className="tl-month">
                                 {m}
                             </div>
@@ -223,13 +192,13 @@ export default function CyclesPageV2() {
                     </div>
                     <div className="tl-rule">
                         {Array.from({ length: 12 }, (_, i) => (
-                            <div key={MONTH_LABELS[i]} className="tick" style={{ left: `${(i / 12) * 100}%` }} />
+                            <div key={MONTHS_SHORT[i]} className="tick" style={{ left: `${(i / 12) * 100}%` }} />
                         ))}
                     </div>
                     <div className="tl-bars">
                         {visibleCycles.map((cycle) => {
                             const pos = getCyclePosition(cycle);
-                            const dataType = TYPE_TO_DATA[cycle.type];
+                            const dataType = CYCLE_TYPE_DATA[cycle.type];
                             const dimmed = activeType !== null && cycle.type !== activeType;
                             return (
                                 <Link

@@ -1,3 +1,4 @@
+import { DOWS_SHORT, MONTHS_LONG, MONTHS_SHORT } from '@/lib/dateFormatters';
 import type { CardioWorkout, MappedCycle, Workout } from '@/types';
 
 export type ViewMode = 'week' | 'month' | 'cycle' | 'year' | 'day';
@@ -28,30 +29,26 @@ export interface OverviewStats {
     };
 }
 
-const MONTH_NAMES_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const MONTH_NAMES_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const DAY_NAMES_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
 /**
- * Get the Monday of the week containing the given date
+ * Get the Monday of the week containing the given date (UTC)
  */
-function getWeekStart(date: Date): Date {
+export function getWeekStart(date: Date): Date {
     const d = new Date(date);
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-    d.setDate(diff);
-    d.setHours(0, 0, 0, 0);
+    const day = d.getUTCDay();
+    const diff = d.getUTCDate() - day + (day === 0 ? -6 : 1);
+    d.setUTCDate(diff);
+    d.setUTCHours(0, 0, 0, 0);
     return d;
 }
 
 /**
- * Get the Sunday of the week containing the given date
+ * Get the Sunday of the week containing the given date (UTC)
  */
-function getWeekEnd(date: Date): Date {
+export function getWeekEnd(date: Date): Date {
     const start = getWeekStart(date);
     const end = new Date(start);
-    end.setDate(start.getDate() + 6);
-    end.setHours(23, 59, 59, 999);
+    end.setUTCDate(start.getUTCDate() + 6);
+    end.setUTCHours(23, 59, 59, 999);
     return end;
 }
 
@@ -59,11 +56,11 @@ function getWeekEnd(date: Date): Date {
  * Format a date range as "Jan 6-12, 2025" or "Dec 30 - Jan 5, 2025"
  */
 function formatWeekRange(start: Date, end: Date): string {
-    const startMonth = start.toLocaleString('en-US', { month: 'short' });
-    const endMonth = end.toLocaleString('en-US', { month: 'short' });
-    const startDay = start.getDate();
-    const endDay = end.getDate();
-    const year = end.getFullYear();
+    const startMonth = MONTHS_SHORT[start.getUTCMonth()];
+    const endMonth = MONTHS_SHORT[end.getUTCMonth()];
+    const startDay = start.getUTCDate();
+    const endDay = end.getUTCDate();
+    const year = end.getUTCFullYear();
 
     if (startMonth === endMonth) {
         return `${startMonth} ${startDay}-${endDay}, ${year}`;
@@ -135,10 +132,10 @@ export function computeMonthPeriods(workouts: Workout[], cardioWorkouts: CardioW
  */
 export function filterCardioWorkoutsByDateRange(cardioWorkouts: CardioWorkout[], startDate: Date, endDate: Date): CardioWorkout[] {
     const start = new Date(startDate);
-    start.setHours(0, 0, 0, 0);
+    start.setUTCHours(0, 0, 0, 0);
 
     const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
+    end.setUTCHours(23, 59, 59, 999);
 
     return cardioWorkouts.filter((workout) => {
         const workoutDate = new Date(workout.date);
@@ -158,17 +155,17 @@ export function aggregateForChart(
     aggregateBy: AggregateBy,
     dateRange: { start: Date; end: Date }
 ): ChartDataPoint[] {
-    const year = dateRange.start.getFullYear();
+    const year = dateRange.start.getUTCFullYear();
 
     if (aggregateBy === 'month') {
         // 12 bars for each month
-        const data: ChartDataPoint[] = MONTH_NAMES_SHORT.map((label, monthIndex) => {
-            const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
-            const start = new Date(year, monthIndex, 1);
-            const end = new Date(year, monthIndex, daysInMonth, 23, 59, 59, 999);
+        const data: ChartDataPoint[] = MONTHS_SHORT.map((label, monthIndex) => {
+            const daysInMonth = new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
+            const start = new Date(Date.UTC(year, monthIndex, 1));
+            const end = new Date(Date.UTC(year, monthIndex, daysInMonth, 23, 59, 59, 999));
             return {
                 label,
-                tooltip: `${MONTH_NAMES_FULL[monthIndex]} 1-${daysInMonth}, ${year}`,
+                tooltip: `${MONTHS_LONG[monthIndex]} 1-${daysInMonth}, ${year}`,
                 liftingCount: 0,
                 cardioCount: 0,
                 dateRange: { start, end },
@@ -176,13 +173,13 @@ export function aggregateForChart(
         });
 
         for (const workout of liftingWorkouts) {
-            const month = workout.date.getMonth();
+            const month = workout.date.getUTCMonth();
             const point = data[month];
             if (point) point.liftingCount++;
         }
 
         for (const workout of cardioWorkouts) {
-            const month = workout.date.getMonth();
+            const month = workout.date.getUTCMonth();
             const point = data[month];
             if (point) point.cardioCount++;
         }
@@ -207,14 +204,14 @@ export function aggregateForChart(
         while (currentChunkStart <= rangeEnd) {
             // End of this 7-day chunk
             const chunkEnd = new Date(currentChunkStart);
-            chunkEnd.setDate(currentChunkStart.getDate() + 6);
+            chunkEnd.setUTCDate(currentChunkStart.getUTCDate() + 6);
 
             // Cap at rangeEnd (which should be end of month in OverviewPage)
             if (chunkEnd > rangeEnd) {
                 chunkEnd.setTime(rangeEnd.getTime());
-                chunkEnd.setHours(23, 59, 59, 999); // Ensure end of day
+                chunkEnd.setUTCHours(23, 59, 59, 999); // Ensure end of day
             } else {
-                chunkEnd.setHours(23, 59, 59, 999);
+                chunkEnd.setUTCHours(23, 59, 59, 999);
             }
 
             const tooltip = formatWeekRange(currentChunkStart, chunkEnd);
@@ -242,8 +239,8 @@ export function aggregateForChart(
 
             // Next chunk
             currentChunkStart = new Date(chunkEnd);
-            currentChunkStart.setDate(currentChunkStart.getDate() + 1);
-            currentChunkStart.setHours(0, 0, 0, 0);
+            currentChunkStart.setUTCDate(currentChunkStart.getUTCDate() + 1);
+            currentChunkStart.setUTCHours(0, 0, 0, 0);
             weekNum++;
         }
 
@@ -255,30 +252,30 @@ export function aggregateForChart(
     const data: ChartDataPoint[] = [];
     const currentDate = new Date(dateRange.start);
     // Ensure we start at 00:00:00
-    currentDate.setHours(0, 0, 0, 0);
+    currentDate.setUTCHours(0, 0, 0, 0);
 
     const rangeEndDate = new Date(dateRange.end);
-    rangeEndDate.setHours(23, 59, 59, 999);
+    rangeEndDate.setUTCHours(23, 59, 59, 999);
 
     while (currentDate <= rangeEndDate) {
-        const dayName = DAY_NAMES_SHORT[currentDate.getDay()];
-        const dayNum = currentDate.getDate();
-        const monthName = MONTH_NAMES_SHORT[currentDate.getMonth()];
-        const dateYear = currentDate.getFullYear();
+        const dayName = DOWS_SHORT[currentDate.getUTCDay()];
+        const dayNum = currentDate.getUTCDate();
+        const monthName = MONTHS_SHORT[currentDate.getUTCMonth()];
+        const dateYear = currentDate.getUTCFullYear();
 
         const dayStart = new Date(currentDate);
         const dayEnd = new Date(currentDate);
-        dayEnd.setHours(23, 59, 59, 999);
+        dayEnd.setUTCHours(23, 59, 59, 999);
 
         data.push({
             label: `${dayName} ${dayNum}`,
-            tooltip: `${DAY_NAMES_SHORT[currentDate.getDay()]}, ${monthName} ${dayNum}, ${dateYear}`,
+            tooltip: `${DOWS_SHORT[currentDate.getUTCDay()]}, ${monthName} ${dayNum}, ${dateYear}`,
             liftingCount: 0,
             cardioCount: 0,
             dateRange: { start: dayStart, end: dayEnd },
         });
 
-        currentDate.setDate(currentDate.getDate() + 1);
+        currentDate.setUTCDate(currentDate.getUTCDate() + 1);
     }
 
     // Count workouts for each day
@@ -344,4 +341,13 @@ export function getCycleDateRange(cycle: MappedCycle): { start: Date; end: Date 
  */
 export function formatNumber(num: number): string {
     return num.toLocaleString('en-US');
+}
+
+/**
+ * Format a volume: raw under 1k, "12.3k" under 1M, "1.23M" above.
+ */
+export function formatVolume(n: number): string {
+    if (n < 1000) return Math.round(n).toLocaleString();
+    if (n < 1_000_000) return `${(n / 1000).toFixed(1)}k`;
+    return `${(n / 1_000_000).toFixed(2)}M`;
 }

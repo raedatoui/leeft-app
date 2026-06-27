@@ -18,6 +18,7 @@
     "pipeline": "bun scripts/pipeline.ts",
     "pipeline:sync": "bun scripts/pipeline.ts --sync-only",
     "pipeline:sh": "./scripts/shell/pipeline.sh",
+    "refresh": "pnpm --filter @leeft/data refresh && pnpm upload",
     "upload": "bun scripts/upload.ts",
     "upload:sh": "./scripts/shell/upload.sh",
     "knip": "knip"

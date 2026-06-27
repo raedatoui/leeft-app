@@ -32,6 +32,15 @@ const formatSetsSummary = (sets: { reps?: number; weight: number }[]): string =>
     return `${reps} @ ${weights}`;
 };
 
+// Compact clipboard form, e.g. "5,5,5@225" (single weight when all sets share it, else positional list).
+const formatSetsForClipboard = (sets: { reps?: number; weight: number }[]): string => {
+    if (sets.length === 0) return '—';
+    const reps = sets.map((s) => s.reps ?? '?').join(',');
+    const weights = sets.map((s) => Math.round(s.weight));
+    const uniqueWeights = [...new Set(weights)];
+    return `${reps}@${uniqueWeights.length === 1 ? uniqueWeights[0] : weights.join(',')}`;
+};
+
 interface ExerciseBlockProps {
     exercise: Exercise;
     metadata: ExerciseMetadata | undefined;
@@ -129,6 +138,7 @@ export const ExerciseBlock: FC<ExerciseBlockProps> = ({ exercise, metadata, incl
 
 interface LiftingBodyProps {
     workout: Workout;
+    date: Date;
     exerciseMap: ExerciseMap;
     includeWarmup: boolean;
     compact: boolean;
@@ -141,6 +151,7 @@ interface LiftingBodyProps {
 
 const LiftingWorkoutBody: FC<LiftingBodyProps> = ({
     workout,
+    date,
     exerciseMap,
     includeWarmup,
     compact,
@@ -150,6 +161,8 @@ const LiftingWorkoutBody: FC<LiftingBodyProps> = ({
     muscleGroupFilter,
     selectedExercise,
 }) => {
+    const [copied, setCopied] = useState(false);
+
     let exercises = workout.exercises;
     if (muscleGroupFilter) {
         exercises = exercises.filter((ex) => exerciseMap.get(ex.exerciseId.toString())?.primaryMuscleGroup === muscleGroupFilter);
@@ -162,11 +175,46 @@ const LiftingWorkoutBody: FC<LiftingBodyProps> = ({
     const totalVolume = includeWarmup ? workout.volume : workout.workVolume;
     const totalSets = exercises.reduce((sum, ex) => sum + (includeWarmup ? ex.sets.length : ex.sets.filter((s) => s.isWorkSet).length), 0);
 
+    const handleCopy = async () => {
+        const lines = exercises.map((ex) => {
+            const name = (exerciseMap.get(ex.exerciseId.toString())?.name ?? `Exercise ${ex.exerciseId}`).toLowerCase();
+            const sets = includeWarmup ? ex.sets : ex.sets.filter((s) => s.isWorkSet);
+            return `${name}: ${formatSetsForClipboard(sets)}`;
+        });
+        const text = `${formatLongDate(date)}\n${lines.join('\n')}`;
+        try {
+            await navigator.clipboard.writeText(text);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+        } catch {
+            // clipboard unavailable (e.g. insecure context) — silently no-op
+        }
+    };
+
     return (
         <>
             <div className="lift-headline">
                 <span className="lift-type">LIFTING</span>
                 {workout.title && <span className="lift-subtitle">{workout.title}</span>}
+                <button
+                    type="button"
+                    className="lift-copy"
+                    onClick={handleCopy}
+                    aria-label="Copy exercises to clipboard"
+                    title={copied ? 'Copied!' : 'Copy exercises'}
+                >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                        <title>{copied ? 'Copied' : 'Copy'}</title>
+                        {copied ? (
+                            <polyline points="20 6 9 17 4 12" />
+                        ) : (
+                            <>
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                            </>
+                        )}
+                    </svg>
+                </button>
             </div>
             <div className="session-vol">
                 <span className="v maint">
@@ -316,6 +364,7 @@ export const WorkoutCard: FC<WorkoutCardProps> = ({
                 <LiftingWorkoutBody
                     key={workout.uuid}
                     workout={workout}
+                    date={day.date}
                     exerciseMap={exerciseMap}
                     includeWarmup={includeWarmup}
                     compact={compact}

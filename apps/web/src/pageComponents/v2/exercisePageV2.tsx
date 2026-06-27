@@ -10,24 +10,12 @@ import DropdownV2, { type DropdownV2Option } from '@/components/ui/v2/dropdownV2
 import { WorkoutCard } from '@/components/workouts/v2/workoutCard';
 import { type CalculationMethod, defaultMaxCalculator, maxCalculators, oneRepMaxCalculators } from '@/lib/calc';
 import { useWorkoutData } from '@/lib/contexts';
-import type { MappedCycle, MappedWorkout, RepRange, SetDetail } from '@/types';
+import { CYCLE_TYPE_COLOR, CYCLE_TYPE_LABEL_SHORT } from '@/lib/cycleTypes';
+import { formatTableDate, MONTHS_SHORT } from '@/lib/dateFormatters';
+import { formatVolume } from '@/lib/statsUtils';
+import type { MappedWorkout, RepRange, SetDetail } from '@/types';
 
-const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const PAGE_SIZE = 10;
-
-const CYCLE_TYPE_COLOR: Record<MappedCycle['type'], string> = {
-    strength: 'var(--strength)',
-    hypertrophy: 'var(--hyper)',
-    break: 'var(--break)',
-    maintenance: 'var(--maint)',
-};
-
-const CYCLE_TYPE_LABEL: Record<MappedCycle['type'], string> = {
-    strength: 'Strength',
-    hypertrophy: 'Hyper',
-    break: 'Break',
-    maintenance: 'Maint',
-};
 
 function formatCycleRange(start: Date, end: Date): string {
     const sameYear = start.getUTCFullYear() === end.getUTCFullYear();
@@ -37,18 +25,8 @@ function formatCycleRange(start: Date, end: Date): string {
     return `${startStr} ${start.getUTCFullYear()} → ${endStr} ${end.getUTCFullYear()}`;
 }
 
-function formatVolume(n: number): string {
-    if (n < 1000) return Math.round(n).toLocaleString();
-    if (n < 1_000_000) return `${(n / 1000).toFixed(1)}k`;
-    return `${(n / 1_000_000).toFixed(2)}M`;
-}
-
 function formatWeight(n: number): string {
     return Math.round(n).toLocaleString();
-}
-
-function formatTableDate(d: Date): string {
-    return `${MONTHS_SHORT[d.getUTCMonth()]} ${d.getUTCDate().toString().padStart(2, '0')} '${d.getUTCFullYear().toString().slice(-2)}`;
 }
 
 interface SessionRow {
@@ -165,7 +143,7 @@ export default function ExercisePageV2() {
                 value: c.uuid,
                 label: c.name,
                 sublabel: formatCycleRange(c.dates[0], c.dates[1]),
-                trailing: CYCLE_TYPE_LABEL[c.type],
+                trailing: CYCLE_TYPE_LABEL_SHORT[c.type],
                 color: CYCLE_TYPE_COLOR[c.type],
                 keywords: `${c.type} ${c.dates[0].getUTCFullYear()}`,
             })),

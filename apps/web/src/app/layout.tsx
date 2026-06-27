@@ -3,7 +3,6 @@ import { Anton, DM_Sans, JetBrains_Mono } from 'next/font/google';
 import localFont from 'next/font/local';
 import './globals.css';
 import './v2.css';
-import Background from '@/components/layout/background';
 import Providers from '@/lib/providers';
 
 const geistSans = localFont({
@@ -51,7 +50,6 @@ export default function RootLayout({
     return (
         <html lang="en" className="dark">
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-                <Background />
                 <Providers>
                     <div data-theme="v2" className={`${anton.variable} ${dmSans.variable} ${jetbrainsMono.variable}`}>
                         {children}

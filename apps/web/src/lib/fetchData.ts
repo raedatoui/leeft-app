@@ -24,7 +24,6 @@ export async function fetchWorkouts(): Promise<Workout[]> {
             workouts: z.array(z.object({ date: z.string(), title: z.string() }).and(z.record(z.string(), z.unknown()))),
         })
         .parse(data);
-    console.log(workouts.length);
     return workouts.map((w) => {
         return WorkoutSchema.parse({
             ...w,

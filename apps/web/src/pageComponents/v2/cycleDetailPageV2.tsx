@@ -6,49 +6,13 @@ import PageTemplateV2 from '@/components/layout/v2/pageTemplateV2';
 import DropdownV2 from '@/components/ui/v2/dropdownV2';
 import { WorkoutCard } from '@/components/workouts/v2/workoutCard';
 import { useWorkoutData } from '@/lib/contexts';
-import type { MappedCycle } from '@/types';
+import { CYCLE_TYPE_COLOR, CYCLE_TYPE_DATA, CYCLE_TYPE_LABEL, cycleDays } from '@/lib/cycleTypes';
+import { formatDayMonth } from '@/lib/dateFormatters';
+import { formatVolume } from '@/lib/statsUtils';
 
 interface CycleDetailPageV2Props {
     id: string;
 }
-
-const TYPE_TO_DATA: Record<MappedCycle['type'], 'strength' | 'hyper' | 'break' | 'maint'> = {
-    strength: 'strength',
-    hypertrophy: 'hyper',
-    break: 'break',
-    maintenance: 'maint',
-};
-
-const TYPE_LABEL: Record<MappedCycle['type'], string> = {
-    strength: 'Strength',
-    hypertrophy: 'Hypertrophy',
-    break: 'Break',
-    maintenance: 'Maintenance',
-};
-
-const TYPE_COLOR: Record<MappedCycle['type'], string> = {
-    strength: 'var(--strength)',
-    hypertrophy: 'var(--hyper)',
-    break: 'var(--break)',
-    maintenance: 'var(--maint)',
-};
-
-const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-const formatDayMonth = (date: Date) => {
-    const d = new Date(date);
-    return `${MONTHS_SHORT[d.getUTCMonth()]} ${String(d.getUTCDate()).padStart(2, '0')}`;
-};
-
-const cycleDays = (cycle: MappedCycle) => {
-    const diff = Math.abs(cycle.dates[1].getTime() - cycle.dates[0].getTime());
-    return Math.max(1, Math.ceil(diff / (1000 * 60 * 60 * 24)) + 1);
-};
-
-const formatVolumeShort = (n: number) => {
-    if (n >= 1000) return `${(n / 1000).toFixed(0)}k`;
-    return Math.round(n).toString();
-};
 
 export default function CycleDetailPageV2({ id }: CycleDetailPageV2Props) {
     const { cycles, exerciseMap, muscleGroups } = useWorkoutData();
@@ -121,8 +85,8 @@ export default function CycleDetailPageV2({ id }: CycleDetailPageV2Props) {
         );
     }
 
-    const dataType = TYPE_TO_DATA[cycle.type];
-    const startYear = cycle.dates[0].getFullYear();
+    const dataType = CYCLE_TYPE_DATA[cycle.type];
+    const startYear = cycle.dates[0].getUTCFullYear();
 
     const goPrev = () => setCurrentIndex(Math.max(0, safeIndex - 1));
     const goNext = () => setCurrentIndex(Math.min(slideCount - 1, safeIndex + 1));
@@ -140,9 +104,9 @@ export default function CycleDetailPageV2({ id }: CycleDetailPageV2Props) {
                     <div className="type-mark" />
                     <div className="titles">
                         <span className="type-tag" data-type={dataType}>
-                            {TYPE_LABEL[cycle.type]}
+                            {CYCLE_TYPE_LABEL[cycle.type]}
                         </span>
-                        <h1 style={{ color: TYPE_COLOR[cycle.type] }}>{cycle.name}</h1>
+                        <h1 style={{ color: CYCLE_TYPE_COLOR[cycle.type] }}>{cycle.name}</h1>
                         <div className="meta">
                             <span>
                                 {formatDayMonth(cycle.dates[0])} → {formatDayMonth(cycle.dates[1])}
@@ -162,7 +126,7 @@ export default function CycleDetailPageV2({ id }: CycleDetailPageV2Props) {
                         <span className="l">Days</span>
                     </div>
                     <div className="stat right">
-                        <span className="v">{formatVolumeShort(totalVolume)}</span>
+                        <span className="v">{formatVolume(totalVolume)}</span>
                         <span className="l">Volume</span>
                     </div>
                 </div>

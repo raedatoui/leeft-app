@@ -102,11 +102,4 @@
     .animate-loader-bar {
         animation: loader-bar 0.8s ease-in-out infinite;
     }
-
-    .bg-grid-pattern {
-        background-image:
-            linear-gradient(to right, hsl(var(--muted-foreground) / 0.2) 1px, transparent 1px),
-            linear-gradient(to bottom, hsl(var(--muted-foreground) / 0.2) 1px, transparent 1px);
-        background-size: 22px 22px;
-    }
 }

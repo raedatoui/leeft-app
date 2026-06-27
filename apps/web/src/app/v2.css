@@ -977,6 +977,25 @@
         text-transform: uppercase;
         letter-spacing: 0.1em;
     }
+    .lift-copy {
+        margin-left: auto;
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        transition: all 200ms;
+        padding: 0;
+        flex-shrink: 0;
+    }
+    .lift-copy:hover {
+        border-color: var(--maint);
+        color: var(--maint);
+    }
 
     /* effort chart (cardio zone breakdown) */
     .effort-chart {
@@ -1035,8 +1054,22 @@
     .sets-table {
         width: 100%;
         border-collapse: collapse;
+        table-layout: fixed;
         font-family: var(--mono);
         font-size: 12px;
+    }
+    .sets-table th:nth-child(1),
+    .sets-table td:nth-child(1) {
+        width: 20%;
+    }
+    .sets-table th:nth-child(2),
+    .sets-table td:nth-child(2) {
+        width: 30%;
+    }
+    .sets-table th:nth-child(3),
+    .sets-table td:nth-child(3) {
+        width: 50%;
+        white-space: nowrap;
     }
     .sets-table thead th {
         color: var(--muted-2);

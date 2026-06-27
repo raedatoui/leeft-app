@@ -7,10 +7,9 @@ import DropdownV2, { type DropdownV2Option } from '@/components/ui/v2/dropdownV2
 import MonthCalendar from '@/components/workouts/v2/monthCalendar';
 import { WorkoutCard } from '@/components/workouts/v2/workoutCard';
 import { useWorkoutData } from '@/lib/contexts';
+import { MONTHS_LONG } from '@/lib/dateFormatters';
 import { useWorkoutLogState } from '@/lib/hooks/useWorkoutLogState';
 import type { DayWorkout } from '@/types';
-
-const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 type ViewMode = 'month' | 'daily';
 
@@ -43,7 +42,7 @@ export default function WorkoutLogPageV2() {
         return Array.from(ys).sort((a, b) => b - a);
     }, [state.workouts]);
 
-    const monthOptions = useMemo<DropdownV2Option[]>(() => MONTH_NAMES.map((name, i) => ({ value: String(i), label: name })), []);
+    const monthOptions = useMemo<DropdownV2Option[]>(() => MONTHS_LONG.map((name, i) => ({ value: String(i), label: name })), []);
     const yearOptions = useMemo<DropdownV2Option[]>(() => availableYears.map((y) => ({ value: String(y), label: String(y) })), [availableYears]);
 
     const goPrevMonth = () => {
@@ -92,7 +91,7 @@ export default function WorkoutLogPageV2() {
         setSelectedDay((current) => (current && current.date.getTime() === day.date.getTime() ? null : day));
     };
 
-    const monthLabel = `${MONTH_NAMES[viewMonth]} ${viewYear}`;
+    const monthLabel = `${MONTHS_LONG[viewMonth]} ${viewYear}`;
 
     // Daily view: latest-first slider — slice the reversed workouts by the hook's slider state.
     const dailyDays = useMemo(() => {

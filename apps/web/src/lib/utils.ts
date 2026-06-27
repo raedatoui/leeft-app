@@ -12,10 +12,10 @@ export function cn(...inputs: ClassValue[]) {
 export function filterWorkoutsByDateRange(workouts: Workout[], startDate: Date, endDate: Date): Workout[] {
     // Normalize dates to midnight UTC for consistent comparison
     const start = new Date(startDate);
-    start.setHours(0, 0, 0, 0);
+    start.setUTCHours(0, 0, 0, 0);
 
     const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
+    end.setUTCHours(23, 59, 59, 999);
 
     return workouts.filter((workout) => {
         const workoutDate = new Date(workout.date);

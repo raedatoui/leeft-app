@@ -1,12 +1,21 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import PageTemplateV2 from '@/components/layout/v2/pageTemplateV2';
 import DropdownV2 from '@/components/ui/v2/dropdownV2';
 import { WorkoutCard } from '@/components/workouts/v2/workoutCard';
 import { useActiveCardio, useWorkoutData } from '@/lib/contexts';
-import { type AggregateBy, aggregateForChart, computeOverviewStats, filterCardioWorkoutsByDateRange, formatNumber } from '@/lib/statsUtils';
+import { formatTableDate, MONTHS_LONG, MONTHS_SHORT } from '@/lib/dateFormatters';
+import {
+    type AggregateBy,
+    aggregateForChart,
+    computeOverviewStats,
+    filterCardioWorkoutsByDateRange,
+    formatNumber,
+    getWeekEnd,
+    getWeekStart,
+} from '@/lib/statsUtils';
 import { filterWorkoutsByDateRange } from '@/lib/utils';
 import type { CardioWorkout, Workout } from '@/types';
 
@@ -28,38 +37,16 @@ interface Bucket {
 
 type Row = { kind: 'lifting'; date: Date; workout: Workout } | { kind: 'cardio'; date: Date; workout: CardioWorkout };
 
-const MONTH_NAMES_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const MONTH_NAMES_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const PAGE_SIZE = 10;
 
-function startOfWeekMon(d: Date): Date {
-    const r = new Date(d);
-    r.setHours(0, 0, 0, 0);
-    const day = r.getDay();
-    const diff = r.getDate() - day + (day === 0 ? -6 : 1);
-    r.setDate(diff);
-    return r;
-}
-
-function endOfWeekMon(start: Date): Date {
-    const e = new Date(start);
-    e.setDate(start.getDate() + 6);
-    e.setHours(23, 59, 59, 999);
-    return e;
-}
-
 function formatWeekLabel(start: Date, end: Date): string {
-    const sm = MONTH_NAMES_SHORT[start.getMonth()];
-    const em = MONTH_NAMES_SHORT[end.getMonth()];
-    const sy = start.getFullYear();
-    const ey = end.getFullYear();
-    if (sy !== ey) return `${sm} ${start.getDate()}, ${sy} – ${em} ${end.getDate()}, ${ey}`;
-    if (sm === em) return `${sm} ${start.getDate()}–${end.getDate()}, ${ey}`;
-    return `${sm} ${start.getDate()} – ${em} ${end.getDate()}, ${ey}`;
-}
-
-function formatTableDate(d: Date): string {
-    return `${MONTH_NAMES_SHORT[d.getMonth()]} ${d.getDate().toString().padStart(2, '0')} '${d.getFullYear().toString().slice(-2)}`;
+    const sm = MONTHS_SHORT[start.getUTCMonth()];
+    const em = MONTHS_SHORT[end.getUTCMonth()];
+    const sy = start.getUTCFullYear();
+    const ey = end.getUTCFullYear();
+    if (sy !== ey) return `${sm} ${start.getUTCDate()}, ${sy} – ${em} ${end.getUTCDate()}, ${ey}`;
+    if (sm === em) return `${sm} ${start.getUTCDate()}–${end.getUTCDate()}, ${ey}`;
+    return `${sm} ${start.getUTCDate()} – ${em} ${end.getUTCDate()}, ${ey}`;
 }
 
 function formatDuration(minutes: number): string {
@@ -72,21 +59,21 @@ function formatDuration(minutes: number): string {
 function computeBuckets(min: Date, max: Date, groupBy: GroupBy): Bucket[] {
     const buckets: Bucket[] = [];
     if (groupBy === 'year') {
-        for (let y = min.getFullYear(); y <= max.getFullYear(); y++) {
+        for (let y = min.getUTCFullYear(); y <= max.getUTCFullYear(); y++) {
             buckets.push({
                 label: String(y),
-                start: new Date(y, 0, 1, 0, 0, 0, 0),
-                end: new Date(y, 11, 31, 23, 59, 59, 999),
+                start: new Date(Date.UTC(y, 0, 1, 0, 0, 0, 0)),
+                end: new Date(Date.UTC(y, 11, 31, 23, 59, 59, 999)),
             });
         }
     } else if (groupBy === 'month') {
-        let y = min.getFullYear();
-        let m = min.getMonth();
-        while (y < max.getFullYear() || (y === max.getFullYear() && m <= max.getMonth())) {
+        let y = min.getUTCFullYear();
+        let m = min.getUTCMonth();
+        while (y < max.getUTCFullYear() || (y === max.getUTCFullYear() && m <= max.getUTCMonth())) {
             buckets.push({
-                label: `${MONTH_NAMES_FULL[m]} ${y}`,
-                start: new Date(y, m, 1, 0, 0, 0, 0),
-                end: new Date(y, m + 1, 0, 23, 59, 59, 999),
+                label: `${MONTHS_LONG[m]} ${y}`,
+                start: new Date(Date.UTC(y, m, 1, 0, 0, 0, 0)),
+                end: new Date(Date.UTC(y, m + 1, 0, 23, 59, 59, 999)),
             });
             m++;
             if (m > 11) {
@@ -95,13 +82,13 @@ function computeBuckets(min: Date, max: Date, groupBy: GroupBy): Bucket[] {
             }
         }
     } else {
-        let cur = startOfWeekMon(min);
-        const limit = startOfWeekMon(max);
+        let cur = getWeekStart(min);
+        const limit = getWeekStart(max);
         while (cur <= limit) {
-            const e = endOfWeekMon(cur);
+            const e = getWeekEnd(cur);
             buckets.push({ label: formatWeekLabel(cur, e), start: new Date(cur), end: e });
             cur = new Date(cur);
-            cur.setDate(cur.getDate() + 7);
+            cur.setUTCDate(cur.getUTCDate() + 7);
         }
     }
     return buckets.reverse();
@@ -169,6 +156,8 @@ export default function StatsPageV2() {
     const [bucketIndex, setBucketIndex] = useState(0);
     const [tablePage, setTablePage] = useState(0);
     const [selectedKey, setSelectedKey] = useState<string | null>(null);
+    // Period to land on when buckets are rebuilt (e.g. on group change). null = jump to today.
+    const anchorRef = useRef<Date | null>(null);
 
     const buckets = useMemo(() => {
         if (!dateBounds) return [];
@@ -180,7 +169,7 @@ export default function StatsPageV2() {
             setBucketIndex(0);
             return;
         }
-        setBucketIndex(findBucketIndex(buckets, new Date()));
+        setBucketIndex(findBucketIndex(buckets, anchorRef.current ?? new Date()));
         setTablePage(0);
         setSelectedKey(null);
     }, [buckets]);
@@ -234,18 +223,20 @@ export default function StatsPageV2() {
     }
 
     const goPrevBucket = () => {
-        setBucketIndex(Math.max(0, safeBucketIndex - 1));
+        setBucketIndex(Math.min(buckets.length - 1, safeBucketIndex + 1));
         setTablePage(0);
         setSelectedKey(null);
     };
     const goNextBucket = () => {
-        setBucketIndex(Math.min(buckets.length - 1, safeBucketIndex + 1));
+        setBucketIndex(Math.max(0, safeBucketIndex - 1));
         setTablePage(0);
         setSelectedKey(null);
     };
 
     const onGroupChange = (g: GroupBy) => {
         if (g === groupBy) return;
+        // Keep the user on the period they're viewing instead of snapping back to today.
+        anchorRef.current = currentBucket.end;
         setGroupBy(g);
         setTablePage(0);
         setSelectedKey(null);
