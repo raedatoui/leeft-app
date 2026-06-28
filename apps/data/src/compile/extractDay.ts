@@ -1,4 +1,4 @@
-import { logger, normalizeToMidnightUTC } from '@leeft/utils';
+import { defaultStartedAt, logger, normalizeToMidnightUTC } from '@leeft/utils';
 import { v4 as uuidv4 } from 'uuid';
 import { type BaseExercise, type BaseWorkout, BaseWorkoutSchema, type RawWorkout } from './types';
 
@@ -74,6 +74,27 @@ export function parseTrainHeroicWorkout(rawWorkout: RawWorkout): BaseWorkout {
         throw new Error(`Invalid date format in workout title: ${saved_workout.title}`);
     }
 
+    // Real session start. `timestamp_started` is sometimes the re-sync time (wrong day),
+    // so accept it only if it lands on the title day; else fall back to the earliest
+    // per-set `date_completed` (UTC strings) on that day; else a noon-ET default.
+    const titleDayKey = savedWorkoutTitle.toISOString().slice(0, 10);
+    const onTitleDay = (d: Date): boolean => !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === titleDayKey;
+    let startedAt: Date | undefined;
+    if (saved_workout.timestamp_started) {
+        const fromTs = new Date(saved_workout.timestamp_started * 1000);
+        if (onTitleDay(fromTs)) startedAt = fromTs;
+    }
+    if (!startedAt) {
+        const fromSets = saved_workout.workoutSets
+            .map((ws) => ws.date_completed)
+            .filter((s): s is string => !!s)
+            .map((s) => new Date(`${s.replace(' ', 'T')}Z`))
+            .filter(onTitleDay)
+            .sort((a, b) => a.getTime() - b.getTime());
+        if (fromSets.length > 0) startedAt = fromSets[0];
+    }
+    if (!startedAt) startedAt = defaultStartedAt(savedWorkoutTitle);
+
     let nextOrder = 0;
     const exercises = saved_workout.workoutSets
         .sort((a, b) => a.order - b.order)
@@ -127,6 +148,7 @@ export function parseTrainHeroicWorkout(rawWorkout: RawWorkout): BaseWorkout {
     return BaseWorkoutSchema.parse({
         uuid: uuidv4(),
         date: savedWorkoutTitle,
+        startedAt,
         title: rawWorkout.saved_workout.title,
         duration: durationMinutes,
         rpe: saved_workout.rpe,

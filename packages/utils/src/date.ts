@@ -34,6 +34,18 @@ export function normalizeToMidnightUTC(date: Date): Date {
 }
 
 /**
+ * Default session start instant for workouts lacking a real time-of-day.
+ * Returns the given calendar day at 17:00 UTC (~noon Eastern, year-round),
+ * which stays on the same calendar day in both UTC and ET so it never shifts
+ * the UTC day-key used for grouping.
+ */
+export function defaultStartedAt(date: Date): Date {
+	return new Date(
+		Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 17),
+	);
+}
+
+/**
  * Check if a date is within a date range (inclusive)
  */
 export function isWithinInterval(

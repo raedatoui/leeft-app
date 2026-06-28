@@ -16,6 +16,7 @@ function convertFitbitToCardioWorkout(activity: FitbitActivity): CardioWorkout {
     return CardioWorkoutSchema.parse({
         uuid: activity.id,
         date: new Date(activity.date),
+        startedAt: activity.startedAt,
         type: activity.type,
         durationMs: activity.durationMs,
         durationMin: activity.durationMin,

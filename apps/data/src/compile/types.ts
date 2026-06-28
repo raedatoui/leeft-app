@@ -47,6 +47,8 @@ export const EffortSchema = z.object({
 export const CardioWorkoutSchema = z.object({
     uuid: z.uuid(),
     date: z.date(),
+    // Real activity start instant (preserves Fitbit's offset). `date` stays the day-key.
+    startedAt: z.coerce.date().optional(),
     type: z.string(), // Use string to be more flexible with activity types
     durationMs: z.number(),
     durationMin: z.number(),

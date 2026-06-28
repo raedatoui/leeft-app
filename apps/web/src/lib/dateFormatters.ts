@@ -23,3 +23,12 @@ export const formatDayMonth = (date: Date): string => {
 export const formatTableDate = (date: Date): string => {
     return `${MONTHS_SHORT[date.getUTCMonth()]} ${String(date.getUTCDate()).padStart(2, '0')} '${String(date.getUTCFullYear()).slice(-2)}`;
 };
+
+/**
+ * "2:42 PM" — time-of-day in Eastern local time. Unlike the date formatters above
+ * (which use UTC to match the day-key), wall-clock time is only meaningful in the
+ * user's timezone, so this converts the `startedAt` instant to America/New_York.
+ */
+export const formatTimeOfDay = (date: Date): string => {
+    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' });
+};

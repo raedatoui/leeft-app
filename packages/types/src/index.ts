@@ -9,6 +9,7 @@ export const RawWorkoutSchema = z.object({
 		workoutSets: z.array(
 			z.object({
 				order: z.number(),
+				date_completed: z.string().optional(),
 				workoutSetExercises: z.array(
 					z.object({
 						exercise_id: z.number(),
@@ -69,6 +70,9 @@ export const ExerciseSchema = BaseExerciseSchema.extend({
 export const BaseWorkoutSchema = z.object({
 	uuid: z.uuid(),
 	date: z.date(),
+	// Real session start instant (UTC). Falls back to a noon-ET default when the
+	// source lacks a real time (see defaultStartedAt). `date` stays the day-key.
+	startedAt: z.coerce.date().optional(),
 	title: z.string(),
 	duration: z.number(),
 	rpe: z.number().nullable(),
@@ -137,6 +141,8 @@ export const CardioTypeEnum = z.enum([
 export const CardioWorkoutSchema = z.object({
 	uuid: z.string().uuid(),
 	date: z.date(),
+	// Real activity start instant (preserves Fitbit's offset). `date` stays the day-key.
+	startedAt: z.coerce.date().optional(),
 	type: CardioTypeEnum,
 	durationMs: z.number(),
 	durationMin: z.number(),

@@ -153,6 +153,8 @@ export const FitbitActivitySchema = z.object({
     durationMin: z.number(),
     loggedBy: z.enum(['manual', 'tracker', 'auto_detected']),
     date: z.string(),
+    // Full ISO start time with offset (e.g. 2024-06-14T14:42:56.000-04:00); preserved from raw startTime.
+    startedAt: z.string().optional(),
     zoneMinutes: z.number(),
     effort: ActivityLevelSchema,
     averageHeartRate: z.number().optional(),

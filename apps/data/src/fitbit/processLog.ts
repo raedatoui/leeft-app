@@ -47,6 +47,7 @@ function transformEntries(raw: RawActivity[]): FitbitActivity[] {
             durationMin: entry.duration / 60000,
             loggedBy,
             date: entry.startTime.split('T')[0],
+            startedAt: entry.startTime,
             zoneMinutes: entry.activeZoneMinutes.totalMinutes,
             effort: entry.activityLevel,
             averageHeartRate: entry.averageHeartRate,

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { type FC, useState } from 'react';
 import { EffortChart } from '@/components/cardio/v2/effortChart';
-import { formatLongDate, formatShortDate } from '@/lib/dateFormatters';
+import { formatLongDate, formatShortDate, formatTimeOfDay } from '@/lib/dateFormatters';
 import type { CardioWorkout, DayWorkout, Exercise, ExerciseMap, ExerciseMetadata, Workout } from '@/types';
 
 interface WorkoutCardProps {
@@ -196,6 +196,7 @@ const LiftingWorkoutBody: FC<LiftingBodyProps> = ({
             <div className="lift-headline">
                 <span className="lift-type">LIFTING</span>
                 {workout.title && <span className="lift-subtitle">{workout.title}</span>}
+                {workout.startedAt && <span className="session-time">{formatTimeOfDay(workout.startedAt)}</span>}
                 <button
                     type="button"
                     className="lift-copy"
@@ -260,6 +261,7 @@ const CardioWorkoutBody: FC<{ workout: CardioWorkout; compact: boolean }> = ({ w
         <>
             <div className="cardio-headline">
                 <span className="cardio-type">{workout.type}</span>
+                {workout.startedAt && <span className="session-time">{formatTimeOfDay(workout.startedAt)}</span>}
                 <span className="cardio-duration">
                     <b>{Math.round(workout.durationMin).toString().padStart(2, '0')}</b>min
                 </span>

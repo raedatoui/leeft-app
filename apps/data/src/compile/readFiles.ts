@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import path, { join } from 'node:path';
-import { logger } from '@leeft/utils';
+import { defaultStartedAt, logger } from '@leeft/utils';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 import { type BaseWorkout, BaseWorkoutSchema, type ExerciseMetadata, ExerciseMetadataSchema } from './types';
@@ -56,6 +56,8 @@ export function readLog(workoutLog: string): BaseWorkout[] {
             BaseWorkoutSchema.parse({
                 ...w,
                 uuid: uuidv4(),
+                // Legacy Google logs carry only a pseudo time; use the noon-ET default.
+                startedAt: defaultStartedAt(w.date),
             })
         );
 }
