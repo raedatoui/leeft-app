@@ -179,7 +179,6 @@ export default function CyclesPageV2() {
 
             <div className="panel-label">
                 <span>Timeline · {visibleYear}</span>
-                <span className="hint">click a bar to open the cycle</span>
             </div>
             <section className="timeline-hero">
                 <div className="tl-track-wrap">
@@ -223,11 +222,15 @@ export default function CyclesPageV2() {
                         <span>
                             Cycles · {filteredCycles.length} of {visibleCycles.length}
                         </span>
-                        <span className="hint">click a card to drill in</span>
                     </div>
                     <section className="cycles-grid">
-                        {filteredCycles.map((cycle, idx) => (
-                            <CycleCardV2 key={cycle.uuid} cycle={cycle} index={idx} exerciseMap={exerciseMap} />
+                        {[...filteredCycles].reverse().map((cycle, revIdx) => (
+                            <CycleCardV2
+                                key={cycle.uuid}
+                                cycle={cycle}
+                                index={filteredCycles.length - 1 - revIdx}
+                                exerciseMap={exerciseMap}
+                            />
                         ))}
                     </section>
                 </>
