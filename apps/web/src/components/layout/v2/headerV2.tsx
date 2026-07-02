@@ -10,6 +10,7 @@ const NAV = [
     { href: '/cycles', label: 'Cycles', color: 'var(--strength)' },
     { href: '/exercises', label: 'Exercises', color: 'var(--hyper)' },
     { href: '/cardio', label: 'Cardio', color: 'var(--cardio)' },
+    { href: '/mobility', label: 'Mobility', color: 'var(--break)' },
 ];
 
 export default function HeaderV2() {
