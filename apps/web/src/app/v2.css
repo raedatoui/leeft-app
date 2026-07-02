@@ -80,10 +80,18 @@
 
     /* ============== top nav ============== */
     .nav {
+        position: sticky;
+        top: 0;
+        z-index: 60;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 24px 0 56px;
+        margin: 0 -32px 44px;
+        padding: 14px 32px;
+        background: color-mix(in srgb, var(--bg) 86%, transparent);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border-bottom: 1px solid var(--border-soft);
     }
     .brand {
         display: inline-flex;
