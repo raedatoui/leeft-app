@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { type FC, useState } from 'react';
 import { EffortChart } from '@/components/cardio/v2/effortChart';
+import { startTime } from '@/lib/contexts';
 import { formatLongDate, formatShortDate, formatTimeOfDay } from '@/lib/dateFormatters';
 import type { CardioWorkout, DayWorkout, Exercise, ExerciseMap, ExerciseMetadata, Workout } from '@/types';
 
@@ -334,6 +335,11 @@ export const WorkoutCard: FC<WorkoutCardProps> = ({
     const hasLifting = day.liftingWorkouts.length > 0;
     const hasCardio = day.cardioWorkouts.length > 0;
 
+    const entries: ({ kind: 'cardio'; workout: CardioWorkout } | { kind: 'lifting'; workout: Workout })[] = [
+        ...day.cardioWorkouts.map((workout) => ({ kind: 'cardio' as const, workout })),
+        ...day.liftingWorkouts.map((workout) => ({ kind: 'lifting' as const, workout })),
+    ].sort((a, b) => startTime(a.workout) - startTime(b.workout));
+
     return (
         <article className={`session${compact ? ' compact' : ''}`}>
             {(showDateHeader || hasLifting || hasCardio) && (
@@ -358,25 +364,25 @@ export const WorkoutCard: FC<WorkoutCardProps> = ({
                 </div>
             )}
 
-            {day.cardioWorkouts.map((workout) => (
-                <CardioWorkoutBody key={workout.uuid} workout={workout} compact={compact} />
-            ))}
-
-            {day.liftingWorkouts.map((workout) => (
-                <LiftingWorkoutBody
-                    key={workout.uuid}
-                    workout={workout}
-                    date={day.date}
-                    exerciseMap={exerciseMap}
-                    includeWarmup={includeWarmup}
-                    compact={compact}
-                    cycleId={cycleId}
-                    onExerciseClick={onExerciseClick}
-                    muscleGroupColor={muscleGroupColor}
-                    muscleGroupFilter={muscleGroupFilter}
-                    selectedExercise={selectedExercise}
-                />
-            ))}
+            {entries.map((entry) =>
+                entry.kind === 'cardio' ? (
+                    <CardioWorkoutBody key={entry.workout.uuid} workout={entry.workout} compact={compact} />
+                ) : (
+                    <LiftingWorkoutBody
+                        key={entry.workout.uuid}
+                        workout={entry.workout}
+                        date={day.date}
+                        exerciseMap={exerciseMap}
+                        includeWarmup={includeWarmup}
+                        compact={compact}
+                        cycleId={cycleId}
+                        onExerciseClick={onExerciseClick}
+                        muscleGroupColor={muscleGroupColor}
+                        muscleGroupFilter={muscleGroupFilter}
+                        selectedExercise={selectedExercise}
+                    />
+                )
+            )}
         </article>
     );
 };

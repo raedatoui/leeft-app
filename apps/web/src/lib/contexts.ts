@@ -40,6 +40,10 @@ export function useActiveAllWorkouts(): DayWorkout[] {
     return useMemo(() => groupWorkoutsByDay(workouts, cardioWorkouts), [workouts, cardioWorkouts]);
 }
 
+export function startTime(w: { startedAt?: Date; date: Date }): number {
+    return (w.startedAt ?? w.date).getTime();
+}
+
 // Helper to group workouts by day
 export function groupWorkoutsByDay(liftingWorkouts: Workout[], cardioWorkouts: CardioWorkout[]): DayWorkout[] {
     const dayWorkoutsMap = new Map<string, { lifting: Workout[]; cardio: CardioWorkout[] }>();
@@ -61,8 +65,8 @@ export function groupWorkoutsByDay(liftingWorkouts: Workout[], cardioWorkouts: C
     return Array.from(dayWorkoutsMap.entries())
         .map(([dateKey, { lifting, cardio: cardioList }]) => ({
             date: new Date(dateKey),
-            liftingWorkouts: lifting.sort((a, b) => a.date.getTime() - b.date.getTime()),
-            cardioWorkouts: cardioList.sort((a, b) => a.date.getTime() - b.date.getTime()),
+            liftingWorkouts: lifting.sort((a, b) => startTime(a) - startTime(b)),
+            cardioWorkouts: cardioList.sort((a, b) => startTime(a) - startTime(b)),
         }))
         .sort((a, b) => a.date.getTime() - b.date.getTime());
 }
