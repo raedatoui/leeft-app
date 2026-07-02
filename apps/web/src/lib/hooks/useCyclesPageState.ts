@@ -22,7 +22,7 @@ const initialYear = (years: number[]): number => {
     const now = new Date().getFullYear();
     if (years.length === 0) return now;
     if (years.includes(now)) return now;
-    return years[0]!;
+    return years[0] ?? now;
 };
 
 export function useCyclesPageState() {
@@ -35,7 +35,7 @@ export function useCyclesPageState() {
             const endYear = cycle.dates[1].getFullYear();
             for (let year = startYear; year <= endYear; year++) {
                 if (!acc[year]) acc[year] = [];
-                acc[year]!.push(cycle);
+                acc[year]?.push(cycle);
             }
         }
         return acc;

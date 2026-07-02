@@ -15,7 +15,15 @@ interface MonthCalendarProps {
     onDaySelect: (day: DayWorkout) => void;
 }
 
-const DOW_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+const DOW_LABELS = [
+    { key: 'sun', label: 'S' },
+    { key: 'mon', label: 'M' },
+    { key: 'tue', label: 'T' },
+    { key: 'wed', label: 'W' },
+    { key: 'thu', label: 'T' },
+    { key: 'fri', label: 'F' },
+    { key: 'sat', label: 'S' },
+];
 
 const utcDateKey = (d: Date): string => {
     return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
@@ -55,15 +63,16 @@ export const MonthCalendar: FC<MonthCalendarProps> = ({ days, viewYear, viewMont
     return (
         <div className="month-cal">
             <div className="month-cal-dows">
-                {DOW_LABELS.map((d, i) => (
-                    <div key={`${d}-${i}`} className="month-cal-dow">
-                        {d}
+                {DOW_LABELS.map((d) => (
+                    <div key={d.key} className="month-cal-dow">
+                        {d.label}
                     </div>
                 ))}
             </div>
 
             <div className="month-cal-grid">
                 {cells.map((cell, i) => {
+                    // biome-ignore lint/suspicious/noArrayIndexKey: cells is fully rebuilt from viewYear/viewMonth each render; blanks are stateless and never reorder
                     if (!cell) return <div key={`blank-${i}`} className="month-cal-cell empty" />;
                     const day = byDate.get(cell.key);
                     const hasWorkout = !!day;

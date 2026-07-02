@@ -21,12 +21,12 @@ export default function WorkoutLogPageV2() {
 
     const muscleGroupColor = useMuscleGroupColor(muscleGroups);
 
+    // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally computed once on mount to seed initial state, not recomputed as workouts load
     const initialView = useMemo(() => {
         const last = state.workouts[state.workouts.length - 1];
         if (last) return { year: last.date.getUTCFullYear(), month: last.date.getUTCMonth() };
         const now = new Date();
         return { year: now.getUTCFullYear(), month: now.getUTCMonth() };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const [viewMode, setViewMode] = useState<ViewMode>('daily');
