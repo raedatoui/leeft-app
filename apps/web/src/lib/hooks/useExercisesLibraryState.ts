@@ -11,6 +11,13 @@ export interface ExercisesHeadlineStats {
     equipmentCount: number;
 }
 
+export interface ExerciseUsageStats {
+    sessionCount: number;
+    setCount: number;
+    maxWeight: number;
+    volume: number;
+}
+
 export interface ExercisesLibraryState {
     muscleFilter: string;
     setMuscleFilter: (val: string) => void;
@@ -26,6 +33,7 @@ export interface ExercisesLibraryState {
     categories: string[];
     equipmentList: string[];
     exerciseMap: ExerciseMap;
+    statsByExerciseId: Map<number, ExerciseUsageStats>;
 }
 
 export interface UseExercisesLibraryStateOptions {
@@ -36,7 +44,7 @@ export interface UseExercisesLibraryStateOptions {
 }
 
 export function useExercisesLibraryState(opts: UseExercisesLibraryStateOptions = {}): ExercisesLibraryState {
-    const { exerciseMap, muscleGroups, categories, equipmentList } = useWorkoutData();
+    const { exerciseMap, muscleGroups, categories, equipmentList, workouts } = useWorkoutData();
     const [muscleFilter, setMuscleFilter] = useState(opts.initialMuscleFilter ?? 'all');
     const [categoryFilter, setCategoryFilter] = useState(opts.initialCategoryFilter ?? 'all');
     const [equipmentFilter, setEquipmentFilter] = useState(opts.initialEquipmentFilter ?? 'all');
@@ -78,6 +86,24 @@ export function useExercisesLibraryState(opts: UseExercisesLibraryStateOptions =
         };
     }, [filteredExercises]);
 
+    const statsByExerciseId = useMemo(() => {
+        const map = new Map<number, ExerciseUsageStats>();
+        for (const w of workouts) {
+            for (const ex of w.exercises) {
+                if (ex.sets.length === 0) continue;
+                const entry = map.get(ex.exerciseId) ?? { sessionCount: 0, setCount: 0, maxWeight: 0, volume: 0 };
+                entry.sessionCount += 1;
+                entry.volume += ex.workVolume;
+                for (const s of ex.sets) {
+                    if (s.isWorkSet) entry.setCount += 1;
+                    if (s.weight > entry.maxWeight) entry.maxWeight = s.weight;
+                }
+                map.set(ex.exerciseId, entry);
+            }
+        }
+        return map;
+    }, [workouts]);
+
     return {
         muscleFilter,
         setMuscleFilter,
@@ -93,5 +119,6 @@ export function useExercisesLibraryState(opts: UseExercisesLibraryStateOptions =
         categories,
         equipmentList,
         exerciseMap,
+        statsByExerciseId,
     };
 }

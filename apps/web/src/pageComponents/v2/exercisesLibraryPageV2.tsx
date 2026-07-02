@@ -22,6 +22,7 @@ export default function ExercisesLibraryPageV2() {
         categories,
         equipmentList,
         exerciseMap,
+        statsByExerciseId,
     } = useExercisesLibraryState();
 
     const muscleGroupById = useMemo(() => new Map(muscleGroups.map((mg) => [mg.id, mg])), [muscleGroups]);
@@ -109,15 +110,14 @@ export default function ExercisesLibraryPageV2() {
                 <>
                     <div className="panel-label">
                         <span>Exercises · {filteredExercises.length} matching</span>
-                        <span className="hint">click a row to drill in</span>
                     </div>
                     <section className="exercise-grid">
-                        {filteredExercises.map((ex, i) => (
+                        {filteredExercises.map((ex) => (
                             <ExerciseCellV2
                                 key={ex.id}
                                 exercise={ex}
-                                indexLabel={String(i + 1).padStart(3, '0')}
                                 muscleGroup={muscleGroupById.get(ex.primaryMuscleGroup)}
+                                stats={statsByExerciseId.get(ex.id)}
                             />
                         ))}
                     </section>

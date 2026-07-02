@@ -1,5 +1,6 @@
 'use client';
 
+import DetailCardV2, { type DetailCardRow } from '@/components/ui/v2/detailCardV2';
 import type { MobilityMovement } from '@/lib/mobility';
 import { regionColor } from '@/lib/mobility-theme';
 
@@ -10,45 +11,33 @@ interface MovementCardV2Props {
 export default function MovementCardV2({ movement }: MovementCardV2Props) {
     const color = regionColor(movement.region);
 
+    const rows: DetailCardRow[] = [];
+    if (movement.dosage) rows.push({ key: 'dosage', label: 'Dosage', value: movement.dosage, emphasize: true });
+    rows.push({ key: 'target', label: 'Target', value: movement.target });
+    if (movement.equipment && movement.equipment !== 'None') rows.push({ key: 'equipment', label: 'Equipment', value: movement.equipment });
+
     return (
-        <div className="mob-card">
-            <div className="top">
-                <h3>{movement.name}</h3>
-            </div>
-            <div className="tags">
-                <span className="chip outline" style={{ color, borderColor: color }}>
-                    {movement.region}
-                </span>
-                <span className="chip">{movement.type}</span>
-                {movement.position && <span className="chip">{movement.position}</span>}
-            </div>
-            <div className="mob-body">
-                {movement.dosage && (
-                    <div className="mob-row dosage">
-                        <span className="k">Dosage</span>
-                        <span className="v">{movement.dosage}</span>
-                    </div>
-                )}
-                <div className="mob-row">
-                    <span className="k">Target</span>
-                    <span className="v">{movement.target}</span>
-                </div>
-                {movement.equipment && movement.equipment !== 'None' && (
-                    <div className="mob-row">
-                        <span className="k">Equipment</span>
-                        <span className="v">{movement.equipment}</span>
-                    </div>
-                )}
-            </div>
-            <div className="mob-foot">
-                {movement.video ? (
-                    <a className="mob-video" href={movement.video} target="_blank" rel="noopener noreferrer">
+        <DetailCardV2
+            title={movement.name}
+            tags={
+                <>
+                    <span className="chip outline" style={{ color, borderColor: color }}>
+                        {movement.region}
+                    </span>
+                    <span className="chip">{movement.type}</span>
+                    {movement.position && <span className="chip">{movement.position}</span>}
+                </>
+            }
+            rows={rows}
+            footer={
+                movement.video ? (
+                    <a className="detail-link" href={movement.video} target="_blank" rel="noopener noreferrer">
                         Video ↗
                     </a>
                 ) : (
-                    <span className="mob-video none">no video</span>
-                )}
-            </div>
-        </div>
+                    <span className="detail-link none">no video</span>
+                )
+            }
+        />
     );
 }

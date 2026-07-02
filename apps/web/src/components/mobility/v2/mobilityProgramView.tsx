@@ -13,7 +13,7 @@ function ProgramRow({ itemId }: { itemId: string }) {
                 <span className="mob-dot" style={{ background: 'var(--muted-2)' }} />
                 <span className="name">{itemId}</span>
                 <span className="dose" />
-                <span className="mob-video none">—</span>
+                <span className="detail-link none">—</span>
             </div>
         );
     }
@@ -29,11 +29,11 @@ function ProgramRow({ itemId }: { itemId: string }) {
             </span>
             <span className="dose">{movement.dosage}</span>
             {movement.video ? (
-                <a className="mob-video" href={movement.video} target="_blank" rel="noopener noreferrer">
+                <a className="detail-link" href={movement.video} target="_blank" rel="noopener noreferrer">
                     Video ↗
                 </a>
             ) : (
-                <span className="mob-video none">—</span>
+                <span className="detail-link none">—</span>
             )}
         </div>
     );

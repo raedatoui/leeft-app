@@ -2381,44 +2381,96 @@
         }
     }
 
-    .exercise-cell {
+    /* shared card used by the exercises and mobility libraries */
+    .detail-card {
         background: var(--bg);
         padding: 24px;
-        cursor: pointer;
-        transition: background 200ms;
         display: flex;
         flex-direction: column;
-        gap: 14px;
-        text-decoration: none;
-        color: inherit;
+        gap: 12px;
+        transition: background 200ms;
     }
-    .exercise-cell:hover {
+    .detail-card:hover {
         background: var(--surface);
     }
-    .exercise-cell .top {
+    .detail-card .top {
         display: flex;
-        justify-content: space-between;
         align-items: flex-start;
-        gap: 12px;
+        gap: 10px;
+        margin-bottom: 4px;
     }
-    .exercise-cell h3 {
+    .detail-card h3 {
         font-family: var(--display);
         font-size: 20px;
-        line-height: 1.05;
+        line-height: 1.45;
         letter-spacing: 0.005em;
         flex: 1;
         min-width: 0;
     }
-    .exercise-cell .index {
-        font-family: var(--mono);
-        font-size: 10px;
-        color: var(--muted-2);
-        letter-spacing: 0.16em;
+    .detail-card h3 a {
+        color: inherit;
+        text-decoration: none;
     }
-    .exercise-cell .tags {
+    .detail-card h3 a:hover {
+        text-decoration: underline;
+    }
+    .detail-card .tags {
         display: flex;
         flex-wrap: wrap;
         gap: 6px;
+    }
+    .detail-body {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .detail-row {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        display: flex;
+        gap: 8px;
+        line-height: 1.5;
+    }
+    .detail-row .k {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--muted-2);
+        min-width: 74px;
+        padding-top: 2px;
+        flex-shrink: 0;
+    }
+    .detail-row .v {
+        flex: 1;
+        min-width: 0;
+    }
+    .detail-row.emphasize .v {
+        color: var(--fg);
+    }
+    .detail-foot {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 12px;
+        margin-top: auto;
+        padding-top: 10px;
+        border-top: 1px solid var(--border-soft);
+    }
+    .detail-link {
+        font-family: var(--mono);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--break);
+        text-decoration: none;
+        flex-shrink: 0;
+    }
+    .detail-link:hover {
+        text-decoration: underline;
+    }
+    .detail-link.none {
+        color: var(--muted-2);
     }
 
     /* ============== cardio page ============== */
@@ -2856,90 +2908,6 @@
     }
 
     /* ============== mobility page ============== */
-    .mob-card {
-        background: var(--bg);
-        padding: 24px;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        transition: background 200ms;
-    }
-    .mob-card:hover {
-        background: var(--surface);
-    }
-    .mob-card .top {
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
-        margin-bottom: 4px;
-    }
-    .mob-card h3 {
-        font-family: var(--display);
-        font-size: 20px;
-        line-height: 1.45;
-        letter-spacing: 0.005em;
-        flex: 1;
-        min-width: 0;
-    }
-    .mob-card .tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-    }
-    .mob-body {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-    }
-    .mob-row {
-        font-family: var(--mono);
-        font-size: 12px;
-        color: var(--muted);
-        display: flex;
-        gap: 8px;
-        line-height: 1.5;
-    }
-    .mob-row .k {
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.14em;
-        color: var(--muted-2);
-        min-width: 74px;
-        padding-top: 2px;
-        flex-shrink: 0;
-    }
-    .mob-row .v {
-        flex: 1;
-        min-width: 0;
-    }
-    .mob-row.dosage .v {
-        color: var(--fg);
-    }
-    .mob-foot {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        gap: 12px;
-        margin-top: auto;
-        padding-top: 10px;
-        border-top: 1px solid var(--border-soft);
-    }
-    .mob-video {
-        font-family: var(--mono);
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: var(--break);
-        text-decoration: none;
-        flex-shrink: 0;
-    }
-    .mob-video:hover {
-        text-decoration: underline;
-    }
-    .mob-video.none {
-        color: var(--muted-2);
-    }
-
     .program-intro {
         max-width: 70ch;
         display: flex;
