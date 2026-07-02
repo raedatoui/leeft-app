@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useActiveAllWorkouts, useCardioSettings, useWorkoutData } from '@/lib/contexts';
+import { type EffortTier, matchesTier } from '@/lib/cardio-effort';
+import { useActiveAllWorkouts, useWorkoutData } from '@/lib/contexts';
 import type { DayWorkout, ExerciseMap } from '@/types';
 
 export interface WorkoutLogState {
@@ -16,8 +17,8 @@ export interface WorkoutLogState {
     responsiveColumns: number;
     includeWarmup: boolean;
     setIncludeWarmup: (val: boolean) => void;
-    useStrictCardio: boolean;
-    setUseStrictCardio: (val: boolean) => void;
+    effortTier: EffortTier;
+    setEffortTier: (val: EffortTier) => void;
     selectedYear: string | undefined;
     activeYear: number | undefined;
     selectedMonth: string | undefined;
@@ -39,16 +40,25 @@ export interface WorkoutLogStateOptions {
 }
 
 export function useWorkoutLogState(opts: WorkoutLogStateOptions = {}): WorkoutLogState {
-    const allWorkouts = useActiveAllWorkouts();
+    const allDayWorkouts = useActiveAllWorkouts();
     const { exerciseMap } = useWorkoutData();
-    const { useStrictCardio, setUseStrictCardio } = useCardioSettings();
     const [miniMode, setMiniMode] = useState(opts.miniMode ?? true);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [slidesToShow, setSlidesToShow] = useState(4);
     const [responsiveColumns, setResponsiveColumns] = useState(4);
     const [includeWarmup, setIncludeWarmup] = useState(opts.includeWarmup ?? true);
+    // 'medium' default keeps the daily view clean (mirrors the old strict-mode default).
+    const [effortTier, setEffortTier] = useState<EffortTier>('medium');
     const [selectedYear, setSelectedYear] = useState<string | undefined>();
     const [selectedMonth, setSelectedMonth] = useState<string | undefined>();
+
+    // Trim each day's cardio to the selected tier; days left with nothing drop out.
+    const allWorkouts = useMemo(() => {
+        if (effortTier === 'all') return allDayWorkouts;
+        return allDayWorkouts
+            .map((day) => ({ ...day, cardioWorkouts: day.cardioWorkouts.filter((w) => matchesTier(w, effortTier)) }))
+            .filter((day) => day.liftingWorkouts.length > 0 || day.cardioWorkouts.length > 0);
+    }, [allDayWorkouts, effortTier]);
 
     const availableYears = useMemo(() => {
         const years = new Set<number>();
@@ -159,8 +169,8 @@ export function useWorkoutLogState(opts: WorkoutLogStateOptions = {}): WorkoutLo
         responsiveColumns,
         includeWarmup,
         setIncludeWarmup,
-        useStrictCardio,
-        setUseStrictCardio,
+        effortTier,
+        setEffortTier,
         selectedYear,
         activeYear,
         selectedMonth,

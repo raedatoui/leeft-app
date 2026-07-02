@@ -1,12 +1,14 @@
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
+import { type EffortTier, matchesTier } from '@/lib/cardio-effort';
 import { cardioColors } from '@/lib/cardio-theme';
-import { useActiveCardio, useCardioSettings } from '@/lib/contexts';
+import { useActiveCardio } from '@/lib/contexts';
 import { filterCardioWorkoutsByDateRange } from '@/lib/statsUtils';
-import type { CardioType, CardioWorkout } from '@/types';
+import type { CardioWorkout } from '@/types';
 
 export type CardioPeriod = 'ytd' | '30d' | '90d' | 'all';
+export type CardioLoggedByFilter = 'all' | 'tracker' | 'manual' | 'auto_detected';
 
 export interface CardioStats {
     workouts: number;
@@ -19,7 +21,7 @@ export interface CardioStats {
 }
 
 export interface CardioDistributionSlice {
-    type: CardioType;
+    type: string;
     count: number;
     pct: number;
     color: string;
@@ -27,7 +29,8 @@ export interface CardioDistributionSlice {
 
 export interface CardioMonthlyTrendBucket {
     month: number;
-    byType: Partial<Record<CardioType, number>>;
+    byType: Partial<Record<string, number>>;
+    byTypeDurationMin: Partial<Record<string, number>>;
     total: number;
     durationMin: number;
     zoneMin: number;
@@ -36,26 +39,31 @@ export interface CardioMonthlyTrendBucket {
 export interface CardioPageState {
     // Raw
     cardioWorkouts: CardioWorkout[];
-    useStrictCardio: boolean;
-    setUseStrictCardio: (v: boolean) => void;
 
     // UI state
     selectedYear: number;
     setSelectedYear: (y: number) => void;
-    activeType: CardioType | null;
-    setActiveType: (t: CardioType | null) => void;
+    activeType: string | null;
+    setActiveType: (t: string | null) => void;
     period: CardioPeriod;
     setPeriod: (p: CardioPeriod) => void;
+    effortTier: EffortTier;
+    setEffortTier: (t: EffortTier) => void;
+    minDuration: number;
+    setMinDuration: (m: number) => void;
+    loggedBy: CardioLoggedByFilter;
+    setLoggedBy: (l: CardioLoggedByFilter) => void;
 
     // Derived data
     workoutsByYear: Record<number, CardioWorkout[]>;
     years: number[];
     yearWorkouts: CardioWorkout[];
     periodWorkouts: CardioWorkout[];
+    scopedWorkouts: CardioWorkout[];
     filteredWorkouts: CardioWorkout[];
     sortedWorkouts: CardioWorkout[];
-    typeCounts: Partial<Record<CardioType, number>>;
-    availableTypes: CardioType[];
+    typeCounts: Partial<Record<string, number>>;
+    availableTypes: string[];
 
     // Precomputed shapes
     stats: CardioStats;
@@ -102,12 +110,12 @@ function computeStats(workouts: CardioWorkout[]): CardioStats {
 
 function computeDistribution(workouts: CardioWorkout[]): CardioDistributionSlice[] {
     if (workouts.length === 0) return [];
-    const counts: Partial<Record<CardioType, number>> = {};
+    const counts: Partial<Record<string, number>> = {};
     for (const w of workouts) {
         counts[w.type] = (counts[w.type] ?? 0) + 1;
     }
     const total = workouts.length;
-    return (Object.entries(counts) as [CardioType, number][])
+    return (Object.entries(counts) as [string, number][])
         .map(([type, count]) => ({
             type,
             count,
@@ -121,6 +129,7 @@ function computeMonthlyTrend(workouts: CardioWorkout[], year: number): CardioMon
     const buckets: CardioMonthlyTrendBucket[] = Array.from({ length: 12 }, (_, i) => ({
         month: i,
         byType: {},
+        byTypeDurationMin: {},
         total: 0,
         durationMin: 0,
         zoneMin: 0,
@@ -131,6 +140,7 @@ function computeMonthlyTrend(workouts: CardioWorkout[], year: number): CardioMon
         const bucket = buckets[w.date.getMonth()];
         if (!bucket) continue;
         bucket.byType[w.type] = (bucket.byType[w.type] ?? 0) + 1;
+        bucket.byTypeDurationMin[w.type] = (bucket.byTypeDurationMin[w.type] ?? 0) + w.durationMin;
         bucket.total += 1;
         bucket.durationMin += w.durationMin;
         bucket.zoneMin += w.zoneMinutes ?? 0;
@@ -147,12 +157,14 @@ function rollingWindowStart(days: number): Date {
 
 export function useCardioPageState(opts: CardioPageStateOptions = {}): CardioPageState {
     const cardioWorkouts = useActiveCardio();
-    const { useStrictCardio, setUseStrictCardio } = useCardioSettings();
 
     const currentYear = new Date().getFullYear();
     const [selectedYear, setSelectedYear] = useState<number>(opts.defaultYear ?? currentYear);
-    const [activeType, setActiveType] = useState<CardioType | null>(null);
+    const [activeType, setActiveType] = useState<string | null>(null);
     const [period, setPeriod] = useState<CardioPeriod>(opts.defaultPeriod ?? 'ytd');
+    const [effortTier, setEffortTier] = useState<EffortTier>('medium');
+    const [minDuration, setMinDuration] = useState(0);
+    const [loggedBy, setLoggedBy] = useState<CardioLoggedByFilter>('all');
 
     const workoutsByYear = useMemo(() => {
         return cardioWorkouts.reduce(
@@ -189,30 +201,39 @@ export function useCardioPageState(opts: CardioPageStateOptions = {}): CardioPag
         }
     }, [period, yearWorkouts, cardioWorkouts]);
 
+    // Effort/duration/logged-by narrow everything downstream (like the old strict mode did).
+    const scopedWorkouts = useMemo(
+        () =>
+            periodWorkouts.filter(
+                (w) => matchesTier(w, effortTier) && w.durationMin >= minDuration && (loggedBy === 'all' || w.loggedBy === loggedBy)
+            ),
+        [periodWorkouts, effortTier, minDuration, loggedBy]
+    );
+
     const typeCounts = useMemo(() => {
-        return periodWorkouts.reduce(
+        return scopedWorkouts.reduce(
             (acc, w) => {
                 acc[w.type] = (acc[w.type] ?? 0) + 1;
                 return acc;
             },
-            {} as Partial<Record<CardioType, number>>
+            {} as Partial<Record<string, number>>
         );
-    }, [periodWorkouts]);
+    }, [scopedWorkouts]);
 
-    const availableTypes = useMemo(() => Object.keys(typeCounts) as CardioType[], [typeCounts]);
+    const availableTypes = useMemo(() => Object.keys(typeCounts), [typeCounts]);
 
     const filteredWorkouts = useMemo(() => {
-        if (!activeType) return periodWorkouts;
-        return periodWorkouts.filter((w) => w.type === activeType);
-    }, [periodWorkouts, activeType]);
+        if (!activeType) return scopedWorkouts;
+        return scopedWorkouts.filter((w) => w.type === activeType);
+    }, [scopedWorkouts, activeType]);
 
     const sortedWorkouts = useMemo(() => [...filteredWorkouts].sort((a, b) => b.date.getTime() - a.date.getTime()), [filteredWorkouts]);
 
     // stats follow the active type filter (matches v1 CardioStats fed from filteredWorkouts).
     const stats = useMemo(() => computeStats(filteredWorkouts), [filteredWorkouts]);
     // distribution and trend show composition across all types — type filter only highlights, doesn't restrict.
-    const distribution = useMemo(() => computeDistribution(periodWorkouts), [periodWorkouts]);
-    const monthlyTrend = useMemo(() => computeMonthlyTrend(periodWorkouts, selectedYear), [periodWorkouts, selectedYear]);
+    const distribution = useMemo(() => computeDistribution(scopedWorkouts), [scopedWorkouts]);
+    const monthlyTrend = useMemo(() => computeMonthlyTrend(scopedWorkouts, selectedYear), [scopedWorkouts, selectedYear]);
 
     const goToPrevYear = useCallback(() => {
         const idx = years.indexOf(selectedYear);
@@ -228,18 +249,23 @@ export function useCardioPageState(opts: CardioPageStateOptions = {}): CardioPag
 
     return {
         cardioWorkouts,
-        useStrictCardio,
-        setUseStrictCardio,
         selectedYear,
         setSelectedYear,
         activeType,
         setActiveType,
         period,
         setPeriod,
+        effortTier,
+        setEffortTier,
+        minDuration,
+        setMinDuration,
+        loggedBy,
+        setLoggedBy,
         workoutsByYear,
         years,
         yearWorkouts,
         periodWorkouts,
+        scopedWorkouts,
         filteredWorkouts,
         sortedWorkouts,
         typeCounts,

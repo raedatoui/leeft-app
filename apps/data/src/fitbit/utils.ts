@@ -156,6 +156,15 @@ export const FitbitActivitySchema = z.object({
     // Full ISO start time with offset (e.g. 2024-06-14T14:42:56.000-04:00); preserved from raw startTime.
     startedAt: z.string().optional(),
     zoneMinutes: z.number(),
+    // Per-HR-zone minutes breakdown, summed from activeZoneMinutes.minutesInHeartRateZones.
+    hrZones: z
+        .object({
+            outOfRange: z.number(),
+            fatBurn: z.number(),
+            cardio: z.number(),
+            peak: z.number(),
+        })
+        .optional(),
     effort: ActivityLevelSchema,
     averageHeartRate: z.number().optional(),
     distance: z.number().optional(),
@@ -270,6 +279,8 @@ export const TARGET_CARDIO_ACTIVITIES = [
     'Aerobics',
     'Bike',
     'Walk',
+    'Basketball',
+    'Sport',
 ] as const;
 
 // Activity type groupings for detailed analysis

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import PageTemplateV2 from '@/components/layout/v2/pageTemplateV2';
 import DropdownV2 from '@/components/ui/v2/dropdownV2';
 import { WorkoutCard } from '@/components/workouts/v2/workoutCard';
+import { EFFORT_TIERS, type EffortTier, matchesTier } from '@/lib/cardio-effort';
 import { useActiveCardio, useWorkoutData } from '@/lib/contexts';
 import { formatTableDate, MONTHS_LONG, MONTHS_SHORT } from '@/lib/dateFormatters';
 import {
@@ -138,7 +139,9 @@ function StatsTableRow({ row, isSelected, onSelect }: { row: Row; isSelected: bo
 
 export default function StatsPageV2() {
     const { workouts, exerciseMap, muscleGroups } = useWorkoutData();
-    const cardioWorkouts = useActiveCardio();
+    const allCardio = useActiveCardio();
+    const [effortTier, setEffortTier] = useState<EffortTier>('medium');
+    const cardioWorkouts = useMemo(() => allCardio.filter((w) => matchesTier(w, effortTier)), [allCardio, effortTier]);
 
     const muscleGroupColor = useMemo(() => {
         const lookup = new Map(muscleGroups.map((mg) => [mg.id, mg.color]));
@@ -345,6 +348,26 @@ export default function StatsPageV2() {
                         <button type="button" className={`seg-btn${groupBy === 'week' ? ' active' : ''}`} onClick={() => onGroupChange('week')}>
                             Week
                         </button>
+                    </div>
+                </div>
+
+                <span className="toolbar-divider" />
+
+                <div className="toolbar-grp">
+                    <span className="label-mono" style={{ padding: '0 8px' }}>
+                        Cardio
+                    </span>
+                    <div className="seg" role="radiogroup" aria-label="Cardio effort">
+                        {EFFORT_TIERS.map(({ value, label }) => (
+                            <button
+                                key={value}
+                                type="button"
+                                className={`seg-btn${effortTier === value ? ' active' : ''}`}
+                                onClick={() => setEffortTier(value)}
+                            >
+                                {label}
+                            </button>
+                        ))}
                     </div>
                 </div>
             </div>

@@ -22,9 +22,7 @@ const projectRoot = dirname(scriptDir);
 const FILES_TO_UPLOAD = [
     'apps/data/data/out/lifting-log.json',
     'apps/data/data/out/cardio-log.json',
-    'apps/data/data/out/cardio-log-strict.json',
     'apps/data/data/out/all-workouts-log.json',
-    'apps/data/data/out/all-workouts-log-strict.json',
     'apps/data/data/out/cycles-lifting.json',
     'apps/data/data/out/cycles-all-workouts.json',
     'apps/data/data/exercise-classified.json',

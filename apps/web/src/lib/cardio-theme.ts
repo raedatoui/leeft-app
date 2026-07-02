@@ -1,8 +1,10 @@
-import { Activity, Bike, Flame, Footprints, Heart, type LucideProps, PersonStanding, Timer, Waves, Zap } from 'lucide-react';
+import { Activity, Bike, Dribbble, Flame, Footprints, Heart, type LucideProps, PersonStanding, Timer, Waves, Zap } from 'lucide-react';
 import type { FC } from 'react';
 import type { CardioType } from '@/types';
 
-export const cardioIcons: Record<CardioType, FC<LucideProps>> = {
+// Keyed by string — every exposed activity type can be looked up; unknown types fall back
+// at the lookup site. `satisfies` keeps the known CardioType set exhaustively covered.
+export const cardioIcons: Partial<Record<string, FC<LucideProps>>> = {
     Run: Footprints,
     'Treadmill run': Footprints,
     Swim: Waves,
@@ -17,9 +19,11 @@ export const cardioIcons: Record<CardioType, FC<LucideProps>> = {
     'Interval Workout': Timer,
     Bootcamp: Zap,
     Aerobics: Heart,
-};
+    Basketball: Dribbble,
+    Sport: Activity,
+} satisfies Record<CardioType, FC<LucideProps>>;
 
-export const cardioColors: Record<CardioType, string> = {
+export const cardioColors: Partial<Record<string, string>> = {
     Run: '#FF5252',
     'Treadmill run': '#FF5252',
     Swim: '#2196F3',
@@ -34,4 +38,6 @@ export const cardioColors: Record<CardioType, string> = {
     'Interval Workout': '#FF5722',
     Bootcamp: '#795548',
     Aerobics: '#E91E63',
-};
+    Basketball: '#FF7043',
+    Sport: '#26A69A',
+} satisfies Record<CardioType, string>;

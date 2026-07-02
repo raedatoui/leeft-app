@@ -6,6 +6,7 @@ import PageTemplateV2 from '@/components/layout/v2/pageTemplateV2';
 import DropdownV2, { type DropdownV2Option } from '@/components/ui/v2/dropdownV2';
 import MonthCalendar from '@/components/workouts/v2/monthCalendar';
 import { WorkoutCard } from '@/components/workouts/v2/workoutCard';
+import { EFFORT_TIERS } from '@/lib/cardio-effort';
 import { useWorkoutData } from '@/lib/contexts';
 import { MONTHS_LONG } from '@/lib/dateFormatters';
 import { useWorkoutLogState } from '@/lib/hooks/useWorkoutLogState';
@@ -241,21 +242,17 @@ export default function WorkoutLogPageV2() {
                 </div>
 
                 <div className="toolbar-grp" style={{ marginLeft: 'auto' }}>
-                    <div className="seg" role="radiogroup" aria-label="Cardio mode">
-                        <button
-                            type="button"
-                            className={`seg-btn${!state.useStrictCardio ? ' active' : ''}`}
-                            onClick={() => state.setUseStrictCardio(false)}
-                        >
-                            Active
-                        </button>
-                        <button
-                            type="button"
-                            className={`seg-btn${state.useStrictCardio ? ' active' : ''}`}
-                            onClick={() => state.setUseStrictCardio(true)}
-                        >
-                            Strict
-                        </button>
+                    <div className="seg" role="radiogroup" aria-label="Cardio effort">
+                        {EFFORT_TIERS.map(({ value, label }) => (
+                            <button
+                                key={value}
+                                type="button"
+                                className={`seg-btn${state.effortTier === value ? ' active' : ''}`}
+                                onClick={() => state.setEffortTier(value)}
+                            >
+                                {label}
+                            </button>
+                        ))}
                     </div>
                 </div>
             </div>
@@ -295,7 +292,8 @@ export default function WorkoutLogPageV2() {
                 <>
                     <div className="panel-label">
                         <span>
-                            Daily · {dailyDays.length} session{dailyDays.length === 1 ? '' : 's'} · page {state.currentIndex + 1} of {state.slideCount}
+                            Daily · {dailyDays.length} session{dailyDays.length === 1 ? '' : 's'} · page {state.currentIndex + 1} of{' '}
+                            {state.slideCount}
                         </span>
                     </div>
                     <div className="log-grid">

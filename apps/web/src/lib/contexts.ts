@@ -13,7 +13,6 @@ export interface MuscleGroup {
 export interface WorkoutDataContextType {
     workouts: Workout[];
     cardioWorkouts: CardioWorkout[];
-    cardioWorkoutsStrict: CardioWorkout[];
     exerciseMap: ExerciseMap;
     muscleGroups: MuscleGroup[];
     categories: string[];
@@ -21,14 +20,7 @@ export interface WorkoutDataContextType {
     cycles: MappedCycle[];
 }
 
-// CardioSettingsContext — changes on user toggle
-export interface CardioSettingsContextType {
-    useStrictCardio: boolean;
-    setUseStrictCardio: (value: boolean) => void;
-}
-
 export const WorkoutDataContext = React.createContext<WorkoutDataContextType | null>(null);
-export const CardioSettingsContext = React.createContext<CardioSettingsContextType | null>(null);
 
 export function useWorkoutData(): WorkoutDataContextType {
     const context = React.useContext(WorkoutDataContext);
@@ -38,27 +30,14 @@ export function useWorkoutData(): WorkoutDataContextType {
     return context;
 }
 
-export function useCardioSettings(): CardioSettingsContextType {
-    const context = React.useContext(CardioSettingsContext);
-    if (!context) {
-        throw new Error('useCardioSettings must be used within a WorkoutProvider');
-    }
-    return context;
-}
-
 export function useActiveCardio(): CardioWorkout[] {
-    const { cardioWorkouts, cardioWorkoutsStrict } = useWorkoutData();
-    const { useStrictCardio } = useCardioSettings();
-    return useMemo(() => (useStrictCardio ? cardioWorkoutsStrict : cardioWorkouts), [useStrictCardio, cardioWorkouts, cardioWorkoutsStrict]);
+    const { cardioWorkouts } = useWorkoutData();
+    return cardioWorkouts;
 }
 
 export function useActiveAllWorkouts(): DayWorkout[] {
-    const { workouts, cardioWorkouts, cardioWorkoutsStrict } = useWorkoutData();
-    const { useStrictCardio } = useCardioSettings();
-    return useMemo(
-        () => groupWorkoutsByDay(workouts, useStrictCardio ? cardioWorkoutsStrict : cardioWorkouts),
-        [workouts, useStrictCardio, cardioWorkouts, cardioWorkoutsStrict]
-    );
+    const { workouts, cardioWorkouts } = useWorkoutData();
+    return useMemo(() => groupWorkoutsByDay(workouts, cardioWorkouts), [workouts, cardioWorkouts]);
 }
 
 // Helper to group workouts by day

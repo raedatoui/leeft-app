@@ -3,7 +3,8 @@
 import { useMemo, useState } from 'react';
 import MonthCellV2 from '@/components/analysis/v2/monthCellV2';
 import PageTemplateV2 from '@/components/layout/v2/pageTemplateV2';
-import { useActiveCardio, useCardioSettings, useWorkoutData } from '@/lib/contexts';
+import { EFFORT_TIERS, type EffortTier, matchesTier } from '@/lib/cardio-effort';
+import { useActiveCardio, useWorkoutData } from '@/lib/contexts';
 import { MONTHS_SHORT } from '@/lib/dateFormatters';
 import { formatNumber } from '@/lib/statsUtils';
 import type { CardioWorkout, Workout } from '@/types';
@@ -35,11 +36,13 @@ function compareYearMonthDesc(a: string, b: string): number {
 
 export default function MonthlyPageV2() {
     const { workouts, exerciseMap, muscleGroups } = useWorkoutData();
-    const activeCardio = useActiveCardio();
-    const { useStrictCardio, setUseStrictCardio } = useCardioSettings();
+    const allCardio = useActiveCardio();
 
     const [includeWarmup, setIncludeWarmup] = useState(true);
     const [range, setRange] = useState<RangeFilter>('all');
+    const [effortTier, setEffortTier] = useState<EffortTier>('medium');
+
+    const activeCardio = useMemo(() => allCardio.filter((w) => matchesTier(w, effortTier)), [allCardio, effortTier]);
 
     const groupedLift = useMemo(() => groupByMonth(workouts), [workouts]);
     const groupedCardio = useMemo(() => groupByMonth(activeCardio), [activeCardio]);
@@ -147,13 +150,17 @@ export default function MonthlyPageV2() {
                     <span className="label-mono" style={{ padding: '0 8px' }}>
                         Cardio
                     </span>
-                    <div className="seg" role="radiogroup" aria-label="Cardio mode">
-                        <button type="button" className={`seg-btn${!useStrictCardio ? ' active' : ''}`} onClick={() => setUseStrictCardio(false)}>
-                            Active
-                        </button>
-                        <button type="button" className={`seg-btn${useStrictCardio ? ' active' : ''}`} onClick={() => setUseStrictCardio(true)}>
-                            Strict
-                        </button>
+                    <div className="seg" role="radiogroup" aria-label="Cardio effort">
+                        {EFFORT_TIERS.map(({ value, label }) => (
+                            <button
+                                key={value}
+                                type="button"
+                                className={`seg-btn${effortTier === value ? ' active' : ''}`}
+                                onClick={() => setEffortTier(value)}
+                            >
+                                {label}
+                            </button>
+                        ))}
                     </div>
                 </div>
 

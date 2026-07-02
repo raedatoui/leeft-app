@@ -136,6 +136,8 @@ export const CardioTypeEnum = z.enum([
 	"Interval Workout",
 	"Bootcamp",
 	"Aerobics",
+	"Basketball",
+	"Sport",
 ]);
 
 export const CardioWorkoutSchema = z.object({
@@ -143,11 +145,21 @@ export const CardioWorkoutSchema = z.object({
 	date: z.date(),
 	// Real activity start instant (preserves Fitbit's offset). `date` stays the day-key.
 	startedAt: z.coerce.date().optional(),
-	type: CardioTypeEnum,
+	// Every logged activity type is exposed; CardioTypeEnum is only the known/styled set.
+	type: z.string(),
 	durationMs: z.number(),
 	durationMin: z.number(),
 	loggedBy: z.enum(["tracker", "manual", "auto_detected"]),
 	zoneMinutes: z.number().optional(),
+	// Per-HR-zone minutes breakdown (from Fitbit activeZoneMinutes).
+	hrZones: z
+		.object({
+			outOfRange: z.number(),
+			fatBurn: z.number(),
+			cardio: z.number(),
+			peak: z.number(),
+		})
+		.optional(),
 	effort: z.array(EffortSchema).optional(),
 	calories: z.number().optional(),
 	averageHeartRate: z.number().optional(),

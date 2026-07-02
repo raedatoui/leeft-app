@@ -108,9 +108,7 @@ export default function ExercisesLibraryPageV2() {
             ) : (
                 <>
                     <div className="panel-label">
-                        <span>
-                            Exercises · {filteredExercises.length} matching
-                        </span>
+                        <span>Exercises · {filteredExercises.length} matching</span>
                         <span className="hint">click a row to drill in</span>
                     </div>
                     <section className="exercise-grid">

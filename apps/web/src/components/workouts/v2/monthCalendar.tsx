@@ -1,6 +1,6 @@
 'use client';
 
-import { Dumbbell } from 'lucide-react';
+import { Dumbbell, Timer } from 'lucide-react';
 import type { FC } from 'react';
 import { cardioColors, cardioIcons } from '@/lib/cardio-theme';
 import type { CardioWorkout, DayWorkout } from '@/types';
@@ -22,7 +22,7 @@ const utcDateKey = (d: Date): string => {
 };
 
 const cardioBadge = (workout: CardioWorkout) => {
-    const Icon = cardioIcons[workout.type];
+    const Icon = cardioIcons[workout.type] ?? Timer;
     const color = cardioColors[workout.type] ?? 'var(--cardio)';
     return { Icon, color, label: workout.type };
 };
@@ -89,7 +89,6 @@ export const MonthCalendar: FC<MonthCalendarProps> = ({ days, viewYear, viewMont
                                     )}
                                     {day.cardioWorkouts.map((c) => {
                                         const { Icon, color, label } = cardioBadge(c);
-                                        if (!Icon) return null;
                                         return (
                                             <span key={c.uuid} className="day-icon" style={{ color }} title={label}>
                                                 <Icon size={12} aria-hidden="true" />

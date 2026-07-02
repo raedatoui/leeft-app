@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { cardioColors } from '@/lib/cardio-theme';
 import type { MuscleGroup } from '@/lib/contexts';
 import { MONTHS_LONG } from '@/lib/dateFormatters';
-import type { CardioType, CardioWorkout, ExerciseMap, Workout } from '@/types';
+import type { CardioWorkout, ExerciseMap, Workout } from '@/types';
 
 interface MonthCellV2Props {
     yearMonth: string;
@@ -82,9 +82,9 @@ export default function MonthCellV2({ yearMonth, workouts, cardioWorkouts, exerc
     const cardioHours = totalCardioMin / 60;
 
     const topCardioTypes = useMemo(() => {
-        const counts: Partial<Record<CardioType, number>> = {};
+        const counts: Partial<Record<string, number>> = {};
         for (const c of cardioWorkouts) counts[c.type] = (counts[c.type] ?? 0) + 1;
-        return (Object.entries(counts) as [CardioType, number][]).sort((a, b) => b[1] - a[1]).slice(0, 3);
+        return (Object.entries(counts) as [string, number][]).sort((a, b) => b[1] - a[1]).slice(0, 3);
     }, [cardioWorkouts]);
 
     return (

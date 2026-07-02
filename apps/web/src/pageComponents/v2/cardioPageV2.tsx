@@ -2,14 +2,14 @@
 
 import { Clock, Flame, Heart, Timer, Zap } from 'lucide-react';
 import type { FC } from 'react';
+import { useMemo } from 'react';
 import CardioSessionCard from '@/components/cardio/v2/cardioSessionCard';
-import DonutChart from '@/components/cardio/v2/donutChart';
-import TrendChart from '@/components/cardio/v2/trendChart';
+import MonthlyBars from '@/components/cardio/v2/monthlyBars';
+import TypeMix from '@/components/cardio/v2/typeMix';
 import PageTemplateV2 from '@/components/layout/v2/pageTemplateV2';
 import DropdownV2, { type DropdownV2Option } from '@/components/ui/v2/dropdownV2';
-import { cardioColors } from '@/lib/cardio-theme';
-import { type CardioPeriod, useCardioPageState } from '@/lib/hooks/useCardioPageState';
-import type { CardioType } from '@/types';
+import { EFFORT_TIERS } from '@/lib/cardio-effort';
+import { type CardioLoggedByFilter, type CardioPeriod, useCardioPageState } from '@/lib/hooks/useCardioPageState';
 
 const PERIOD_OPTIONS: DropdownV2Option[] = [
     { value: 'ytd', label: 'Year to date' },
@@ -18,13 +18,19 @@ const PERIOD_OPTIONS: DropdownV2Option[] = [
     { value: 'all', label: 'All time' },
 ];
 
-// Short display names for filter pills (the full enum names are too long for pill chrome).
-const TYPE_SHORT: Partial<Record<CardioType, string>> = {
-    'Treadmill run': 'Treadmill',
-    'Outdoor Bike': 'Bike',
-    'Rowing machine': 'Rowing',
-    'Aerobic Workout': 'Aerobic',
-};
+const MIN_DURATION_OPTIONS: DropdownV2Option[] = [
+    { value: '0', label: 'Any length' },
+    { value: '10', label: '10+ min' },
+    { value: '20', label: '20+ min' },
+    { value: '30', label: '30+ min' },
+];
+
+const LOGGED_BY_OPTIONS: DropdownV2Option[] = [
+    { value: 'all', label: 'Any source' },
+    { value: 'tracker', label: 'Tracker' },
+    { value: 'manual', label: 'Manual' },
+    { value: 'auto_detected', label: 'Auto-detected' },
+];
 
 const StatIcon: FC<{ tone: string; icon: React.ReactNode; label: string; value: string }> = ({ tone, icon, label, value }) => (
     <div className="stat-icn" data-tone={tone}>
@@ -39,19 +45,20 @@ const StatIcon: FC<{ tone: string; icon: React.ReactNode; label: string; value: 
 export default function CardioPageV2() {
     const state = useCardioPageState();
     const {
-        useStrictCardio,
-        setUseStrictCardio,
         selectedYear,
         activeType,
         setActiveType,
         period,
         setPeriod,
+        effortTier,
+        setEffortTier,
+        minDuration,
+        setMinDuration,
+        loggedBy,
+        setLoggedBy,
         years,
-        yearWorkouts,
-        periodWorkouts,
+        scopedWorkouts,
         sortedWorkouts,
-        typeCounts,
-        availableTypes,
         stats,
         distribution,
         monthlyTrend,
@@ -59,13 +66,15 @@ export default function CardioPageV2() {
         goToNextYear,
     } = state;
 
+    const typeOrder = useMemo(() => distribution.map((slice) => slice.type), [distribution]);
+
     const yearLabel =
         period === 'ytd' ? `${selectedYear} · Year-to-date` : period === '30d' ? 'Last 30 days' : period === '90d' ? 'Last 90 days' : 'All time';
 
     const prevDisabled = years.length === 0 || selectedYear === Math.min(...years);
     const nextDisabled = years.length === 0 || selectedYear === Math.max(...years);
 
-    const allCount = period === 'ytd' ? yearWorkouts.length : periodWorkouts.length;
+    const allCount = scopedWorkouts.length;
 
     return (
         <PageTemplateV2 footer={`Cardio · ${sortedWorkouts.length} of ${allCount} sessions`}>
@@ -94,7 +103,6 @@ export default function CardioPageV2() {
                         </span>
                     </div>
                 </div>
-
             </section>
 
             <div className="toolbar u-mb-8">
@@ -125,13 +133,7 @@ export default function CardioPageV2() {
                                 <span className="label-mono" style={{ padding: '0 4px' }}>
                                     {selectedYear}
                                 </span>
-                                <button
-                                    type="button"
-                                    className="icon-btn sm"
-                                    onClick={goToNextYear}
-                                    disabled={nextDisabled}
-                                    aria-label="Next year"
-                                >
+                                <button type="button" className="icon-btn sm" onClick={goToNextYear} disabled={nextDisabled} aria-label="Next year">
                                     <svg
                                         width="12"
                                         height="12"
@@ -153,44 +155,37 @@ export default function CardioPageV2() {
 
                 <div className="toolbar-grp">
                     <span className="label-mono" style={{ padding: '0 8px' }}>
-                        Type
+                        Effort
                     </span>
-                    <div className="filter-pills">
-                        <button type="button" className={`filter-pill${activeType === null ? ' active' : ''}`} onClick={() => setActiveType(null)}>
-                            All <span className="count">{allCount}</span>
-                        </button>
-                        {availableTypes.map((type) => {
-                            const isActive = activeType === type;
-                            return (
-                                <button
-                                    key={type}
-                                    type="button"
-                                    className={`filter-pill${isActive ? ' active' : ''}`}
-                                    onClick={() => setActiveType(isActive ? null : type)}
-                                >
-                                    <span className="swatch" style={{ background: cardioColors[type] ?? 'var(--muted)' }} />
-                                    {TYPE_SHORT[type] ?? type}
-                                    <span className="count">{typeCounts[type] ?? 0}</span>
-                                </button>
-                            );
-                        })}
+                    <div className="seg" role="radiogroup" aria-label="Cardio effort">
+                        {EFFORT_TIERS.map(({ value, label }) => (
+                            <button
+                                key={value}
+                                type="button"
+                                className={`seg-btn${effortTier === value ? ' active' : ''}`}
+                                onClick={() => setEffortTier(value)}
+                            >
+                                {label}
+                            </button>
+                        ))}
                     </div>
                 </div>
 
                 <span className="toolbar-divider" />
 
                 <div className="toolbar-grp">
-                    <span className="label-mono" style={{ padding: '0 8px' }}>
-                        Mode
-                    </span>
-                    <div className="seg" role="radiogroup" aria-label="Cardio mode">
-                        <button type="button" className={`seg-btn${!useStrictCardio ? ' active' : ''}`} onClick={() => setUseStrictCardio(false)}>
-                            Active
-                        </button>
-                        <button type="button" className={`seg-btn${useStrictCardio ? ' active' : ''}`} onClick={() => setUseStrictCardio(true)}>
-                            Strict
-                        </button>
-                    </div>
+                    <DropdownV2
+                        value={String(minDuration)}
+                        options={MIN_DURATION_OPTIONS}
+                        onChange={(v) => setMinDuration(Number(v))}
+                        ariaLabel="Minimum duration"
+                    />
+                    <DropdownV2
+                        value={loggedBy}
+                        options={LOGGED_BY_OPTIONS}
+                        onChange={(v) => setLoggedBy(v as CardioLoggedByFilter)}
+                        ariaLabel="Logged by"
+                    />
                 </div>
 
                 <div className="toolbar-grp" style={{ marginLeft: 'auto' }}>
@@ -229,20 +224,20 @@ export default function CardioPageV2() {
             <section className="charts-row">
                 <div className="chart-zone">
                     <div className="panel-label" style={{ margin: 0 }}>
-                        <span>Distribution</span>
-                        <span className="hint">click to filter</span>
+                        <span>Mix · {allCount} sessions</span>
+                        <span className="hint">click a type to filter</span>
                     </div>
-                    <DonutChart distribution={distribution} activeType={activeType} onTypeSelect={setActiveType} totalLabel="Sessions" />
+                    <TypeMix distribution={distribution} activeType={activeType} onTypeSelect={setActiveType} />
                 </div>
 
                 <div className="chart-zone">
                     <div className="panel-label" style={{ margin: 0 }}>
-                        <span>Monthly Trend · Duration &amp; Zone Min</span>
+                        <span>Monthly · Hours by type</span>
                         <span className="hint">
                             {period === 'ytd' ? selectedYear : period === 'all' ? 'all years' : period === '30d' ? 'last 30d' : 'last 90d'}
                         </span>
                     </div>
-                    <TrendChart monthlyTrend={monthlyTrend} />
+                    <MonthlyBars monthlyTrend={monthlyTrend} typeOrder={typeOrder} activeType={activeType} />
                 </div>
             </section>
 

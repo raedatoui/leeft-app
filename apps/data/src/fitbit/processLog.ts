@@ -32,6 +32,26 @@ function toKm(d: number | undefined, unit: string | undefined): number | undefin
     return d;
 }
 
+// Map Fitbit HR-zone type identifiers to hrZones fields
+const HR_ZONE_FIELDS: Record<string, 'outOfRange' | 'fatBurn' | 'cardio' | 'peak'> = {
+    OUT_OF_ZONE: 'outOfRange',
+    FAT_BURN: 'fatBurn',
+    CARDIO: 'cardio',
+    PEAK: 'peak',
+};
+
+// Sum minutes per HR zone into a per-activity breakdown
+function buildHrZones(entry: RawActivity): { outOfRange: number; fatBurn: number; cardio: number; peak: number } {
+    const hrZones = { outOfRange: 0, fatBurn: 0, cardio: 0, peak: 0 };
+    for (const zone of entry.activeZoneMinutes.minutesInHeartRateZones) {
+        const field = HR_ZONE_FIELDS[zone.type];
+        if (field) {
+            hrZones[field] += zone.minutes;
+        }
+    }
+    return hrZones;
+}
+
 // Transform raw entries into simplified, validated parsed entries
 function transformEntries(raw: RawActivity[]): FitbitActivity[] {
     return raw.map((entry) => {
@@ -49,6 +69,7 @@ function transformEntries(raw: RawActivity[]): FitbitActivity[] {
             date: entry.startTime.split('T')[0],
             startedAt: entry.startTime,
             zoneMinutes: entry.activeZoneMinutes.totalMinutes,
+            hrZones: buildHrZones(entry),
             effort: entry.activityLevel,
             averageHeartRate: entry.averageHeartRate,
             distance: toKm(entry.distance, entry.distanceUnit),

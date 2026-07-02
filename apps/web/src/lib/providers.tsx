@@ -1,11 +1,11 @@
 'use client';
 
 import type React from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Loader from '@/components/common/loader';
 import { getUniqueValues } from '@/lib/exercises';
-import { fetchCardioWorkouts, fetchCardioWorkoutsStrict, fetchCycles, fetchExerciseMap, fetchWorkouts } from '@/lib/fetchData';
-import { CardioSettingsContext, type MuscleGroup, WorkoutDataContext, type WorkoutDataContextType } from './contexts';
+import { fetchCardioWorkouts, fetchCycles, fetchExerciseMap, fetchWorkouts } from '@/lib/fetchData';
+import { type MuscleGroup, WorkoutDataContext, type WorkoutDataContextType } from './contexts';
 
 interface ProvidersProps {
     children: React.ReactNode;
@@ -32,18 +32,11 @@ const PALETTE = [
 export function WorkoutProvider({ children }: WorkoutProviderProps) {
     const [data, setData] = useState<WorkoutDataContextType | null>(null);
     const [error, setError] = useState<Error | null>(null);
-    const [useStrictCardio, setUseStrictCardio] = useState(true);
 
     useEffect(() => {
         async function fetchData() {
             try {
-                const [wo, cardio, cardioStrict, m, cy] = await Promise.all([
-                    fetchWorkouts(),
-                    fetchCardioWorkouts(),
-                    fetchCardioWorkoutsStrict(),
-                    fetchExerciseMap(),
-                    fetchCycles(),
-                ]);
+                const [wo, cardio, m, cy] = await Promise.all([fetchWorkouts(), fetchCardioWorkouts(), fetchExerciseMap(), fetchCycles()]);
 
                 const { muscleGroups: uniqueGroups, categories: uniqueCategories, equipmentList: uniqueEquipment } = getUniqueValues(m);
 
@@ -72,7 +65,6 @@ export function WorkoutProvider({ children }: WorkoutProviderProps) {
                 setData({
                     workouts: wo,
                     cardioWorkouts: cardio,
-                    cardioWorkoutsStrict: cardioStrict,
                     exerciseMap: updatedExerciseMap,
                     muscleGroups: canonicalMuscleGroups,
                     categories: uniqueCategories,
@@ -87,16 +79,10 @@ export function WorkoutProvider({ children }: WorkoutProviderProps) {
         fetchData();
     }, []);
 
-    const cardioSettingsValue = useMemo(() => ({ useStrictCardio, setUseStrictCardio }), [useStrictCardio]);
-
     if (error) return <div className="p-8 text-center text-red-500">Error: {error.message}</div>;
     if (!data) return <Loader />;
 
-    return (
-        <WorkoutDataContext.Provider value={data}>
-            <CardioSettingsContext.Provider value={cardioSettingsValue}>{children}</CardioSettingsContext.Provider>
-        </WorkoutDataContext.Provider>
-    );
+    return <WorkoutDataContext.Provider value={data}>{children}</WorkoutDataContext.Provider>;
 }
 
 export default function Providers({ children }: ProvidersProps) {

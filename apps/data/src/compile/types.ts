@@ -54,6 +54,15 @@ export const CardioWorkoutSchema = z.object({
     durationMin: z.number(),
     loggedBy: z.enum(['tracker', 'manual', 'auto_detected']),
     zoneMinutes: z.number().optional(),
+    // Per-HR-zone minutes breakdown (from Fitbit activeZoneMinutes).
+    hrZones: z
+        .object({
+            outOfRange: z.number(),
+            fatBurn: z.number(),
+            cardio: z.number(),
+            peak: z.number(),
+        })
+        .optional(),
     effort: z.array(EffortSchema).optional(),
     calories: z.number().optional(),
     averageHeartRate: z.number().optional(),

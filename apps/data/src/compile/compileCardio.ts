@@ -2,7 +2,6 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { logger } from '@leeft/utils';
 import {
-    calculateEffortScore,
     type FitbitActivity,
     FitbitActivitySchema,
     filterCardioActivitiesByCriteria,
@@ -22,6 +21,7 @@ function convertFitbitToCardioWorkout(activity: FitbitActivity): CardioWorkout {
         durationMin: activity.durationMin,
         loggedBy: activity.loggedBy,
         zoneMinutes: activity.zoneMinutes,
+        hrZones: activity.hrZones,
         effort: activity.effort,
         averageHeartRate: activity.averageHeartRate,
         distance: activity.distance,
@@ -41,72 +41,46 @@ export function main(): void {
     logger.loading('Loading Fitbit activities...');
     const fitbitActivities = loadFitbitActivities();
 
-    // === PERMISSIVE FILTER (current algorithm) ===
-    logger.filtering('Filtering cardio activities (permissive)...');
+    // === DIAGNOSTIC FILTERS (not used to build the shipped log — the UI filters by effort tier) ===
     const cardioActivities = filterCardioActivitiesByCriteria(fitbitActivities);
-    logger.filtered(`Permissive filter: ${cardioActivities.length} activities`);
+    logger.filtered(`Permissive filter (diagnostic): ${cardioActivities.length} activities`);
 
-    // === STRICT FILTER (new algorithm) ===
-    logger.filtering('Filtering cardio activities (strict)...');
     const cardioActivitiesStrict = filterCardioActivitiesByCriteriaStrict(fitbitActivities);
-    logger.filtered(`Strict filter: ${cardioActivitiesStrict.length} activities`);
+    logger.filtered(`Strict filter (diagnostic): ${cardioActivitiesStrict.length} activities`);
 
-    // === IDENTIFY QUESTIONABLE ===
-    logger.filtering('Identifying questionable activities...');
     const questionable = identifyQuestionableActivities(cardioActivities);
     logger.filtered(`Questionable activities: ${questionable.length}`);
 
-    // Log activity type counts for permissive
-    const typeCounts = getActivityTypeCounts(cardioActivities);
-    logger.breakdown('Permissive - Activity type breakdown:');
+    // === CONVERT ALL ACTIVITIES ===
+    logger.converting('Converting to cardio workout format...');
+    const cardioWorkouts = fitbitActivities.map(convertFitbitToCardioWorkout);
+
+    // Sort by date
+    cardioWorkouts.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    const typeCounts = getActivityTypeCounts(fitbitActivities);
+    logger.breakdown('Activity type breakdown:');
     Object.entries(typeCounts).forEach(([type, count]) => {
         logger.count(`  ${type}: ${count}`);
     });
 
-    // Log activity type counts for strict
-    const typeCountsStrict = getActivityTypeCounts(cardioActivitiesStrict);
-    logger.breakdown('Strict - Activity type breakdown:');
-    Object.entries(typeCountsStrict).forEach(([type, count]) => {
-        logger.count(`  ${type}: ${count}`);
-    });
+    logger.compiled(`All activities: ${cardioWorkouts.length} workouts`);
 
-    // === CONVERT TO CARDIO WORKOUTS ===
-    logger.converting('Converting to cardio workout format...');
-    const cardioWorkouts = cardioActivities.map(convertFitbitToCardioWorkout);
-    const cardioWorkoutsStrict = cardioActivitiesStrict.map(convertFitbitToCardioWorkout);
-
-    // Sort by date
-    cardioWorkouts.sort((a, b) => a.date.getTime() - b.date.getTime());
-    cardioWorkoutsStrict.sort((a, b) => a.date.getTime() - b.date.getTime());
-
-    logger.compiled(`Permissive: ${cardioWorkouts.length} workouts`);
-    logger.compiled(`Strict: ${cardioWorkoutsStrict.length} workouts`);
-    logger.compiled(`Difference: ${cardioWorkouts.length - cardioWorkoutsStrict.length} filtered out by strict`);
-
-    // === WRITE PERMISSIVE CARDIO LOG ===
+    // === WRITE CARDIO LOG (all activities) ===
     const outputPath = join(__dirname, '../../data/out/cardio-log.json');
     writeFileSync(outputPath, JSON.stringify(cardioWorkouts, null, 2), { flag: 'w' });
-    logger.saved(`Cardio workouts (permissive) saved to: ${outputPath}`);
+    logger.saved(`Cardio workouts saved to: ${outputPath}`);
 
-    // === WRITE STRICT CARDIO LOG ===
-    const strictOutputPath = join(__dirname, '../../data/out/cardio-log-strict.json');
-    writeFileSync(strictOutputPath, JSON.stringify(cardioWorkoutsStrict, null, 2), { flag: 'w' });
-    logger.saved(`Cardio workouts (strict) saved to: ${strictOutputPath}`);
-
-    // === WRITE ANALYSIS ===
-    // Find what was filtered out by strict
-    const strictIds = new Set(cardioActivitiesStrict.map((a) => a.id));
-    const filteredOut = cardioActivities.filter((a) => !strictIds.has(a.id));
-
+    // === WRITE ANALYSIS (local-only diagnostics) ===
     const analysis = {
         summary: {
-            permissiveCount: cardioWorkouts.length,
-            strictCount: cardioWorkoutsStrict.length,
-            filteredOutCount: filteredOut.length,
+            totalCount: cardioWorkouts.length,
+            permissiveCount: cardioActivities.length,
+            strictCount: cardioActivitiesStrict.length,
             questionableCount: questionable.length,
         },
         permissiveBreakdown: {
-            byType: typeCounts,
+            byType: getActivityTypeCounts(cardioActivities),
             byLogMethod: cardioActivities.reduce(
                 (acc, a) => {
                     acc[a.loggedBy] = (acc[a.loggedBy] || 0) + 1;
@@ -116,7 +90,7 @@ export function main(): void {
             ),
         },
         strictBreakdown: {
-            byType: typeCountsStrict,
+            byType: getActivityTypeCounts(cardioActivitiesStrict),
             byLogMethod: cardioActivitiesStrict.reduce(
                 (acc, a) => {
                     acc[a.loggedBy] = (acc[a.loggedBy] || 0) + 1;
@@ -125,16 +99,6 @@ export function main(): void {
                 {} as Record<string, number>
             ),
         },
-        filteredOutByStrict: filteredOut.map((a) => ({
-            id: a.id,
-            date: a.date,
-            type: a.type,
-            durationMin: Math.round(a.durationMin),
-            loggedBy: a.loggedBy,
-            zoneMinutes: a.zoneMinutes,
-            effortScore: calculateEffortScore(a),
-            averageHeartRate: a.averageHeartRate,
-        })),
         questionableWorkouts: questionable.map((q) => ({
             id: q.activity.id,
             date: q.activity.date,
@@ -152,7 +116,7 @@ export function main(): void {
     writeFileSync(analysisPath, JSON.stringify(analysis, null, 2), { flag: 'w' });
     logger.saved(`Cardio analysis saved to: ${analysisPath}`);
 
-    // === WRITE STATS (for permissive - backward compatible) ===
+    // === WRITE STATS ===
     const stats = {
         total: cardioWorkouts.length,
         typeBreakdown: cardioWorkouts.reduce(
