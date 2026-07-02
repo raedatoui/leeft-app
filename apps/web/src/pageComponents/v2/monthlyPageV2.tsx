@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from 'react';
 import MonthCellV2 from '@/components/analysis/v2/monthCellV2';
+import EffortTierToggle from '@/components/cardio/v2/effortTierToggle';
 import PageTemplateV2 from '@/components/layout/v2/pageTemplateV2';
-import { EFFORT_TIERS, type EffortTier, matchesTier } from '@/lib/cardio-effort';
+import { type EffortTier, matchesTier } from '@/lib/cardio-effort';
 import { useActiveCardio, useWorkoutData } from '@/lib/contexts';
 import { MONTHS_SHORT } from '@/lib/dateFormatters';
 import { formatNumber } from '@/lib/statsUtils';
@@ -146,23 +147,7 @@ export default function MonthlyPageV2() {
 
                 <span className="toolbar-divider" />
 
-                <div className="toolbar-grp">
-                    <span className="label-mono" style={{ padding: '0 8px' }}>
-                        Cardio
-                    </span>
-                    <div className="seg" role="radiogroup" aria-label="Cardio effort">
-                        {EFFORT_TIERS.map(({ value, label }) => (
-                            <button
-                                key={value}
-                                type="button"
-                                className={`seg-btn${effortTier === value ? ' active' : ''}`}
-                                onClick={() => setEffortTier(value)}
-                            >
-                                {label}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+                <EffortTierToggle value={effortTier} onChange={setEffortTier} />
 
                 <div className="toolbar-grp" style={{ marginLeft: 'auto' }}>
                     <select

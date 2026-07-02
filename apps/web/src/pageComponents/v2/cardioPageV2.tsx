@@ -4,11 +4,11 @@ import { Clock, Flame, Heart, Timer, Zap } from 'lucide-react';
 import type { FC } from 'react';
 import { useMemo } from 'react';
 import CardioSessionCard from '@/components/cardio/v2/cardioSessionCard';
+import EffortTierToggle from '@/components/cardio/v2/effortTierToggle';
 import MonthlyBars from '@/components/cardio/v2/monthlyBars';
 import TypeMix from '@/components/cardio/v2/typeMix';
 import PageTemplateV2 from '@/components/layout/v2/pageTemplateV2';
 import DropdownV2, { type DropdownV2Option } from '@/components/ui/v2/dropdownV2';
-import { EFFORT_TIERS } from '@/lib/cardio-effort';
 import { type CardioLoggedByFilter, type CardioPeriod, useCardioPageState } from '@/lib/hooks/useCardioPageState';
 
 const PERIOD_OPTIONS: DropdownV2Option[] = [
@@ -153,23 +153,7 @@ export default function CardioPageV2() {
                     </>
                 )}
 
-                <div className="toolbar-grp">
-                    <span className="label-mono" style={{ padding: '0 8px' }}>
-                        Effort
-                    </span>
-                    <div className="seg" role="radiogroup" aria-label="Cardio effort">
-                        {EFFORT_TIERS.map(({ value, label }) => (
-                            <button
-                                key={value}
-                                type="button"
-                                className={`seg-btn${effortTier === value ? ' active' : ''}`}
-                                onClick={() => setEffortTier(value)}
-                            >
-                                {label}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+                <EffortTierToggle value={effortTier} onChange={setEffortTier} label="Effort" />
 
                 <span className="toolbar-divider" />
 

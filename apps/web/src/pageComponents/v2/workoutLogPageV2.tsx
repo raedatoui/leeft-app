@@ -2,11 +2,11 @@
 
 import { X } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import EffortTierToggle from '@/components/cardio/v2/effortTierToggle';
 import PageTemplateV2 from '@/components/layout/v2/pageTemplateV2';
 import DropdownV2, { type DropdownV2Option } from '@/components/ui/v2/dropdownV2';
 import MonthCalendar from '@/components/workouts/v2/monthCalendar';
 import { WorkoutCard } from '@/components/workouts/v2/workoutCard';
-import { EFFORT_TIERS } from '@/lib/cardio-effort';
 import { useWorkoutData } from '@/lib/contexts';
 import { MONTHS_LONG } from '@/lib/dateFormatters';
 import { useWorkoutLogState } from '@/lib/hooks/useWorkoutLogState';
@@ -241,20 +241,9 @@ export default function WorkoutLogPageV2() {
                     </button>
                 </div>
 
-                <div className="toolbar-grp" style={{ marginLeft: 'auto' }}>
-                    <div className="seg" role="radiogroup" aria-label="Cardio effort">
-                        {EFFORT_TIERS.map(({ value, label }) => (
-                            <button
-                                key={value}
-                                type="button"
-                                className={`seg-btn${state.effortTier === value ? ' active' : ''}`}
-                                onClick={() => state.setEffortTier(value)}
-                            >
-                                {label}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+                <span className="toolbar-divider" />
+
+                <EffortTierToggle value={state.effortTier} onChange={state.setEffortTier} />
             </div>
 
             {viewMode === 'month' ? (

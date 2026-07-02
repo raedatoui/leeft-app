@@ -2,10 +2,11 @@
 
 import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import EffortTierToggle from '@/components/cardio/v2/effortTierToggle';
 import PageTemplateV2 from '@/components/layout/v2/pageTemplateV2';
 import DropdownV2 from '@/components/ui/v2/dropdownV2';
 import { WorkoutCard } from '@/components/workouts/v2/workoutCard';
-import { EFFORT_TIERS, type EffortTier, matchesTier } from '@/lib/cardio-effort';
+import { type EffortTier, matchesTier } from '@/lib/cardio-effort';
 import { useActiveCardio, useWorkoutData } from '@/lib/contexts';
 import { formatTableDate, MONTHS_LONG, MONTHS_SHORT } from '@/lib/dateFormatters';
 import {
@@ -353,23 +354,7 @@ export default function StatsPageV2() {
 
                 <span className="toolbar-divider" />
 
-                <div className="toolbar-grp">
-                    <span className="label-mono" style={{ padding: '0 8px' }}>
-                        Cardio
-                    </span>
-                    <div className="seg" role="radiogroup" aria-label="Cardio effort">
-                        {EFFORT_TIERS.map(({ value, label }) => (
-                            <button
-                                key={value}
-                                type="button"
-                                className={`seg-btn${effortTier === value ? ' active' : ''}`}
-                                onClick={() => setEffortTier(value)}
-                            >
-                                {label}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+                <EffortTierToggle value={effortTier} onChange={setEffortTier} />
             </div>
 
             {chartData && chartData.length > 0 && (
