@@ -9,6 +9,7 @@ import MonthCalendar from '@/components/workouts/v2/monthCalendar';
 import { WorkoutCard } from '@/components/workouts/v2/workoutCard';
 import { useWorkoutData } from '@/lib/contexts';
 import { MONTHS_LONG } from '@/lib/dateFormatters';
+import { useMuscleGroupColor } from '@/lib/hooks/useMuscleGroupColor';
 import { useWorkoutLogState } from '@/lib/hooks/useWorkoutLogState';
 import type { DayWorkout } from '@/types';
 
@@ -18,10 +19,7 @@ export default function WorkoutLogPageV2() {
     const state = useWorkoutLogState({ includeWarmup: false });
     const { muscleGroups } = useWorkoutData();
 
-    const muscleGroupColor = useMemo(() => {
-        const lookup = new Map(muscleGroups.map((mg) => [mg.id, mg.color]));
-        return (id: string | undefined) => (id ? lookup.get(id) : undefined);
-    }, [muscleGroups]);
+    const muscleGroupColor = useMuscleGroupColor(muscleGroups);
 
     const initialView = useMemo(() => {
         const last = state.workouts[state.workouts.length - 1];

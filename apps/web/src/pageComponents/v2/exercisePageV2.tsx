@@ -7,6 +7,7 @@ import ExercisePRChart from '@/components/charts/exercisePRChart';
 import ExerciseLookupV2 from '@/components/exercises/v2/exerciseLookupV2';
 import PageTemplateV2 from '@/components/layout/v2/pageTemplateV2';
 import DropdownV2, { type DropdownV2Option } from '@/components/ui/v2/dropdownV2';
+import TablePager from '@/components/ui/v2/tablePager';
 import { WorkoutCard } from '@/components/workouts/v2/workoutCard';
 import { type CalculationMethod, defaultMaxCalculator, maxCalculators, oneRepMaxCalculators } from '@/lib/calc';
 import { useWorkoutData } from '@/lib/contexts';
@@ -353,40 +354,15 @@ export default function ExercisePageV2() {
                             onHover={setHoveredIndex}
                         />
 
-                        <div className="pr-pager">
-                            <button
-                                type="button"
-                                className="icon-btn sm"
-                                onClick={() => setTablePage((p) => Math.max(0, p - 1))}
-                                disabled={currentPage === 0}
-                                aria-label="Newer page"
-                            >
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                                    <title>Previous</title>
-                                    <polyline points="15 18 9 12 15 6" />
-                                </svg>
-                            </button>
-                            <span className="pr-pager-pos">
-                                Page <b>{currentPage + 1}</b> / {totalPages}
-                            </span>
-                            <button
-                                type="button"
-                                className="icon-btn sm"
-                                onClick={() => setTablePage((p) => Math.min(totalPages - 1, p + 1))}
-                                disabled={currentPage >= totalPages - 1}
-                                aria-label="Older page"
-                            >
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                                    <title>Next</title>
-                                    <polyline points="9 18 15 12 9 6" />
-                                </svg>
-                            </button>
-                            {pageRangeStart && pageRangeEnd && (
-                                <span className="pr-pager-range">
-                                    {formatTableDate(pageRangeStart)} → {formatTableDate(pageRangeEnd)}
-                                </span>
-                            )}
-                        </div>
+                        <TablePager
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPrev={() => setTablePage((p) => Math.max(0, p - 1))}
+                            onNext={() => setTablePage((p) => Math.min(totalPages - 1, p + 1))}
+                            rangeLabel={
+                                pageRangeStart && pageRangeEnd ? `${formatTableDate(pageRangeStart)} → ${formatTableDate(pageRangeEnd)}` : undefined
+                            }
+                        />
 
                         <div className="pr-table">
                             <div className="pr-row head">

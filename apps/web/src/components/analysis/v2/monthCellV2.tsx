@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { cardioColors } from '@/lib/cardio-theme';
 import type { MuscleGroup } from '@/lib/contexts';
 import { MONTHS_LONG } from '@/lib/dateFormatters';
+import { useMuscleGroupColor } from '@/lib/hooks/useMuscleGroupColor';
 import type { CardioWorkout, ExerciseMap, Workout } from '@/types';
 
 interface MonthCellV2Props {
@@ -63,10 +64,7 @@ export default function MonthCellV2({ yearMonth, workouts, cardioWorkouts, exerc
     const monthIdx = Math.max(0, Math.min(11, Number(monthStr) - 1));
     const monthName = MONTHS_LONG[monthIdx];
 
-    const muscleColor = useMemo(() => {
-        const lookup = new Map(muscleGroups.map((mg) => [mg.id, mg.color]));
-        return (id: string | undefined) => (id ? lookup.get(id) : undefined);
-    }, [muscleGroups]);
+    const muscleColor = useMuscleGroupColor(muscleGroups);
 
     const liftCount = workouts.length;
     const avgExercises = liftCount > 0 ? workouts.reduce((s, w) => s + w.exercises.length, 0) / liftCount : 0;

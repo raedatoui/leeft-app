@@ -5,10 +5,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import EffortTierToggle from '@/components/cardio/v2/effortTierToggle';
 import PageTemplateV2 from '@/components/layout/v2/pageTemplateV2';
 import DropdownV2 from '@/components/ui/v2/dropdownV2';
+import PagerControls from '@/components/ui/v2/pagerControls';
+import TablePager from '@/components/ui/v2/tablePager';
 import { WorkoutCard } from '@/components/workouts/v2/workoutCard';
 import { type EffortTier, matchesTier } from '@/lib/cardio-effort';
 import { useActiveCardio, useWorkoutData } from '@/lib/contexts';
 import { formatTableDate, MONTHS_LONG, MONTHS_SHORT } from '@/lib/dateFormatters';
+import { useMuscleGroupColor } from '@/lib/hooks/useMuscleGroupColor';
 import {
     type AggregateBy,
     aggregateForChart,
@@ -144,10 +147,7 @@ export default function StatsPageV2() {
     const [effortTier, setEffortTier] = useState<EffortTier>('medium');
     const cardioWorkouts = useMemo(() => allCardio.filter((w) => matchesTier(w, effortTier)), [allCardio, effortTier]);
 
-    const muscleGroupColor = useMemo(() => {
-        const lookup = new Map(muscleGroups.map((mg) => [mg.id, mg.color]));
-        return (id: string | undefined) => (id ? lookup.get(id) : undefined);
-    }, [muscleGroups]);
+    const muscleGroupColor = useMuscleGroupColor(muscleGroups);
 
     const dateBounds = useMemo(() => {
         const dates = [...workouts.map((w) => w.date), ...cardioWorkouts.map((c) => c.date)];
@@ -298,29 +298,18 @@ export default function StatsPageV2() {
 
             <div className="toolbar u-mb-8">
                 <div className="toolbar-grp">
-                    <button
-                        type="button"
-                        className="icon-btn sm"
-                        onClick={goPrevBucket}
-                        disabled={safeBucketIndex >= buckets.length - 1}
-                        aria-label="Older bucket"
-                    >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                            <title>Older</title>
-                            <polyline points="15 18 9 12 15 6" />
-                        </svg>
-                    </button>
-                    <span className="toolbar-pos">
-                        <b>{safeBucketIndex + 1}</b>
-                        <span className="sep">/</span>
-                        {buckets.length}
-                    </span>
-                    <button type="button" className="icon-btn sm" onClick={goNextBucket} disabled={safeBucketIndex === 0} aria-label="Newer bucket">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                            <title>Newer</title>
-                            <polyline points="9 18 15 12 9 6" />
-                        </svg>
-                    </button>
+                    <PagerControls
+                        index={safeBucketIndex}
+                        count={buckets.length}
+                        onPrev={goPrevBucket}
+                        onNext={goNextBucket}
+                        prevDisabled={safeBucketIndex >= buckets.length - 1}
+                        nextDisabled={safeBucketIndex === 0}
+                        prevLabel="Older bucket"
+                        nextLabel="Newer bucket"
+                        prevTitle="Older"
+                        nextTitle="Newer"
+                    />
                     <DropdownV2
                         value={String(safeBucketIndex)}
                         options={buckets.map((b, i) => ({ value: String(i), label: b.label }))}
@@ -383,34 +372,15 @@ export default function StatsPageV2() {
                             <span className="hint">click a row for details</span>
                         </div>
 
-                        <div className="pr-pager">
-                            <button type="button" className="icon-btn sm" onClick={goPrevPage} disabled={currentPage === 0} aria-label="Newer page">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                                    <title>Previous</title>
-                                    <polyline points="15 18 9 12 15 6" />
-                                </svg>
-                            </button>
-                            <span className="pr-pager-pos">
-                                Page <b>{currentPage + 1}</b> / {totalPages}
-                            </span>
-                            <button
-                                type="button"
-                                className="icon-btn sm"
-                                onClick={goNextPage}
-                                disabled={currentPage >= totalPages - 1}
-                                aria-label="Older page"
-                            >
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                                    <title>Next</title>
-                                    <polyline points="9 18 15 12 9 6" />
-                                </svg>
-                            </button>
-                            {pageRangeStart && pageRangeEnd && (
-                                <span className="pr-pager-range">
-                                    {formatTableDate(pageRangeStart)} → {formatTableDate(pageRangeEnd)}
-                                </span>
-                            )}
-                        </div>
+                        <TablePager
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPrev={goPrevPage}
+                            onNext={goNextPage}
+                            rangeLabel={
+                                pageRangeStart && pageRangeEnd ? `${formatTableDate(pageRangeStart)} → ${formatTableDate(pageRangeEnd)}` : undefined
+                            }
+                        />
 
                         <div className="pr-table">
                             <div className="pr-row head stats-row">

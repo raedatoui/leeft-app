@@ -4,10 +4,12 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import PageTemplateV2 from '@/components/layout/v2/pageTemplateV2';
 import DropdownV2 from '@/components/ui/v2/dropdownV2';
+import PagerControls from '@/components/ui/v2/pagerControls';
 import { WorkoutCard } from '@/components/workouts/v2/workoutCard';
 import { useWorkoutData } from '@/lib/contexts';
 import { CYCLE_TYPE_COLOR, CYCLE_TYPE_DATA, CYCLE_TYPE_LABEL, cycleDays } from '@/lib/cycleTypes';
 import { formatDayMonth } from '@/lib/dateFormatters';
+import { useMuscleGroupColor } from '@/lib/hooks/useMuscleGroupColor';
 import { formatVolume } from '@/lib/statsUtils';
 
 interface CycleDetailPageV2Props {
@@ -24,10 +26,7 @@ export default function CycleDetailPageV2({ id }: CycleDetailPageV2Props) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<string | null>(null);
 
-    const muscleGroupColor = useMemo(() => {
-        const lookup = new Map(muscleGroups.map((mg) => [mg.id, mg.color]));
-        return (id: string | undefined) => (id ? lookup.get(id) : undefined);
-    }, [muscleGroups]);
+    const muscleGroupColor = useMuscleGroupColor(muscleGroups);
 
     const muscleGroupName = useMemo(() => {
         const lookup = new Map(muscleGroups.map((mg) => [mg.id, mg.name]));
@@ -197,23 +196,14 @@ export default function CycleDetailPageV2({ id }: CycleDetailPageV2Props) {
 
                     <div className="toolbar" style={{ marginBottom: 20 }}>
                         <div className="toolbar-grp">
-                            <button type="button" className="icon-btn sm" onClick={goPrev} disabled={safeIndex === 0} aria-label="Previous">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <title>Previous</title>
-                                    <polyline points="15 18 9 12 15 6" />
-                                </svg>
-                            </button>
-                            <span className="toolbar-pos">
-                                <b>{safeIndex + 1}</b>
-                                <span className="sep">/</span>
-                                {slideCount}
-                            </span>
-                            <button type="button" className="icon-btn sm" onClick={goNext} disabled={safeIndex >= slideCount - 1} aria-label="Next">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <title>Next</title>
-                                    <polyline points="9 18 15 12 9 6" />
-                                </svg>
-                            </button>
+                            <PagerControls
+                                index={safeIndex}
+                                count={slideCount}
+                                onPrev={goPrev}
+                                onNext={goNext}
+                                prevDisabled={safeIndex === 0}
+                                nextDisabled={safeIndex >= slideCount - 1}
+                            />
                         </div>
 
                         <span className="toolbar-divider" />
