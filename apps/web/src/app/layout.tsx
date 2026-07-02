@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Anton, DM_Sans, JetBrains_Mono } from 'next/font/google';
 import localFont from 'next/font/local';
+import { ThemeProvider } from 'next-themes';
 import './globals.css';
 import './v2.css';
 import Providers from '@/lib/providers';
@@ -48,13 +49,15 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en" className="dark">
+        <html lang="en" className="dark" suppressHydrationWarning>
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-                <Providers>
-                    <div data-theme="v2" className={`${anton.variable} ${dmSans.variable} ${jetbrainsMono.variable}`}>
-                        {children}
-                    </div>
-                </Providers>
+                <ThemeProvider attribute="data-mode" defaultTheme="system" enableSystem storageKey="leeft-theme">
+                    <Providers>
+                        <div data-theme="v2" className={`${anton.variable} ${dmSans.variable} ${jetbrainsMono.variable}`}>
+                            {children}
+                        </div>
+                    </Providers>
+                </ThemeProvider>
             </body>
         </html>
     );

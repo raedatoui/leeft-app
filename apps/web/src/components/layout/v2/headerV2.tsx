@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import ThemeToggleV2 from './themeToggleV2';
 
 const NAV = [
     { href: '/', label: 'Log', color: 'var(--maint)' },
@@ -36,6 +37,7 @@ export default function HeaderV2() {
                         );
                     })}
                 </div>
+                <ThemeToggleV2 />
             </div>
         </nav>
     );

@@ -46,6 +46,9 @@
     --mg-core: #b8b8a8;
     --mg-calves: #c47bd2;
 
+    --hairline-highlight: rgba(255, 255, 255, 0.04);
+    --shadow-dropdown: rgba(0, 0, 0, 0.45);
+
     --display: var(--font-display, "Anton"), "Impact", sans-serif;
     --body: var(--font-body, "DM Sans"), system-ui, sans-serif;
     --mono: var(--font-mono, "JetBrains Mono"), ui-monospace, monospace;
@@ -57,8 +60,8 @@
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     background-image:
-        radial-gradient(1200px 600px at 80% -10%, rgba(255, 160, 0, 0.04), transparent 60%),
-        radial-gradient(900px 500px at -10% 30%, rgba(91, 155, 255, 0.04), transparent 60%);
+        radial-gradient(1200px 600px at 80% -10%, color-mix(in srgb, var(--maint) 4%, transparent), transparent 60%),
+        radial-gradient(900px 500px at -10% 30%, color-mix(in srgb, var(--break) 4%, transparent), transparent 60%);
     background-attachment: fixed;
     min-height: 100vh;
     display: block;
@@ -515,7 +518,7 @@
     .seg-btn.active {
         background: var(--bg);
         color: var(--maint);
-        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+        box-shadow: 0 1px 0 var(--hairline-highlight) inset;
     }
 
     /* ============== stat strip ============== */
@@ -719,7 +722,7 @@
         width: 18px;
         height: 18px;
         border-radius: 4px;
-        background: rgba(255, 255, 255, 0.04);
+        background: var(--hairline-highlight);
     }
 
     @media (max-width: 600px) {
@@ -1563,7 +1566,7 @@
         background: var(--surface);
         border: 1px solid var(--border);
         border-radius: 14px;
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+        box-shadow: 0 12px 32px var(--shadow-dropdown);
         z-index: 50;
         display: flex;
         flex-direction: column;
@@ -1706,7 +1709,7 @@
         background: var(--surface);
         border: 1px solid var(--border);
         border-radius: 14px;
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+        box-shadow: 0 12px 32px var(--shadow-dropdown);
         z-index: 50;
         display: flex;
         flex-direction: column;
@@ -2006,7 +2009,7 @@
         content: "";
         position: absolute;
         inset: 0;
-        background: radial-gradient(800px 200px at 50% 100%, rgba(25, 230, 140, 0.04), transparent);
+        background: radial-gradient(800px 200px at 50% 100%, color-mix(in srgb, var(--strength) 4%, transparent), transparent);
         pointer-events: none;
     }
     .timeline-hero .tl-track-wrap {
@@ -3040,5 +3043,39 @@
         font-size: 11px;
         color: var(--muted);
         text-align: right;
+    }
+}
+
+/* ============== light mode token overrides ==============
+   Same pigments, daylight: the neutral pair literally swaps — dark mode's
+   bone text (#ecebe2) becomes the paper, its warm black (#0b0a08) becomes
+   the ink. Accents keep their exact dark-mode hue (spring green 154°, signal
+   red 3°, cobalt 217°, amber 38°, cyan 190°, brass 48°) deepened until each
+   passes 4.5:1 as text on --bg, so the neon signage reads as enamel paint
+   rather than being swapped for unrelated "light theme" tones. */
+html[data-mode="light"] [data-theme="v2"] {
+    --bg: #ecebe2;
+    --surface: #f7f6f1;
+    --surface-2: #e3e0d3;
+    --border: #cfc9b7;
+    --border-soft: #dfdbcd;
+    --fg: #0b0a08;
+    --muted: #6b6454;
+    --muted-2: #9a927d;
+
+    --strength: #067947;
+    --hyper: #d01a11;
+    --break: #1262e2;
+    --maint: #945e00;
+    --cardio: #047389;
+    --zone: #7f6603;
+
+    --hairline-highlight: rgba(0, 0, 0, 0.05);
+    --shadow-dropdown: rgba(20, 18, 12, 0.14);
+
+    /* the thumb is bone (--fg) in dark mode; in light mode --fg is ink and
+       would sink into the amber on-state, so it stays paper-colored */
+    .switch .thumb {
+        background: var(--surface);
     }
 }

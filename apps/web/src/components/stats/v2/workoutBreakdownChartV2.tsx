@@ -2,8 +2,9 @@
 
 import Highcharts, { type Options } from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
+import { useTheme } from 'next-themes';
 import { useMemo } from 'react';
-import { chartColors, chartFonts } from '@/lib/chart-theme';
+import { chartFonts, getChartPalette } from '@/lib/chart-theme';
 import type { AggregateBy, ChartDataPoint } from '@/lib/statsUtils';
 
 interface Props {
@@ -14,11 +15,12 @@ interface Props {
     selectedIndex?: number | null;
 }
 
-const LIFTING_COLOR = '#ffa000';
-const CARDIO_COLOR = '#00d4ff';
 const DESELECTED_OPACITY = 0.3;
 
 export default function WorkoutBreakdownChartV2({ data, aggregateBy, onPointClick, selectedIndex }: Props) {
+    const { resolvedTheme } = useTheme();
+    const chartColors = getChartPalette(resolvedTheme === 'light' ? 'light' : 'dark');
+
     const { categories, tooltips, liftingSeries, cardioSeries } = useMemo(() => {
         const hasSelection = selectedIndex !== null && selectedIndex !== undefined;
         return {
@@ -26,14 +28,14 @@ export default function WorkoutBreakdownChartV2({ data, aggregateBy, onPointClic
             tooltips: data.map((d) => d.tooltip),
             liftingSeries: data.map((d, i) => ({
                 y: d.liftingCount,
-                color: hasSelection && i !== selectedIndex ? `rgba(255, 160, 0, ${DESELECTED_OPACITY})` : LIFTING_COLOR,
+                color: hasSelection && i !== selectedIndex ? `rgba(${chartColors.liftingRgb}, ${DESELECTED_OPACITY})` : chartColors.lifting,
             })),
             cardioSeries: data.map((d, i) => ({
                 y: d.cardioCount,
-                color: hasSelection && i !== selectedIndex ? `rgba(0, 212, 255, ${DESELECTED_OPACITY})` : CARDIO_COLOR,
+                color: hasSelection && i !== selectedIndex ? `rgba(${chartColors.cardioRgb}, ${DESELECTED_OPACITY})` : chartColors.cardio,
             })),
         };
-    }, [data, selectedIndex]);
+    }, [data, selectedIndex, chartColors]);
 
     const hasData = liftingSeries.some((v) => v.y > 0) || cardioSeries.some((v) => v.y > 0);
 
@@ -124,8 +126,8 @@ export default function WorkoutBreakdownChartV2({ data, aggregateBy, onPointClic
             },
         },
         series: [
-            { name: 'Lifting', type: 'column', data: liftingSeries, color: LIFTING_COLOR },
-            { name: 'Cardio', type: 'column', data: cardioSeries, color: CARDIO_COLOR },
+            { name: 'Lifting', type: 'column', data: liftingSeries, color: chartColors.lifting },
+            { name: 'Cardio', type: 'column', data: cardioSeries, color: chartColors.cardio },
         ],
         credits: { enabled: false },
     };

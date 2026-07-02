@@ -2,16 +2,32 @@
 
 import Highcharts, { type Options, type Point, type SVGPathArray } from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
+import { useTheme } from 'next-themes';
 
-const v2 = {
-    bg: '#0b0a08',
-    fg: '#ecebe2',
-    muted: '#807a6c',
-    muted2: '#5a5448',
-    border: '#2a2722',
-    maint: '#ffa000',
-    strength: '#19e68c',
-};
+// Highcharts renders to inline SVG/style attributes rather than the page's CSS cascade,
+// so these can't just reference the v2 CSS custom properties — pick the palette per resolvedTheme.
+const V2_PALETTES = {
+    dark: {
+        bg: '#0b0a08',
+        fg: '#ecebe2',
+        muted: '#807a6c',
+        muted2: '#5a5448',
+        border: '#2a2722',
+        maint: '#ffa000',
+        maintRgb: '255, 160, 0',
+        strength: '#19e68c',
+    },
+    light: {
+        bg: '#ecebe2',
+        fg: '#0b0a08',
+        muted: '#6b6454',
+        muted2: '#9a927d',
+        border: '#cfc9b7',
+        maint: '#945e00',
+        maintRgb: '148, 94, 0',
+        strength: '#067947',
+    },
+} as const;
 
 // Custom 5-point star with tight inner radius for sharp, dramatic points.
 // Registered once at module load; Highcharts looks it up by symbol name.
@@ -49,12 +65,6 @@ const formatTickLabel = (d: Date): string =>
 
 export type PrTier = 'allTime' | 'active' | 'beaten';
 
-const TIER_COLOR: Record<PrTier, string> = {
-    allTime: v2.maint, // gold — heaviest set ever, any rep count
-    active: v2.strength, // green — current record for this rep count
-    beaten: v2.muted, // gray — was a record, since surpassed
-};
-
 export interface ChartSession {
     date: Date;
     metric: number;
@@ -68,6 +78,14 @@ interface ExercisePRChartProps {
 }
 
 export default function ExercisePRChart({ sessions, methodName, onHover }: ExercisePRChartProps) {
+    const { resolvedTheme } = useTheme();
+    const v2 = V2_PALETTES[resolvedTheme === 'light' ? 'light' : 'dark'];
+    const TIER_COLOR: Record<PrTier, string> = {
+        allTime: v2.maint, // gold — heaviest set ever, any rep count
+        active: v2.strength, // green — current record for this rep count
+        beaten: v2.muted, // gray — was a record, since surpassed
+    };
+
     const options: Options = {
         chart: {
             zooming: {
@@ -131,8 +149,8 @@ export default function ExercisePRChart({ sessions, methodName, onHover }: Exerc
                 fillColor: {
                     linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
                     stops: [
-                        [0, 'rgba(255, 160, 0, 0.28)'],
-                        [1, 'rgba(255, 160, 0, 0.02)'],
+                        [0, `rgba(${v2.maintRgb}, 0.28)`],
+                        [1, `rgba(${v2.maintRgb}, 0.02)`],
                     ],
                 },
                 lineColor: v2.maint,

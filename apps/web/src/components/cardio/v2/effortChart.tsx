@@ -47,7 +47,10 @@ export const EffortChart: FC<EffortChartProps> = ({ effort, showLegend = true })
                         style={{
                             flexGrow: z.minutes,
                             background: ZONE_COLORS[z.name] ?? 'var(--muted)',
-                            color: z.name === 'fairly' ? 'var(--bg)' : 'var(--fg)',
+                            // colored fills are bright in dark mode and deep in light mode,
+                            // so --bg text is legible on them in both; the neutral
+                            // sedentary fill is mid-tone and wants --fg instead
+                            color: z.name === 'sedentary' ? 'var(--fg)' : 'var(--bg)',
                         }}
                         title={`${ZONE_LABELS[z.name] ?? z.name}: ${z.minutes}m`}
                     >
