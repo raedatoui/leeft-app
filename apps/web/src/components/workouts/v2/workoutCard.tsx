@@ -196,7 +196,6 @@ const LiftingWorkoutBody: FC<LiftingBodyProps> = ({
         <>
             <div className="lift-headline">
                 <span className="lift-type">LIFTING</span>
-                {workout.title && <span className="lift-subtitle">{workout.title}</span>}
                 {workout.startedAt && <span className="session-time">{formatTimeOfDay(workout.startedAt)}</span>}
                 <button
                     type="button"

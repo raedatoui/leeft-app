@@ -986,13 +986,6 @@
         color: var(--maint);
         text-transform: uppercase;
     }
-    .lift-subtitle {
-        font-family: var(--mono);
-        font-size: 12px;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-    }
     .lift-copy {
         margin-left: auto;
         background: transparent;

@@ -225,12 +225,7 @@ export default function CyclesPageV2() {
                     </div>
                     <section className="cycles-grid">
                         {[...filteredCycles].reverse().map((cycle, revIdx) => (
-                            <CycleCardV2
-                                key={cycle.uuid}
-                                cycle={cycle}
-                                index={filteredCycles.length - 1 - revIdx}
-                                exerciseMap={exerciseMap}
-                            />
+                            <CycleCardV2 key={cycle.uuid} cycle={cycle} index={filteredCycles.length - 1 - revIdx} exerciseMap={exerciseMap} />
                         ))}
                     </section>
                 </>
