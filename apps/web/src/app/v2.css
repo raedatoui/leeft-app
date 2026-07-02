@@ -2878,23 +2878,6 @@
         flex: 1;
         min-width: 0;
     }
-    .mob-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        flex-shrink: 0;
-        margin-top: 6px;
-    }
-    .conf-badge {
-        font-family: var(--mono);
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.16em;
-        border: 1px solid currentColor;
-        border-radius: 999px;
-        padding: 2px 8px;
-        flex-shrink: 0;
-    }
     .mob-card .tags {
         display: flex;
         flex-wrap: wrap;

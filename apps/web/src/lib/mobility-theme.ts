@@ -1,5 +1,3 @@
-import type { MobilityConf } from '@/lib/mobility';
-
 // Region hues from the PT Movement Hub prototype, with five remapped onto v2
 // palette tokens so the page reads as part of the app rather than the mock.
 export const regionColors: Record<string, string> = {
@@ -22,9 +20,3 @@ export const regionColors: Record<string, string> = {
 export function regionColor(region: string): string {
     return regionColors[region] ?? 'var(--muted)';
 }
-
-export const confColors: Record<MobilityConf, string> = {
-    High: 'var(--strength)',
-    Med: 'var(--maint)',
-    Low: 'var(--muted)',
-};

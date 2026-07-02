@@ -1,7 +1,7 @@
 'use client';
 
 import type { MobilityMovement } from '@/lib/mobility';
-import { confColors, regionColor } from '@/lib/mobility-theme';
+import { regionColor } from '@/lib/mobility-theme';
 
 interface MovementCardV2Props {
     movement: MobilityMovement;
@@ -13,11 +13,7 @@ export default function MovementCardV2({ movement }: MovementCardV2Props) {
     return (
         <div className="mob-card">
             <div className="top">
-                <span className="mob-dot" style={{ background: color }} />
                 <h3>{movement.name}</h3>
-                <span className="conf-badge" style={{ color: confColors[movement.conf] }}>
-                    {movement.conf}
-                </span>
             </div>
             <div className="tags">
                 <span className="chip outline" style={{ color, borderColor: color }}>
