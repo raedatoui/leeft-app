@@ -26,6 +26,7 @@ const FILES_TO_UPLOAD = [
     'apps/data/data/out/cycles-lifting.json',
     'apps/data/data/out/cycles-all-workouts.json',
     'apps/data/data/exercise-classified.json',
+    'apps/data/src/mobility/mobility-movements.json',
 ];
 
 function runCommand(command: string, args: string[]): Promise<boolean> {

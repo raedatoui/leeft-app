@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { type MobilityMovement, mobilityMovements } from '@/lib/mobility';
+import { useWorkoutData } from '@/lib/contexts';
+import type { MobilityMovement } from '@/lib/mobility';
 
 export type MobilityView = 'database' | 'program';
 
@@ -25,16 +26,29 @@ export interface MobilityPageState {
     clearFilters: () => void;
     searchQuery: string;
     setSearchQuery: (query: string) => void;
+    movements: MobilityMovement[];
+    regions: string[];
+    types: string[];
+    equipTags: string[];
     filteredMovements: MobilityMovement[];
     headlineStats: MobilityHeadlineStats;
 }
 
+function uniqueInOrder(values: string[]): string[] {
+    return [...new Set(values)];
+}
+
 export function useMobilityPageState(): MobilityPageState {
+    const { mobilityMovements } = useWorkoutData();
     const [view, setView] = useState<MobilityView>('database');
     const [regionFilter, setRegionFilter] = useState('all');
     const [typeFilter, setTypeFilter] = useState('all');
     const [equipFilter, setEquipFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
+
+    const regions = useMemo(() => uniqueInOrder(mobilityMovements.map((m) => m.region)), [mobilityMovements]);
+    const types = useMemo(() => uniqueInOrder(mobilityMovements.map((m) => m.type)), [mobilityMovements]);
+    const equipTags = useMemo(() => uniqueInOrder(mobilityMovements.flatMap((m) => m.equip_tags)), [mobilityMovements]);
 
     const filteredMovements = useMemo(() => {
         const q = searchQuery.trim().toLowerCase();
@@ -49,7 +63,7 @@ export function useMobilityPageState(): MobilityPageState {
             }
             return true;
         });
-    }, [regionFilter, typeFilter, equipFilter, searchQuery]);
+    }, [mobilityMovements, regionFilter, typeFilter, equipFilter, searchQuery]);
 
     const headlineStats = useMemo<MobilityHeadlineStats>(() => {
         const regions = new Set<string>();
@@ -88,6 +102,10 @@ export function useMobilityPageState(): MobilityPageState {
         },
         searchQuery,
         setSearchQuery,
+        movements: mobilityMovements,
+        regions,
+        types,
+        equipTags,
         filteredMovements,
         headlineStats,
     };

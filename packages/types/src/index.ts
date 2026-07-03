@@ -183,6 +183,27 @@ export const GroupedCardioSchema = z.object({
 	workouts: z.array(CardioWorkoutSchema),
 });
 
+export const MobilityConfEnum = z.enum(['High', 'Med', 'Low']);
+
+export const MobilityMovementSchema = z.object({
+	name: z.string(),
+	aliases: z.string(),
+	region: z.string(),
+	type: z.string(),
+	position: z.string(),
+	equipment: z.string(),
+	target: z.string(),
+	dosage: z.string(),
+	video: z.string(),
+	source: z.string(),
+	conf: MobilityConfEnum,
+	notes: z.string(),
+	id: z.string(),
+	equip_tags: z.array(z.string()),
+	status: z.enum(['active', 'removed']),
+	removedAt: z.string().optional(),
+});
+
 export type RawWorkout = z.infer<typeof RawWorkoutSchema>;
 export type ExerciseMetadata = z.infer<typeof ExerciseMetadataSchema>;
 export type BaseSet = z.infer<typeof BaseSetSchema>;
@@ -201,3 +222,5 @@ export type CardioWorkout = z.infer<typeof CardioWorkoutSchema>;
 export type GroupedCardio = z.infer<typeof GroupedCardioSchema>;
 export type DayWorkout = z.infer<typeof DayWorkoutSchema>;
 export type SliderWorkoutItem = z.infer<typeof SliderWorkoutItemSchema>;
+export type MobilityConf = z.infer<typeof MobilityConfEnum>;
+export type MobilityMovement = z.infer<typeof MobilityMovementSchema>;

@@ -6,7 +6,6 @@ import MobilityProgramView from '@/components/mobility/v2/mobilityProgramView';
 import MovementCardV2 from '@/components/mobility/v2/movementCardV2';
 import DropdownV2, { type DropdownV2Option } from '@/components/ui/v2/dropdownV2';
 import { useMobilityPageState } from '@/lib/hooks/useMobilityPageState';
-import { mobilityEquipTags, mobilityMovements, mobilityRegions, mobilityTypes } from '@/lib/mobility';
 import { regionColor } from '@/lib/mobility-theme';
 
 export default function MobilityPageV2() {
@@ -23,23 +22,24 @@ export default function MobilityPageV2() {
         clearFilters,
         searchQuery,
         setSearchQuery,
+        movements,
+        regions,
+        types,
+        equipTags,
         filteredMovements,
         headlineStats,
     } = useMobilityPageState();
 
-    const totalMovements = mobilityMovements.length;
+    const totalMovements = movements.length;
 
     const regionOptions = useMemo<DropdownV2Option[]>(
-        () => [{ value: 'all', label: 'All' }, ...mobilityRegions.map((r) => ({ value: r, label: r, color: regionColor(r) }))],
-        []
+        () => [{ value: 'all', label: 'All' }, ...regions.map((r) => ({ value: r, label: r, color: regionColor(r) }))],
+        [regions]
     );
-    const typeOptions = useMemo<DropdownV2Option[]>(
-        () => [{ value: 'all', label: 'All' }, ...mobilityTypes.map((t) => ({ value: t, label: t }))],
-        []
-    );
+    const typeOptions = useMemo<DropdownV2Option[]>(() => [{ value: 'all', label: 'All' }, ...types.map((t) => ({ value: t, label: t }))], [types]);
     const equipOptions = useMemo<DropdownV2Option[]>(
-        () => [{ value: 'all', label: 'All' }, ...mobilityEquipTags.map((e) => ({ value: e, label: e }))],
-        []
+        () => [{ value: 'all', label: 'All' }, ...equipTags.map((e) => ({ value: e, label: e }))],
+        [equipTags]
     );
 
     return (

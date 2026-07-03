@@ -38,6 +38,7 @@
         "fitbit:process": "bun src/fitbit/index.ts process",
         "format": "biome format --write .",
         "lint": "biome lint .",
+        "mobility:review": "bun src/mobility/review.ts",
         "refresh": "bun compile:lifting && bun combine:lifting && bun compile:cardio && bun compile:all && bun combine:all",
         "test": "bun test",
         "trainheroic:compare": "bun src/trainheroic/compare.ts",
@@ -62,6 +63,7 @@
     },
     "devDependencies": {
         "@biomejs/biome": "catalog:",
+        "@clack/prompts": "^0.11.0",
         "@types/lodash": "^4.17.17",
         "@types/node": "^24.8.1",
         "@types/papaparse": "^5.3.16",

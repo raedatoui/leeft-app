@@ -7,6 +7,8 @@ import {
     CycleSchema,
     type ExerciseMap,
     ExerciseMetadataSchema,
+    type MobilityMovement,
+    MobilityMovementSchema,
     type Workout,
     WorkoutSchema,
 } from '@/types';
@@ -51,6 +53,17 @@ export async function fetchCycles(): Promise<Cycle[]> {
     });
     const data = await response.json();
     return z.array(CycleSchema).parse(data);
+}
+
+export async function fetchMobilityMovements(): Promise<MobilityMovement[]> {
+    const response = await fetch(`${CDN_BASE_URL}/mobility-movements_${TIMESTAMP}.json.gz`, {
+        cache: 'no-cache',
+    });
+    const data = await response.json();
+    return z
+        .array(MobilityMovementSchema)
+        .parse(data)
+        .filter((m) => m.status === 'active');
 }
 
 export async function fetchCardioWorkouts(): Promise<CardioWorkout[]> {

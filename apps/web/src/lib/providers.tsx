@@ -4,7 +4,7 @@ import type React from 'react';
 import { useEffect, useState } from 'react';
 import Loader from '@/components/common/loader';
 import { getUniqueValues } from '@/lib/exercises';
-import { fetchCardioWorkouts, fetchCycles, fetchExerciseMap, fetchWorkouts } from '@/lib/fetchData';
+import { fetchCardioWorkouts, fetchCycles, fetchExerciseMap, fetchMobilityMovements, fetchWorkouts } from '@/lib/fetchData';
 import { type MuscleGroup, WorkoutDataContext, type WorkoutDataContextType } from './contexts';
 
 interface ProvidersProps {
@@ -36,7 +36,13 @@ export function WorkoutProvider({ children }: WorkoutProviderProps) {
     useEffect(() => {
         async function fetchData() {
             try {
-                const [wo, cardio, m, cy] = await Promise.all([fetchWorkouts(), fetchCardioWorkouts(), fetchExerciseMap(), fetchCycles()]);
+                const [wo, cardio, m, cy, mobility] = await Promise.all([
+                    fetchWorkouts(),
+                    fetchCardioWorkouts(),
+                    fetchExerciseMap(),
+                    fetchCycles(),
+                    fetchMobilityMovements(),
+                ]);
 
                 const { muscleGroups: uniqueGroups, categories: uniqueCategories, equipmentList: uniqueEquipment } = getUniqueValues(m);
 
@@ -70,6 +76,7 @@ export function WorkoutProvider({ children }: WorkoutProviderProps) {
                     categories: uniqueCategories,
                     equipmentList: uniqueEquipment,
                     cycles: mappedCycles,
+                    mobilityMovements: mobility,
                 });
             } catch (e) {
                 setError(e instanceof Error ? e : new Error('An error occurred fetching data'));

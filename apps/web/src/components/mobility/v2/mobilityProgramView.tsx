@@ -1,17 +1,17 @@
 'use client';
 
+import { useMemo } from 'react';
 import { mobilityProgram } from '@/data/mobilityProgram';
-import { movementById } from '@/lib/mobility';
+import { useWorkoutData } from '@/lib/contexts';
+import type { MobilityMovement } from '@/lib/mobility';
 import { regionColor } from '@/lib/mobility-theme';
 
-function ProgramRow({ itemId }: { itemId: string }) {
-    const movement = movementById.get(itemId);
-
+function ProgramRow({ name, movement }: { name: string; movement: MobilityMovement | undefined }) {
     if (!movement) {
         return (
             <div className="program-row">
                 <span className="mob-dot" style={{ background: 'var(--muted-2)' }} />
-                <span className="name">{itemId}</span>
+                <span className="name">{name}</span>
                 <span className="dose" />
                 <span className="detail-link none">—</span>
             </div>
@@ -41,6 +41,8 @@ function ProgramRow({ itemId }: { itemId: string }) {
 
 export default function MobilityProgramView() {
     const program = mobilityProgram;
+    const { mobilityMovements } = useWorkoutData();
+    const movementByName = useMemo(() => new Map(mobilityMovements.map((m) => [m.name, m])), [mobilityMovements]);
 
     return (
         <>
@@ -82,8 +84,8 @@ export default function MobilityProgramView() {
                         </span>
                     </div>
                     <div className="program-rows">
-                        {program.warmup.items.map((itemId) => (
-                            <ProgramRow key={itemId} itemId={itemId} />
+                        {program.warmup.items.map((name) => (
+                            <ProgramRow key={name} name={name} movement={movementByName.get(name)} />
                         ))}
                     </div>
                 </div>
@@ -104,8 +106,8 @@ export default function MobilityProgramView() {
                             </span>
                         </div>
                         <div className="program-rows">
-                            {session.items.map((itemId) => (
-                                <ProgramRow key={itemId} itemId={itemId} />
+                            {session.items.map((name) => (
+                                <ProgramRow key={name} name={name} movement={movementByName.get(name)} />
                             ))}
                         </div>
                     </div>

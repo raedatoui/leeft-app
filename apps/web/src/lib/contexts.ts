@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import type { CardioWorkout, DayWorkout, ExerciseMap, MappedCycle, Workout } from '@/types';
+import type { CardioWorkout, DayWorkout, ExerciseMap, MappedCycle, MobilityMovement, Workout } from '@/types';
 
 export interface MuscleGroup {
     id: string;
@@ -18,6 +18,7 @@ export interface WorkoutDataContextType {
     categories: string[];
     equipmentList: string[];
     cycles: MappedCycle[];
+    mobilityMovements: MobilityMovement[];
 }
 
 export const WorkoutDataContext = React.createContext<WorkoutDataContextType | null>(null);
