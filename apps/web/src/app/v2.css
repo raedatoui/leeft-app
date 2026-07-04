@@ -989,6 +989,22 @@
         color: var(--maint);
         text-transform: uppercase;
     }
+    .lift-duration {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-left: auto;
+    }
+    .lift-duration b {
+        font-family: var(--display);
+        font-size: 20px;
+        color: var(--maint);
+        font-weight: 400;
+        letter-spacing: 0;
+        margin-right: 4px;
+    }
     .lift-copy {
         margin-left: auto;
         background: transparent;

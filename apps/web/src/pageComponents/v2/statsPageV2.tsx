@@ -120,7 +120,7 @@ function StatsTableRow({ row, isSelected, onSelect }: { row: Row; isSelected: bo
                     <span className="dot lift">●</span>
                     {formatNumber(w.volume)} lbs
                 </div>
-                <div className="sets-detail">{formatDuration(w.duration / 1000 / 60)}</div>
+                <div className="sets-detail">{formatDuration(w.duration)}</div>
                 <div className="sets-detail">{w.rpe !== null ? w.rpe.toFixed(1) : '—'}</div>
                 {indicator}
             </button>

@@ -182,7 +182,7 @@ const LiftingWorkoutBody: FC<LiftingBodyProps> = ({
             const sets = includeWarmup ? ex.sets : ex.sets.filter((s) => s.isWorkSet);
             return `${name}: ${formatSetsForClipboard(sets)}`;
         });
-        const text = `${formatLongDate(date)}\n${lines.join('\n')}`;
+        const text = `${formatLongDate(date)} · ${Math.round(workout.duration)} min\n${lines.join('\n')}`;
         try {
             await navigator.clipboard.writeText(text);
             setCopied(true);
@@ -197,6 +197,20 @@ const LiftingWorkoutBody: FC<LiftingBodyProps> = ({
             <div className="lift-headline">
                 <span className="lift-type">LIFTING</span>
                 {workout.startedAt && <span className="session-time">{formatTimeOfDay(workout.startedAt)}</span>}
+                <span className="lift-duration">
+                    <b>{Math.round(workout.duration).toString().padStart(2, '0')}</b>min
+                </span>
+            </div>
+            <div className="session-vol">
+                <span className="v maint">
+                    <b>{totalVolume.toLocaleString()}</b>lbs
+                </span>
+                <span>
+                    <b>{totalSets}</b>sets
+                </span>
+                <span>
+                    <b>{exercises.length}</b>ex
+                </span>
                 <button
                     type="button"
                     className="lift-copy"
@@ -216,17 +230,6 @@ const LiftingWorkoutBody: FC<LiftingBodyProps> = ({
                         )}
                     </svg>
                 </button>
-            </div>
-            <div className="session-vol">
-                <span className="v maint">
-                    <b>{totalVolume.toLocaleString()}</b>lbs
-                </span>
-                <span>
-                    <b>{totalSets}</b>sets
-                </span>
-                <span>
-                    <b>{exercises.length}</b>ex
-                </span>
             </div>
             <div className="exercises">
                 {exercises.map((exercise) => (

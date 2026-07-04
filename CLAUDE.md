@@ -135,7 +135,7 @@ Never duplicate types between apps. Add shared types to `packages/types`.
 - **pnpm catalog**: Shared dependency versions (TypeScript, Biome, Zod) are managed in `pnpm-workspace.yaml` `catalog:` — update there, not in individual package.json files
 - **Data files gitignored**: All `apps/data/data/` contents are gitignored
 - **Date grouping is UTC**: `groupWorkoutsByDay` in `lib/contexts.ts` keys by `toISOString().slice(0, 10)` (UTC). UI must format dates with `getUTC*` methods or off-by-one bugs appear in non-UTC timezones. v2 components do this; v1 uses `toLocaleDateString` (mostly fine because v1 doesn't show full dates in places that would expose the offset).
-- **Lifting `Workout.duration` is in milliseconds**, not minutes — confirmed empirically (a 176-min session has `duration ≈ 10,560,000`). Cardio uses both `durationMs` and `durationMin` explicitly.
+- **Lifting `Workout.duration` is in minutes** (computed in `extractDay.ts` from TrainHeroic's unix-seconds `timestamp_started`/`timestamp_completed`, capped at 100 when 0 or >200). Cardio instead uses both `durationMs` and `durationMin` explicitly — don't assume lifting follows the same convention.
 - **All weights are in lbs**, not kg — mixed sources (TrainHeroic, Google Fit) are normalized to lbs in the data pipeline. v1 mostly displays the bare number; v2 labels columns `lbs`.
 
 ## v2 design system
