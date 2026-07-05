@@ -183,7 +183,7 @@ export const GroupedCardioSchema = z.object({
 	workouts: z.array(CardioWorkoutSchema),
 });
 
-export const MobilityConfEnum = z.enum(['High', 'Med', 'Low']);
+export const MobilityConfEnum = z.enum(["High", "Med", "Low"]);
 
 export const MobilityMovementSchema = z.object({
 	name: z.string(),
@@ -200,7 +200,7 @@ export const MobilityMovementSchema = z.object({
 	notes: z.string(),
 	id: z.string(),
 	equip_tags: z.array(z.string()),
-	status: z.enum(['active', 'removed']),
+	status: z.enum(["active", "removed"]),
 	removedAt: z.string().optional(),
 });
 
