@@ -74,24 +74,24 @@ export function parseTrainHeroicWorkout(rawWorkout: RawWorkout): BaseWorkout {
         throw new Error(`Invalid date format in workout title: ${saved_workout.title}`);
     }
 
-    // Real session start. `timestamp_started` is sometimes the re-sync time (wrong day),
-    // so accept it only if it lands on the title day; else fall back to the earliest
-    // per-set `date_completed` (UTC strings) on that day; else a noon-ET default.
+    // Real session start. `timestamp_started` is unreliable (sometimes a re-sync time,
+    // landing hours or days after the session actually started — confirmed across the
+    // downloaded TrainHeroic archive, where it fails this in ~37% of workouts), so prefer
+    // the earliest per-set `date_completed` (UTC strings) on the title day when available;
+    // else fall back to `timestamp_started` if it lands on the title day; else a noon-ET default.
     const titleDayKey = savedWorkoutTitle.toISOString().slice(0, 10);
     const onTitleDay = (d: Date): boolean => !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === titleDayKey;
     let startedAt: Date | undefined;
-    if (saved_workout.timestamp_started) {
+    const fromSets = saved_workout.workoutSets
+        .map((ws) => ws.date_completed)
+        .filter((s): s is string => !!s)
+        .map((s) => new Date(`${s.replace(' ', 'T')}Z`))
+        .filter(onTitleDay)
+        .sort((a, b) => a.getTime() - b.getTime());
+    if (fromSets.length > 0) startedAt = fromSets[0];
+    if (!startedAt && saved_workout.timestamp_started) {
         const fromTs = new Date(saved_workout.timestamp_started * 1000);
         if (onTitleDay(fromTs)) startedAt = fromTs;
-    }
-    if (!startedAt) {
-        const fromSets = saved_workout.workoutSets
-            .map((ws) => ws.date_completed)
-            .filter((s): s is string => !!s)
-            .map((s) => new Date(`${s.replace(' ', 'T')}Z`))
-            .filter(onTitleDay)
-            .sort((a, b) => a.getTime() - b.getTime());
-        if (fromSets.length > 0) startedAt = fromSets[0];
     }
     if (!startedAt) startedAt = defaultStartedAt(savedWorkoutTitle);
 
