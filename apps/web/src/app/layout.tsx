@@ -4,6 +4,7 @@ import localFont from 'next/font/local';
 import { ThemeProvider } from 'next-themes';
 import './globals.css';
 import './v2.css';
+import ServiceWorkerRegister from '@/components/common/serviceWorkerRegister';
 import Providers from '@/lib/providers';
 
 const geistSans = localFont({
@@ -41,6 +42,12 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
     title: 'Leeft',
     description: 'Lifting log',
+    manifest: '/manifest.webmanifest',
+    appleWebApp: {
+        capable: true,
+        statusBarStyle: 'black-translucent',
+        title: 'Leeft',
+    },
 };
 
 // viewport-fit=cover makes env(safe-area-inset-*) non-zero on notched phones,
@@ -49,6 +56,7 @@ export const viewport: Viewport = {
     width: 'device-width',
     initialScale: 1,
     viewportFit: 'cover',
+    themeColor: '#0b0a08',
 };
 
 export default function RootLayout({
@@ -60,6 +68,7 @@ export default function RootLayout({
         <html lang="en" className="dark" suppressHydrationWarning>
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
                 <ThemeProvider attribute="data-mode" defaultTheme="system" enableSystem storageKey="leeft-theme">
+                    <ServiceWorkerRegister />
                     <Providers>
                         <div data-theme="v2" className={`${anton.variable} ${dmSans.variable} ${jetbrainsMono.variable}`}>
                             {children}
