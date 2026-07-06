@@ -198,6 +198,14 @@ All v1 routes have been ported to v2 and v1 was removed; v2 owns the root routes
 
 **Phase 1 reference HTML mocks** are in `design/*.html` — pre-built static prototypes of every page in the v2 style. Use them as visual ground truth; they share `design/shared.css`.
 
+### Mobile layer (≤768px)
+All mobile rules live in one nested `@media (max-width: 768px)` block at the end of `v2.css` (plus a ≤1140px nav-gap tweak). The approach:
+- **Bottom dock**: `.nav-links` is hidden; `HeaderV2` renders a second `<nav class="dock">` (fixed bottom tab bar, lucide icons, per-section colors via a `--dock-c` custom property, active tab gets a 2px top bar). Hidden ≥769px via the base `.dock { display: none }`.
+- **Toolbars become horizontal scroll strips**: `.toolbar` goes `flex-wrap: nowrap; overflow-x: auto` with `flex-shrink: 0` children and a sticky `::after` right-edge fade. Do NOT use `mask-image` for the fade — it would mask the dropdown sheets, which are DOM descendants of the toolbar.
+- **Dropdown panels and the log day panel become bottom sheets**: `.dd-v2-panel`, `.exercise-lookup-panel`, `.day-panel-inline` switch to `position: fixed` above the dock (dd sheets z-95 > day sheet z-90 > dock z-70). `position: fixed` is what lets them escape the toolbar's scroll clip; this requires no transformed/filtered ancestors, so on mobile `.stagger > *` swaps to the transform-free `leeft-v2-fade` keyframes.
+- **Tables re-grid instead of shrinking**: `.pr-row.stats-row` and exercise `.pr-row`s become two-line grid rows via explicit `grid-area` placements keyed to child order in the TSX (`.pr-row.head` is hidden); `.tl-month`/`.month-x` labels thin out via `nth-child` + `visibility: hidden`.
+- `.shell` gets bottom padding for dock clearance; `overflow-x: clip` (not `hidden` — that would break the sticky nav) guards against stray overflow.
+
 ### Gotchas specific to v2
 - **Radix portals leak**: shadcn's Radix-based primitives (Select, Dialog, Popover) mount to `document.body`, escaping `[data-theme="v2"]`. v2 components avoid Radix; use plain `<select>`, custom dropdowns, or anchor portals via the `container` prop.
 - **Geist fonts still load**: the root `app/layout.tsx` still applies Geist on `<body>` even though v2 uses Anton/DM Sans/JetBrains Mono on the inner `data-theme="v2"` wrapper. Harmless dead weight; can be dropped later.

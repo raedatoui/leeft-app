@@ -47,7 +47,8 @@ export default function ExerciseLookupV2({ exerciseMap, currentExerciseId }: Exe
     }, [open]);
 
     useEffect(() => {
-        if (open) inputRef.current?.focus();
+        // no autofocus on touch devices: the panel renders as a bottom sheet there and the keyboard would cover it
+        if (open && !window.matchMedia('(pointer: coarse)').matches) inputRef.current?.focus();
     }, [open]);
 
     const handleSelect = (id: string) => {

@@ -76,7 +76,8 @@ export default function DropdownV2({
     }, [open]);
 
     useEffect(() => {
-        if (open && isSearchable) inputRef.current?.focus();
+        // no autofocus on touch devices: the panel renders as a bottom sheet there and the keyboard would cover it
+        if (open && isSearchable && !window.matchMedia('(pointer: coarse)').matches) inputRef.current?.focus();
     }, [open, isSearchable]);
 
     useEffect(() => {

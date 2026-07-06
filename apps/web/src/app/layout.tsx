@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Anton, DM_Sans, JetBrains_Mono } from 'next/font/google';
 import localFont from 'next/font/local';
 import { ThemeProvider } from 'next-themes';
@@ -41,6 +41,14 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
     title: 'Leeft',
     description: 'Lifting log',
+};
+
+// viewport-fit=cover makes env(safe-area-inset-*) non-zero on notched phones,
+// which the mobile dock and bottom sheets in v2.css rely on
+export const viewport: Viewport = {
+    width: 'device-width',
+    initialScale: 1,
+    viewportFit: 'cover',
 };
 
 export default function RootLayout({

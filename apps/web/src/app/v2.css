@@ -17,6 +17,30 @@
     }
 }
 
+/* mobile bottom sheets (dropdown panels, day panel) */
+@keyframes leeft-v2-sheet-up {
+    from {
+        opacity: 0;
+        transform: translateY(24px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* transform-free stagger for mobile: an animating translateY on a page
+   section turns it into the containing block for position:fixed children,
+   mispositioning the bottom sheets until the entrance animation ends */
+@keyframes leeft-v2-fade {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
 [data-theme="v2"] {
     /* ============== design tokens ============== */
     --bg: #0b0a08;
@@ -133,6 +157,11 @@
     .nav-links a.active {
         color: var(--fg);
         border-bottom: 2px solid var(--fg);
+    }
+
+    /* bottom tab dock — mobile-only primary nav, styled in the ≤768px block */
+    .dock {
+        display: none;
     }
 
     /* ============== page hero ============== */
@@ -3027,6 +3056,420 @@
         font-size: 11px;
         color: var(--muted);
         text-align: right;
+    }
+
+    /* ============================================================
+       mobile (≤768px) — bottom dock nav, scroll-strip toolbars,
+       bottom-sheet dropdowns and day panel, re-gridded tables
+       ============================================================ */
+    @media (max-width: 1140px) {
+        .nav-links {
+            gap: 16px;
+            font-size: 13px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        overflow-x: clip;
+
+        .shell {
+            padding: 0 18px calc(80px + env(safe-area-inset-bottom));
+        }
+
+        /* ---- chrome: compact top bar; nav links live in the dock ---- */
+        .nav {
+            margin: 0 -18px 28px;
+            padding: 10px 18px;
+        }
+        .nav-links {
+            display: none;
+        }
+        .brand {
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+        }
+        .brand .lift {
+            font-size: 24px;
+        }
+        .brand .word {
+            font-size: 17px;
+        }
+
+        .dock {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 70;
+            display: flex;
+            align-items: stretch;
+            padding: 6px max(10px, env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+            background: color-mix(in srgb, var(--bg) 90%, transparent);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-top: 1px solid var(--border-soft);
+        }
+        .dock-item {
+            position: relative;
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 2px 4px;
+            color: color-mix(in srgb, var(--dock-c) 46%, var(--muted-2));
+            transition: color 200ms;
+        }
+        .dock-item span {
+            max-width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            font-family: var(--mono);
+            font-size: 8.5px;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            color: var(--muted-2);
+            transition: color 200ms;
+        }
+        .dock-item.active {
+            color: var(--dock-c);
+        }
+        .dock-item.active span {
+            color: var(--fg);
+        }
+        .dock-item.active::before {
+            content: "";
+            position: absolute;
+            top: -7px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 26px;
+            height: 2px;
+            background: var(--dock-c);
+        }
+
+        footer {
+            padding: 36px 0 28px;
+            margin-top: 40px;
+        }
+
+        /* ---- hero: title stacks over a wrapping meta line ---- */
+        .hero-row {
+            gap: 20px;
+            padding-bottom: 18px;
+            margin-bottom: 24px;
+        }
+        .hero-block {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .hero-meta {
+            padding-bottom: 0;
+        }
+        .hero-meta .stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 14px;
+            font-size: 13px;
+        }
+        .hero-actions {
+            padding-bottom: 0;
+        }
+
+        /* ---- toolbar: single-row scroll strip, pill silhouette intact ---- */
+        .toolbar {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            max-width: 100%;
+            scrollbar-width: none;
+            overscroll-behavior-x: contain;
+        }
+        .toolbar::-webkit-scrollbar {
+            display: none;
+        }
+        /* right-edge fade as a sticky overlay: a mask-image here would also
+           mask the fixed-position dropdown sheets (they're DOM descendants) */
+        .toolbar::after {
+            content: "";
+            position: sticky;
+            right: 0;
+            flex: 0 0 28px;
+            margin-left: -28px;
+            align-self: stretch;
+            background: linear-gradient(90deg, transparent, var(--surface));
+            pointer-events: none;
+        }
+        .toolbar > *,
+        .toolbar-grp > * {
+            flex-shrink: 0;
+        }
+        .toolbar .filter-pills {
+            flex-wrap: nowrap;
+        }
+        .search-input {
+            min-width: 190px;
+        }
+        .dd-v2-trigger-label {
+            max-width: 220px;
+        }
+
+        /* ---- dropdown panels become bottom sheets. position:fixed escapes
+           the toolbar's scroll clip; the panel stays a DOM child of .dd-v2,
+           so the outside-click close logic keeps working. ---- */
+        .dd-v2-panel,
+        .dd-v2-panel.align-right,
+        .exercise-lookup-panel {
+            position: fixed;
+            top: auto;
+            left: 12px;
+            right: 12px;
+            bottom: calc(66px + env(safe-area-inset-bottom));
+            width: auto !important; /* beats the inline panelWidth style */
+            min-width: 0;
+            max-width: none;
+            max-height: 46vh;
+            max-height: 46dvh;
+            z-index: 95; /* above the day-panel sheet: dropdowns are always the topmost interaction */
+            border-radius: 16px;
+            overscroll-behavior: contain;
+            animation: leeft-v2-sheet-up 200ms ease-out;
+        }
+
+        /* ---- log month view: day detail slides up as a sheet ---- */
+        .day-panel-inline {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 90;
+            max-height: 74vh;
+            max-height: 74dvh;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            display: flex;
+            flex-direction: column;
+            border: 0;
+            border-top: 1px solid var(--border);
+            border-radius: 18px 18px 0 0;
+            padding: 12px 18px calc(20px + env(safe-area-inset-bottom));
+            box-shadow: 0 -18px 60px var(--shadow-dropdown);
+            animation: leeft-v2-sheet-up 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .day-panel-inline .day-panel-close {
+            position: sticky;
+            top: 0;
+            align-self: flex-end;
+            z-index: 2;
+            background: var(--surface);
+        }
+
+        /* ---- density: 32px panel paddings don't survive 390px ---- */
+        .panel,
+        .zone-2,
+        .detail-zones .zone,
+        .chart-zone {
+            padding: 18px;
+        }
+        .session {
+            padding: 18px 16px 14px;
+        }
+        .month-cell {
+            padding: 20px 16px;
+        }
+        .stat-icn {
+            padding: 14px;
+        }
+
+        /* ---- stats page table: two-line rows, header hidden ---- */
+        .pr-row.head {
+            display: none;
+        }
+        .pr-row.stats-row {
+            grid-template-columns: 1fr auto 14px;
+            gap: 2px 10px;
+            padding: 10px 0;
+        }
+        .pr-row.stats-row > .date {
+            grid-column: 1;
+            grid-row: 2;
+        }
+        .pr-row.stats-row > .weight {
+            grid-column: 1;
+            grid-row: 1;
+        }
+        .pr-row.stats-row > .sets-detail:nth-child(3) {
+            grid-column: 2;
+            grid-row: 1;
+            text-align: right;
+        }
+        .pr-row.stats-row > .sets-detail:nth-child(4) {
+            grid-column: 2;
+            grid-row: 2;
+            text-align: right;
+        }
+        .pr-row.stats-row > .pr-flag {
+            grid-column: 3;
+            grid-row: 1 / span 2;
+            display: flex;
+            align-items: center;
+        }
+
+        /* ---- exercise PR table: sets detail drops to its own line ---- */
+        .pr-row:not(.stats-row) {
+            grid-template-columns: auto 1fr auto;
+            gap: 2px 12px;
+        }
+        .pr-row:not(.stats-row) > .date {
+            grid-column: 1;
+            grid-row: 1;
+        }
+        .pr-row:not(.stats-row) > .weight {
+            grid-column: 2;
+            grid-row: 1;
+        }
+        .pr-row:not(.stats-row) > .sets-detail {
+            grid-column: 1 / -1;
+            grid-row: 2;
+        }
+        .pr-row:not(.stats-row) > .pr-flag {
+            grid-column: 3;
+            grid-row: 1;
+        }
+        .pr-pager {
+            flex-wrap: wrap;
+            row-gap: 4px;
+        }
+        .method-explain .formula {
+            margin-left: 0;
+        }
+
+        /* ---- cycles: quarterly timeline labels, tighter cards ---- */
+        .timeline-hero {
+            padding: 8px 16px;
+            border-radius: 16px;
+        }
+        .tl-month {
+            font-size: 10px;
+        }
+        .tl-month:not(:nth-child(3n + 1)) {
+            visibility: hidden;
+        }
+        .cycle-card {
+            padding: 20px 16px;
+            gap: 14px;
+        }
+        .cycle-card h3 {
+            font-size: 26px;
+        }
+        .cycle-card .meta {
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .cycle-card .stat-line {
+            gap: 18px;
+        }
+        .cycle-card .duration .n {
+            font-size: 30px;
+        }
+
+        /* ---- detail heroes (cycle / exercise) ---- */
+        .detail-hero {
+            gap: 20px;
+            padding-bottom: 18px;
+        }
+        .detail-hero .left h1 {
+            font-size: clamp(36px, 10vw, 64px);
+            overflow-wrap: anywhere;
+        }
+        .detail-hero .right {
+            gap: 18px;
+            padding-bottom: 0;
+        }
+        .stat .v {
+            font-size: 30px;
+        }
+        .stat.sm .v {
+            font-size: 20px;
+        }
+        .breadcrumb {
+            flex-wrap: wrap;
+            row-gap: 8px;
+        }
+        .exercise-lookup-trigger {
+            min-width: 0;
+        }
+        .mg-row {
+            grid-template-columns: 86px 1fr 48px;
+            gap: 10px;
+        }
+        .mg-row .name {
+            font-size: 12px;
+        }
+
+        /* cycle detail: user-picked 3/4 columns otherwise beat the 700px collapse */
+        .workouts-grid,
+        .workouts-grid.cols-3,
+        .workouts-grid.cols-4 {
+            grid-template-columns: 1fr;
+        }
+
+        /* ---- cardio: 12-month bar chart, labels every other month ---- */
+        .month-bars,
+        .month-x {
+            gap: 3px;
+        }
+        .month-x {
+            font-size: 8px;
+            letter-spacing: 0;
+        }
+        .month-x > *:nth-child(2n) {
+            visibility: hidden;
+        }
+        .month-val {
+            font-size: 8px;
+        }
+
+        /* opacity-only entrance: keeps fixed-position sheets viewport-anchored
+           while their ancestor section is still animating in */
+        .stagger > * {
+            animation-name: leeft-v2-fade;
+        }
+
+        /* ---- mobility program: dose + video drop under the name ---- */
+        .program-session {
+            padding: 16px;
+        }
+        .program-row {
+            grid-template-columns: auto 1fr auto;
+            gap: 2px 10px;
+        }
+        .program-row .mob-dot {
+            grid-row: 1;
+        }
+        .program-row .name {
+            grid-column: 2 / -1;
+            grid-row: 1;
+        }
+        .program-row .dose {
+            grid-column: 2;
+            grid-row: 2;
+            text-align: left;
+        }
+        .program-row .detail-link {
+            grid-column: 3;
+            grid-row: 2;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .dd-v2-panel,
+        .exercise-lookup-panel,
+        .day-panel-inline {
+            animation: none;
+        }
     }
 }
 
