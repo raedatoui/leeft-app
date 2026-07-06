@@ -139,6 +139,12 @@ export const RawActivitySchema = z.object({
     activityLevel: ActivityLevelSchema,
     activeZoneMinutes: ActiveZoneMinutesSchema,
     averageHeartRate: z.number().optional(),
+    distance: z.number().optional(),
+    distanceUnit: z.string().optional(),
+    pace: z.number().optional(),
+    speed: z.number().optional(),
+    calories: z.number().optional(),
+    steps: z.number().optional(),
 });
 export const FitbitActivitySchema = z.object({
     id: z.string(),
@@ -150,6 +156,10 @@ export const FitbitActivitySchema = z.object({
     zoneMinutes: z.number(),
     effort: ActivityLevelSchema,
     averageHeartRate: z.number().optional(),
+    distance: z.number().optional(),
+    pace: z.number().optional(),
+    calories: z.number().optional(),
+    steps: z.number().optional(),
 });
 export type RawActivity = z.infer<typeof RawActivitySchema>;
 export type FitbitActivity = z.infer<typeof FitbitActivitySchema>;

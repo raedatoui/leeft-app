@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
-import { fetchExerciseMap } from '@/lib/fetchData';
-import ExercisePage from '@/pageComponents/exercisePage';
 import Loader from '@/components/common/loader';
+import { fetchExerciseMap } from '@/lib/fetchData';
+import ExercisePageV2 from '@/pageComponents/v2/exercisePageV2';
 
 export async function generateStaticParams() {
     try {
@@ -16,7 +16,7 @@ export async function generateStaticParams() {
 export default function Page() {
     return (
         <Suspense fallback={<Loader />}>
-            <ExercisePage />
+            <ExercisePageV2 />
         </Suspense>
     );
 }

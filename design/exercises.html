@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Leeft — exercises</title>
+<link rel="stylesheet" href="shared.css" />
+<style>
+.filter-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border-soft);
+}
+.filter-row .group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.filter-row .group .label-mono { white-space: nowrap; }
+
+.search-input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--fg);
+    font-family: var(--body);
+    font-size: 13px;
+    padding: 9px 16px 9px 38px;
+    border-radius: 999px;
+    min-width: 240px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23807a6c' stroke-width='2'><circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>");
+    background-repeat: no-repeat;
+    background-position: 12px center;
+    background-size: 14px;
+    transition: border-color 200ms;
+}
+.search-input::placeholder { color: var(--muted-2); }
+.search-input:focus { outline: none; border-color: var(--fg); }
+
+.exercise-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border-soft);
+    border: 1px solid var(--border-soft);
+}
+@media (max-width: 1100px) { .exercise-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 700px) { .exercise-grid { grid-template-columns: 1fr; } }
+
+.exercise-cell {
+    background: var(--bg);
+    padding: 24px;
+    cursor: pointer;
+    transition: background 200ms;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    text-decoration: none;
+    color: inherit;
+}
+.exercise-cell:hover { background: var(--surface); }
+.exercise-cell .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.exercise-cell h3 {
+    font-family: var(--display);
+    font-size: 20px;
+    line-height: 1.05;
+    letter-spacing: 0.005em;
+    flex: 1;
+    min-width: 0;
+}
+.exercise-cell .index {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted-2);
+    letter-spacing: 0.16em;
+}
+.exercise-cell .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.exercise-cell .stats {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    gap: 14px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-soft);
+}
+.exercise-cell .stats b { color: var(--fg); font-weight: 500; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+    <nav class="nav">
+        <div class="brand"><span class="lift">🏋️</span>LEEFT<span class="lift flip">🏋️</span><span class="sub">2026</span></div>
+        <div class="nav-links">
+            <a href="log.html">Log</a>
+            <a href="cycles.html">Cycles</a>
+            <a href="stats.html">Stats</a>
+            <a href="exercises.html">Exercises</a>
+            <a href="cardio.html">Cardio</a>
+            <a href="analysis.html">Analysis</a>
+        </div>
+    </nav>
+
+    <main class="stagger">
+
+        <section class="hero-row">
+            <div class="hero-block">
+                <div class="hero-title medium">Exercises</div>
+                <div class="hero-meta">
+                    <span class="label">Library · Filtered</span>
+                    <span class="stats">
+                        <span><b>184</b>exercises</span>
+                        <span><b>10</b>muscle groups</span>
+                        <span><b>6</b>categories</span>
+                        <span><b>22</b>equipment types</span>
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <section class="filter-row">
+            <input class="search-input" placeholder="Search exercises…" />
+
+            <div class="group">
+                <span class="label-mono">Muscle</span>
+                <select class="select">
+                    <option>All</option><option>Chest</option><option>Back</option><option>Quads</option>
+                    <option>Hamstrings</option><option>Shoulders</option><option>Biceps</option><option>Triceps</option>
+                    <option>Glutes</option><option>Core</option><option>Calves</option>
+                </select>
+            </div>
+
+            <div class="group">
+                <span class="label-mono">Category</span>
+                <select class="select">
+                    <option>All</option><option>Compound</option><option>Isolation</option>
+                    <option>Cable</option><option>Machine</option><option>Bodyweight</option>
+                </select>
+            </div>
+
+            <div class="group">
+                <span class="label-mono">Equipment</span>
+                <select class="select">
+                    <option>All</option><option>Barbell</option><option>Dumbbell</option><option>Cable</option>
+                    <option>Machine</option><option>Smith</option><option>Bodyweight</option>
+                </select>
+            </div>
+        </section>
+
+        <section class="exercise-grid">
+
+            <a class="exercise-cell" href="exercise.html">
+                <div class="top">
+                    <h3>Incline DB Press</h3>
+                    <span class="index">001</span>
+                </div>
+                <div class="tags">
+                    <span class="chip outline" style="color:var(--mg-chest); border-color:var(--mg-chest)">Chest</span>
+                    <span class="chip">Compound</span>
+                    <span class="chip">Dumbbell</span>
+                </div>
+                <div class="stats">
+                    <span><b>142</b> sets</span><span><b>32kg</b> PR</span><span><b>18</b> sessions</span>
+                </div>
+            </a>
+
+            <a class="exercise-cell" href="exercise.html">
+                <div class="top">
+                    <h3>Hack Squat</h3>
+                    <span class="index">002</span>
+                </div>
+                <div class="tags">
+                    <span class="chip outline" style="color:var(--mg-quads); border-color:var(--mg-quads)">Quads</span>
+                    <span class="chip">Compound</span>
+                    <span class="chip">Machine</span>
+                </div>
+                <div class="stats">
+                    <span><b>96</b> sets</span><span><b>140kg</b> PR</span><span><b>22</b> sessions</span>
+                </div>
+            </a>
+
+            <a class="exercise-cell" href="exercise.html">
+                <div class="top">
+                    <h3>RDL</h3>
+                    <span class="index">003</span>
+                </div>
+                <div class="tags">
+                    <span class="chip outline" style="color:var(--mg-hams); border-color:var(--mg-hams)">Hamstrings</span>
+                    <span class="chip">Compound</span>
+                    <span class="chip">Barbell</span>
+                </div>
+                <div class="stats">
+                    <span><b>78</b> sets</span><span><b>130kg</b> PR</span><span><b>20</b> sessions</span>
+                </div>
+            </a>
+
+            <a class="exercise-cell" href="exercise.html">
+                <div class="top">
+                    <h3>Lat Pulldown</h3>
+                    <span class="index">004</span>
+                </div>
+                <div class="tags">
+                    <span class="chip outline" style="color:var(--mg-back); border-color:var(--mg-back)">Back</span>
+                    <span class="chip">Compound</span>
+                    <span class="chip">Cable</span>
+                </div>
+                <div class="stats">
+                    <span><b>118</b> sets</span><span><b>80kg</b> PR</span><span><b>30</b> sessions</span>
+                </div>
+            </a>
+
+            <a class="exercise-cell" href="exercise.html">
+                <div class="top">
+                    <h3>Lateral Raise</h3>
+                    <span class="index">005</span>
+                </div>
+                <div class="tags">
+                    <span class="chip outline" style="color:var(--mg-shoulders); border-color:var(--mg-shoulders)">Shoulders</span>
+                    <span class="chip">Isolation</span>
+                    <span class="chip">Dumbbell</span>
+                </div>
+                <div class="stats">
+                    <span><b>164</b> sets</span><span><b>16kg</b> PR</span><span><b>40</b> sessions</span>
+                </div>
+            </a>
+
+            <a class="exercise-cell" href="exercise.html">
+                <div class="top">
+                    <h3>Cable Row</h3>
+                    <span class="index">006</span>
+                </div>
+                <div class="tags">
+                    <span class="chip outline" style="color:var(--mg-back); border-color:var(--mg-back)">Back</span>
+                    <span class="chip">Compound</span>
+                    <span class="chip">Cable</span>
+                </div>
+                <div class="stats">
+                    <span><b>92</b> sets</span><span><b>90kg</b> PR</span><span><b>26</b> sessions</span>
+                </div>
+            </a>
+
+            <a class="exercise-cell" href="exercise.html">
+                <div class="top">
+                    <h3>Pull-up</h3>
+                    <span class="index">007</span>
+                </div>
+                <div class="tags">
+                    <span class="chip outline" style="color:var(--mg-back); border-color:var(--mg-back)">Back</span>
+                    <span class="chip">Compound</span>
+                    <span class="chip">Bodyweight</span>
+                </div>
+                <div class="stats">
+                    <span><b>72</b> sets</span><span><b>BW+15kg</b> PR</span><span><b>24</b> sessions</span>
+                </div>
+            </a>
+
+            <a class="exercise-cell" href="exercise.html">
+                <div class="top">
+                    <h3>Hip Thrust</h3>
+                    <span class="index">008</span>
+                </div>
+                <div class="tags">
+                    <span class="chip outline" style="color:var(--mg-glutes); border-color:var(--mg-glutes)">Glutes</span>
+                    <span class="chip">Compound</span>
+                    <span class="chip">Barbell</span>
+                </div>
+                <div class="stats">
+                    <span><b>54</b> sets</span><span><b>140kg</b> PR</span><span><b>18</b> sessions</span>
+                </div>
+            </a>
+
+            <a class="exercise-cell" href="exercise.html">
+                <div class="top">
+                    <h3>Hammer Curl</h3>
+                    <span class="index">009</span>
+                </div>
+                <div class="tags">
+                    <span class="chip outline" style="color:var(--mg-biceps); border-color:var(--mg-biceps)">Biceps</span>
+                    <span class="chip">Isolation</span>
+                    <span class="chip">Dumbbell</span>
+                </div>
+                <div class="stats">
+                    <span><b>88</b> sets</span><span><b>16kg</b> PR</span><span><b>28</b> sessions</span>
+                </div>
+            </a>
+
+            <a class="exercise-cell" href="exercise.html">
+                <div class="top">
+                    <h3>Tricep Pushdown</h3>
+                    <span class="index">010</span>
+                </div>
+                <div class="tags">
+                    <span class="chip outline" style="color:var(--mg-triceps); border-color:var(--mg-triceps)">Triceps</span>
+                    <span class="chip">Isolation</span>
+                    <span class="chip">Cable</span>
+                </div>
+                <div class="stats">
+                    <span><b>96</b> sets</span><span><b>34kg</b> PR</span><span><b>32</b> sessions</span>
+                </div>
+            </a>
+
+            <a class="exercise-cell" href="exercise.html">
+                <div class="top">
+                    <h3>Leg Curl</h3>
+                    <span class="index">011</span>
+                </div>
+                <div class="tags">
+                    <span class="chip outline" style="color:var(--mg-hams); border-color:var(--mg-hams)">Hamstrings</span>
+                    <span class="chip">Isolation</span>
+                    <span class="chip">Machine</span>
+                </div>
+                <div class="stats">
+                    <span><b>62</b> sets</span><span><b>55kg</b> PR</span><span><b>20</b> sessions</span>
+                </div>
+            </a>
+
+            <a class="exercise-cell" href="exercise.html">
+                <div class="top">
+                    <h3>Cable Fly</h3>
+                    <span class="index">012</span>
+                </div>
+                <div class="tags">
+                    <span class="chip outline" style="color:var(--mg-chest); border-color:var(--mg-chest)">Chest</span>
+                    <span class="chip">Isolation</span>
+                    <span class="chip">Cable</span>
+                </div>
+                <div class="stats">
+                    <span><b>74</b> sets</span><span><b>20kg</b> PR</span><span><b>24</b> sessions</span>
+                </div>
+            </a>
+
+        </section>
+
+    </main>
+
+    <footer>Showing 12 of 184 exercises</footer>
+
+</div>
+
+<script src="shared.js"></script>
+</body>
+</html>

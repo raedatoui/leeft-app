@@ -134,3 +134,72 @@ Never duplicate types between apps. Add shared types to `packages/types`.
 - **Timestamp after pipeline**: After running the data pipeline, update `NEXT_PUBLIC_TIMESTAMP` in `apps/web/.env.local` to match the new upload
 - **pnpm catalog**: Shared dependency versions (TypeScript, Biome, Zod) are managed in `pnpm-workspace.yaml` `catalog:` — update there, not in individual package.json files
 - **Data files gitignored**: All `apps/data/data/` contents are gitignored
+- **Date grouping is UTC**: `groupWorkoutsByDay` in `lib/contexts.ts` keys by `toISOString().slice(0, 10)` (UTC). UI must format dates with `getUTC*` methods or off-by-one bugs appear in non-UTC timezones. v2 components do this; v1 uses `toLocaleDateString` (mostly fine because v1 doesn't show full dates in places that would expose the offset).
+- **Lifting `Workout.duration` is in milliseconds**, not minutes — confirmed empirically (a 176-min session has `duration ≈ 10,560,000`). Cardio uses both `durationMs` and `durationMin` explicitly.
+- **All weights are in lbs**, not kg — mixed sources (TrainHeroic, Google Fit) are normalized to lbs in the data pipeline. v1 mostly displays the bare number; v2 labels columns `lbs`.
+
+## v2 design system
+
+v1 has been removed; v2 is the only UI, served at the root routes (`/`, `/stats`, `/monthly`, `/cycles`, `/exercises`, `/cardio`). The whole app is wrapped in `<div data-theme="v2">` by the root `app/layout.tsx`, which also loads the v2 fonts and imports `app/v2.css`. The static-export build needs no rewrites.
+
+### Layout
+```
+apps/web/src/
+├── app/
+│   ├── layout.tsx               # root: Geist + v2 fonts, <div data-theme="v2"> wrapper, imports globals.css + v2.css
+│   ├── page.tsx                 # / entry → WorkoutLogPageV2
+│   └── v2.css                   # scoped design system, all rules under [data-theme="v2"]
+├── components/
+│   ├── layout/v2/
+│   │   ├── headerV2.tsx         # 🏋️ LEEFT 🏋️ brand + nav
+│   │   └── pageTemplateV2.tsx   # shell + header + footer wrapper
+│   └── workouts/v2/
+│       ├── workoutCard.tsx      # per-day card with cardio + lifting bodies, per-card collapse toggle
+│       └── monthCalendar.tsx    # 7-col grid with cardio icons/colors per cell
+├── pageComponents/v2/
+│   └── workoutLogPageV2.tsx     # / home: hero + toolbar + Month/Daily view + inline day panel
+└── lib/hooks/
+    └── useWorkoutLogState.ts    # workout-log state hook (consumed by WorkoutLogPageV2)
+```
+
+### Design tokens (in `app/v2.css` under `[data-theme="v2"]`)
+- **Fonts**: Anton (display) + DM Sans (body) + JetBrains Mono (mono), loaded via `next/font/google` and exposed as `--font-display / --font-body / --font-mono` CSS variables.
+- **Palette**: `--bg #0b0a08`, `--surface #14130f`, `--fg #ecebe2`, `--muted #807a6c`, `--muted-2 #5a5448`. Type colors: `--strength #19e68c`, `--hyper #ff3b30`, `--break #5b9bff`, `--maint #ffa000`, `--cardio #00d4ff`, `--zone #ffd60a`. Muscle groups have their own `--mg-*` tokens.
+- **Cardio types use v1 palette** (`lib/cardio-theme.ts` → `cardioColors` / `cardioIcons`) for consistency with the calendar's day-cell badges. v2's `--cardio` token is reserved for the generic "cardio" headline color.
+- **Yellow `--maint` is the accent** — used for inline `<b>` numbers in stats lines, brand dot, PR markers, the LIFTING headline, today indicator on the calendar.
+
+### Component primitives (all classes scoped under `[data-theme="v2"]`)
+- `.shell` — page max-width container (1440px)
+- `.nav`, `.brand`, `.nav-links` — top nav chrome
+- `.hero-row`, `.hero-title`, `.hero-meta` — page hero with Anton title + meta line
+- `.toolbar`, `.toolbar-grp`, `.toolbar-divider`, `.toolbar-pos`, `.toolbar-control` — visible control bar with switches and buttons
+- `.switch[data-on]` — iOS-style toggle. The data attribute drives the on/off color
+- `.seg`, `.seg-btn.active` — segmented controls (View, Cardio mode)
+- `.select.sm` — small mono dropdown for inline use
+- `.session`, `.session-title-row`, `.session-vol`, `.exercises` — workout card scaffolding
+- `.lift-headline`, `.cardio-headline` — yellow / cyan label rows above per-modality bodies
+- `.ex-block`, `.ex-name`, `.ex-vol`, `.sets-table`, `.ex-summary` — exercise renderer (sets table when expanded; one-line summary when compact)
+- `.month-cal`, `.month-cal-grid`, `.month-cal-cell` — calendar grid
+- `.day-panel`, `.day-panel-backdrop` — right-side slide-in panel
+- `.effort-chart`, `.effort-bar`, `.effort-seg`, `.effort-legend` — cardio zone breakdown
+- `.stagger > *` — page-load animation utility
+
+### CSS scoping
+- The whole stylesheet lives inside one nested rule `[data-theme="v2"] { ... }` using CSS nesting (LightningCSS handles this). Everything under the root `data-theme="v2"` wrapper receives the variables and rules.
+- Universal resets (`* { ... }`) and root `html, body` rules are intentionally NOT in `v2.css` — Tailwind preflight already handles those globally.
+- `@keyframes` declared outside the `[data-theme="v2"]` block (keyframes can't be scoped).
+
+### State
+- Page state lives in presentation-agnostic hooks under `lib/hooks/` (`useWorkoutLogState`, `useCardioPageState`, `useCyclesPageState`, `useExercisesLibraryState`). `useWorkoutLogState` is called as `useWorkoutLogState({ includeWarmup: false })` (warmup default OFF).
+- All data context (`WorkoutDataContext`, `CardioSettingsContext`) is mounted ONCE at the root layout via `Providers`.
+
+### Status
+All v1 routes have been ported to v2 and v1 was removed; v2 owns the root routes: `/` (workout log), `/stats`, `/monthly` (the old `/analysis` rollup), `/cycles`, `/cycles/[id]`, `/exercises`, `/exercises/[id]`, `/cardio`. Each `app/<route>/page.tsx` renders the matching `pageComponents/v2/<page>V2.tsx`, which consumes a `lib/hooks/use<Page>State.ts` hook.
+
+**Phase 1 reference HTML mocks** are in `design/*.html` — pre-built static prototypes of every page in the v2 style. Use them as visual ground truth; they share `design/shared.css`.
+
+### Gotchas specific to v2
+- **Radix portals leak**: shadcn's Radix-based primitives (Select, Dialog, Popover) mount to `document.body`, escaping `[data-theme="v2"]`. v2 components avoid Radix; use plain `<select>`, custom dropdowns, or anchor portals via the `container` prop.
+- **Geist fonts still load**: the root `app/layout.tsx` still applies Geist on `<body>` even though v2 uses Anton/DM Sans/JetBrains Mono on the inner `data-theme="v2"` wrapper. Harmless dead weight; can be dropped later.
+- **Per-card local state resets on day key change**: `<WorkoutTable key={day.date.toISOString()} />` in `DayPanel` forces remount when the panel switches days, so `initialCompact` is re-applied.
+- **`useWorkoutLogState` defaults are SSR-safe**: state defaults are derived from `opts` arg, not from `window`/`document`. The `useEffect` that adjusts `responsiveColumns` runs only client-side.

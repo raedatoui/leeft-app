@@ -56,6 +56,8 @@ export const CardioWorkoutSchema = z.object({
     calories: z.number().optional(),
     averageHeartRate: z.number().optional(),
     steps: z.number().optional(),
+    distance: z.number().optional(), // kilometers
+    pace: z.number().optional(), // seconds per kilometer
 });
 
 // Union type for all workout categories

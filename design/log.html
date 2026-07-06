@@ -1,0 +1,667 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Leeft — workout log</title>
+<link rel="stylesheet" href="shared.css" />
+<style>
+.log-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border-soft);
+    border: 1px solid var(--border-soft);
+}
+@media (max-width: 1300px) { .log-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 980px)  { .log-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px)  { .log-grid { grid-template-columns: 1fr; } }
+
+.session {
+    background: var(--bg);
+    padding: 22px 22px 18px;
+    transition: background 200ms;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 480px;
+}
+.session:hover { background: var(--surface); }
+
+.session-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-soft);
+}
+.session-head .day-num {
+    font-family: var(--display);
+    font-size: 32px;
+    line-height: 0.9;
+    color: var(--fg);
+}
+.session-head .day-meta {
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    line-height: 1.6;
+}
+.session-head .day-meta .month { color: var(--maint); }
+
+.session-title-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.session-title {
+    font-family: var(--display);
+    font-size: 22px;
+    line-height: 1;
+    letter-spacing: 0.01em;
+}
+.session-vol {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted-2);
+    display: flex;
+    gap: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.session-vol b { color: var(--fg); font-weight: 500; margin-right: 4px; }
+.session-vol .v.maint b { color: var(--maint); }
+
+.session.cardio-session .session-head .day-num { color: var(--cardio); }
+.session.cardio-session .session-title { color: var(--cardio); }
+
+.exercises {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.cardio-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 14px;
+    padding: 8px 0;
+}
+.cardio-stats-grid .ks {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.cardio-stats-grid .ks .v {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--fg);
+    font-weight: 500;
+}
+.cardio-stats-grid .ks .v.cardio { color: var(--cardio); }
+.cardio-stats-grid .ks .l {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted-2);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+    <nav class="nav">
+        <div class="brand"><span class="lift">🏋️</span>LEEFT<span class="lift flip">🏋️</span><span class="sub">2026</span></div>
+        <div class="nav-links">
+            <a href="log.html">Log</a>
+            <a href="cycles.html">Cycles</a>
+            <a href="stats.html">Stats</a>
+            <a href="exercises.html">Exercises</a>
+            <a href="cardio.html">Cardio</a>
+            <a href="analysis.html">Analysis</a>
+        </div>
+    </nav>
+
+    <main class="stagger">
+
+        <section class="hero-row">
+            <div class="hero-block">
+                <div class="hero-title">Log</div>
+                <div class="hero-meta">
+                    <span class="label">Workout Log · Most Recent</span>
+                    <span class="stats">
+                        <span><b>4</b>this week</span>
+                        <span><b>18</b>this month</span>
+                        <span><b>187</b>this year</span>
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <!-- full visible toolbar -->
+        <div class="toolbar mb-8">
+            <div class="toolbar-grp">
+                <button class="icon-btn sm" aria-label="Previous">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <span class="toolbar-pos"><b>1</b><span class="sep">/</span>3</span>
+                <button class="icon-btn sm" aria-label="Next">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+            </div>
+
+            <span class="toolbar-divider"></span>
+
+            <div class="toolbar-grp">
+                <span class="toolbar-control" title="Detail mode">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <span class="switch" data-on="true"><span class="thumb"></span></span>
+                    <span>Detail</span>
+                </span>
+                <span class="toolbar-control" title="Include warmup sets">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6.5 6.5 11 11"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/></svg>
+                    <span class="switch" data-on="true"><span class="thumb"></span></span>
+                    <span>Warmup</span>
+                </span>
+                <span class="toolbar-control" title="Columns">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/></svg>
+                    <select class="select sm" aria-label="Columns">
+                        <option>3</option><option selected>4</option><option>5</option><option>6</option><option>7</option><option>8</option>
+                    </select>
+                </span>
+            </div>
+
+            <span class="toolbar-divider"></span>
+
+            <div class="toolbar-grp">
+                <span class="toolbar-control">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </span>
+                <select class="select sm">
+                    <option>2026</option><option>2025</option><option>2024</option>
+                </select>
+                <select class="select sm">
+                    <option>March</option><option>February</option><option>January</option>
+                </select>
+            </div>
+
+            <div class="toolbar-grp" style="margin-left:auto">
+                <div class="seg" role="radiogroup" aria-label="Cardio mode">
+                    <button class="seg-btn active">Active</button>
+                    <button class="seg-btn">Strict</button>
+                    <button class="seg-btn">Both</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="log-grid">
+
+            <!-- Lifting session (full sets table per exercise) -->
+            <div class="session">
+                <div class="session-head">
+                    <div class="day-num">28</div>
+                    <div class="day-meta"><div class="month">MAR · SAT</div><div>14:32 · 1h 24m</div></div>
+                </div>
+                <div class="session-title-row">
+                    <div class="session-title">Lower Squat</div>
+                    <div class="session-vol">
+                        <span class="v maint"><b>17.1k</b>kg</span>
+                        <span><b>22</b>sets</span>
+                        <span><b>5</b>ex</span>
+                    </div>
+                </div>
+                <div class="exercises">
+
+                    <div class="ex-block">
+                        <div class="ex-head">
+                            <span class="ex-name"><span class="mg-pip" style="background:var(--mg-quads)"></span>Hack Squat</span>
+                            <span class="ex-vol"><b>4.4k</b>kg</span>
+                        </div>
+                        <table class="sets-table">
+                            <thead><tr><th>set</th><th>reps</th><th>weight</th></tr></thead>
+                            <tbody>
+                                <tr><td>1</td><td>10</td><td>60</td></tr>
+                                <tr><td>2</td><td>8</td><td>100</td></tr>
+                                <tr class="work"><td>3</td><td>8</td><td>140</td></tr>
+                                <tr class="work"><td>4</td><td>8</td><td>140</td></tr>
+                                <tr class="work"><td>5</td><td>7</td><td>140</td></tr>
+                                <tr class="work"><td>6</td><td>8</td><td>130</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="ex-block">
+                        <div class="ex-head">
+                            <span class="ex-name"><span class="mg-pip" style="background:var(--mg-quads)"></span>Leg Press</span>
+                            <span class="ex-vol"><b>7.2k</b>kg</span>
+                        </div>
+                        <table class="sets-table">
+                            <thead><tr><th>set</th><th>reps</th><th>weight</th></tr></thead>
+                            <tbody>
+                                <tr class="work"><td>1</td><td>12</td><td>200</td></tr>
+                                <tr class="work"><td>2</td><td>12</td><td>200</td></tr>
+                                <tr class="work"><td>3</td><td>10</td><td>200</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="ex-block">
+                        <div class="ex-head">
+                            <span class="ex-name"><span class="mg-pip" style="background:var(--mg-quads)"></span>Leg Extension</span>
+                            <span class="ex-vol"><b>2.7k</b>kg</span>
+                        </div>
+                        <table class="sets-table">
+                            <thead><tr><th>set</th><th>reps</th><th>weight</th></tr></thead>
+                            <tbody>
+                                <tr class="work"><td>1</td><td>15</td><td>60</td></tr>
+                                <tr class="work"><td>2</td><td>15</td><td>60</td></tr>
+                                <tr class="work"><td>3</td><td>12</td><td>60</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="session">
+                <div class="session-head">
+                    <div class="day-num">26</div>
+                    <div class="day-meta"><div class="month">MAR · THU</div><div>13:08 · 1h 12m</div></div>
+                </div>
+                <div class="session-title-row">
+                    <div class="session-title">Upper Pull A</div>
+                    <div class="session-vol">
+                        <span class="v maint"><b>13.4k</b>kg</span>
+                        <span><b>18</b>sets</span>
+                        <span><b>5</b>ex</span>
+                    </div>
+                </div>
+                <div class="exercises">
+
+                    <div class="ex-block">
+                        <div class="ex-head">
+                            <span class="ex-name"><span class="mg-pip" style="background:var(--mg-back)"></span>Pulldown</span>
+                            <span class="ex-vol"><b>2.8k</b>kg</span>
+                        </div>
+                        <table class="sets-table">
+                            <thead><tr><th>set</th><th>reps</th><th>weight</th></tr></thead>
+                            <tbody>
+                                <tr><td>1</td><td>12</td><td>40</td></tr>
+                                <tr class="work"><td>2</td><td>10</td><td>60</td></tr>
+                                <tr class="work"><td>3</td><td>8</td><td>70</td></tr>
+                                <tr class="work"><td>4</td><td>8</td><td>70</td></tr>
+                                <tr class="work"><td>5</td><td>8</td><td>70</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="ex-block">
+                        <div class="ex-head">
+                            <span class="ex-name"><span class="mg-pip" style="background:var(--mg-back)"></span>Cable Row</span>
+                            <span class="ex-vol"><b>2.4k</b>kg</span>
+                        </div>
+                        <table class="sets-table">
+                            <thead><tr><th>set</th><th>reps</th><th>weight</th></tr></thead>
+                            <tbody>
+                                <tr class="work"><td>1</td><td>10</td><td>80</td></tr>
+                                <tr class="work"><td>2</td><td>10</td><td>80</td></tr>
+                                <tr class="work"><td>3</td><td>10</td><td>80</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="ex-block">
+                        <div class="ex-head">
+                            <span class="ex-name"><span class="mg-pip" style="background:var(--mg-shoulders)"></span>Face Pull</span>
+                            <span class="ex-vol"><b>1.1k</b>kg</span>
+                        </div>
+                        <table class="sets-table">
+                            <thead><tr><th>set</th><th>reps</th><th>weight</th></tr></thead>
+                            <tbody>
+                                <tr class="work"><td>1</td><td>15</td><td>25</td></tr>
+                                <tr class="work"><td>2</td><td>15</td><td>25</td></tr>
+                                <tr class="work"><td>3</td><td>15</td><td>25</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cardio session: full metrics -->
+            <div class="session cardio-session">
+                <div class="session-head">
+                    <div class="day-num">25</div>
+                    <div class="day-meta"><div class="month" style="color:var(--cardio)">MAR · WED</div><div>07:20 · 34m</div></div>
+                </div>
+                <div class="session-title-row">
+                    <div class="session-title">Treadmill Run</div>
+                    <div class="session-vol">
+                        <span><b style="color:var(--cardio)">6.4</b>km</span>
+                        <span><b style="color:var(--zone)">12</b>zone</span>
+                        <span><b>412</b>kcal</span>
+                    </div>
+                </div>
+                <div class="cardio-stats-grid">
+                    <div class="ks"><span class="v cardio">5:18</span><span class="l">Avg pace /km</span></div>
+                    <div class="ks"><span class="v">152</span><span class="l">Avg HR</span></div>
+                    <div class="ks"><span class="v">178</span><span class="l">Max HR</span></div>
+                    <div class="ks"><span class="v">+82m</span><span class="l">Elevation</span></div>
+                    <div class="ks"><span class="v">5.3</span><span class="l">Avg km/h</span></div>
+                    <div class="ks"><span class="v">412</span><span class="l">Calories</span></div>
+                </div>
+
+                <div class="top-ex-list">
+                    <div class="top-ex-row">
+                        <span class="mono" style="color:var(--zone); font-size:9px;">Z3</span>
+                        <span class="nm">Aerobic Zone</span>
+                        <span class="freq">12 min</span>
+                    </div>
+                    <div class="top-ex-row">
+                        <span class="mono" style="color:var(--cardio); font-size:9px;">Z2</span>
+                        <span class="nm">Endurance Zone</span>
+                        <span class="freq">18 min</span>
+                    </div>
+                    <div class="top-ex-row">
+                        <span class="mono" style="color:var(--strength); font-size:9px;">Z1</span>
+                        <span class="nm">Recovery</span>
+                        <span class="freq">4 min</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="session">
+                <div class="session-head">
+                    <div class="day-num">24</div>
+                    <div class="day-meta"><div class="month">MAR · TUE</div><div>13:45 · 1h 18m</div></div>
+                </div>
+                <div class="session-title-row">
+                    <div class="session-title">Lower Hinge</div>
+                    <div class="session-vol">
+                        <span class="v maint"><b>16.8k</b>kg</span>
+                        <span><b>20</b>sets</span>
+                        <span><b>5</b>ex</span>
+                    </div>
+                </div>
+                <div class="exercises">
+
+                    <div class="ex-block">
+                        <div class="ex-head">
+                            <span class="ex-name"><span class="mg-pip" style="background:var(--mg-hams)"></span>RDL</span>
+                            <span class="ex-vol"><b>3.4k</b>kg</span>
+                        </div>
+                        <table class="sets-table">
+                            <thead><tr><th>set</th><th>reps</th><th>weight</th></tr></thead>
+                            <tbody>
+                                <tr><td>1</td><td>8</td><td>60</td></tr>
+                                <tr><td>2</td><td>6</td><td>100</td></tr>
+                                <tr class="work"><td>3</td><td>6</td><td>130</td></tr>
+                                <tr class="work"><td>4</td><td>6</td><td>130</td></tr>
+                                <tr class="work"><td>5</td><td>6</td><td>130</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="ex-block">
+                        <div class="ex-head">
+                            <span class="ex-name"><span class="mg-pip" style="background:var(--mg-glutes)"></span>Hip Thrust</span>
+                            <span class="ex-vol"><b>3.6k</b>kg</span>
+                        </div>
+                        <table class="sets-table">
+                            <thead><tr><th>set</th><th>reps</th><th>weight</th></tr></thead>
+                            <tbody>
+                                <tr class="work"><td>1</td><td>10</td><td>120</td></tr>
+                                <tr class="work"><td>2</td><td>10</td><td>120</td></tr>
+                                <tr class="work"><td>3</td><td>10</td><td>120</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="ex-block">
+                        <div class="ex-head">
+                            <span class="ex-name"><span class="mg-pip" style="background:var(--mg-hams)"></span>Leg Curl</span>
+                            <span class="ex-vol"><b>1.8k</b>kg</span>
+                        </div>
+                        <table class="sets-table">
+                            <thead><tr><th>set</th><th>reps</th><th>weight</th></tr></thead>
+                            <tbody>
+                                <tr class="work"><td>1</td><td>12</td><td>50</td></tr>
+                                <tr class="work"><td>2</td><td>12</td><td>50</td></tr>
+                                <tr class="work"><td>3</td><td>12</td><td>50</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="session">
+                <div class="session-head">
+                    <div class="day-num">22</div>
+                    <div class="day-meta"><div class="month">MAR · SUN</div><div>11:00 · 1h 06m</div></div>
+                </div>
+                <div class="session-title-row">
+                    <div class="session-title">Upper Push A</div>
+                    <div class="session-vol">
+                        <span class="v maint"><b>14.2k</b>kg</span>
+                        <span><b>20</b>sets</span>
+                        <span><b>5</b>ex</span>
+                    </div>
+                </div>
+                <div class="exercises">
+
+                    <div class="ex-block">
+                        <div class="ex-head">
+                            <span class="ex-name"><span class="mg-pip" style="background:var(--mg-chest)"></span>Incline DB Press</span>
+                            <span class="ex-vol"><b>2.8k</b>kg</span>
+                        </div>
+                        <table class="sets-table">
+                            <thead><tr><th>set</th><th>reps</th><th>weight</th></tr></thead>
+                            <tbody>
+                                <tr><td>1</td><td>10</td><td>20</td></tr>
+                                <tr><td>2</td><td>8</td><td>26</td></tr>
+                                <tr class="work"><td>3</td><td>8</td><td>32</td></tr>
+                                <tr class="work"><td>4</td><td>8</td><td>32</td></tr>
+                                <tr class="work"><td>5</td><td>7</td><td>32</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="ex-block">
+                        <div class="ex-head">
+                            <span class="ex-name"><span class="mg-pip" style="background:var(--mg-chest)"></span>Cable Fly</span>
+                            <span class="ex-vol"><b>1.3k</b>kg</span>
+                        </div>
+                        <table class="sets-table">
+                            <thead><tr><th>set</th><th>reps</th><th>weight</th></tr></thead>
+                            <tbody>
+                                <tr class="work"><td>1</td><td>12</td><td>18</td></tr>
+                                <tr class="work"><td>2</td><td>12</td><td>18</td></tr>
+                                <tr class="work"><td>3</td><td>12</td><td>18</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="ex-block">
+                        <div class="ex-head">
+                            <span class="ex-name"><span class="mg-pip" style="background:var(--mg-shoulders)"></span>Lateral Raise</span>
+                            <span class="ex-vol"><b>0.8k</b>kg</span>
+                        </div>
+                        <table class="sets-table">
+                            <thead><tr><th>set</th><th>reps</th><th>weight</th></tr></thead>
+                            <tbody>
+                                <tr class="work"><td>1</td><td>12</td><td>14</td></tr>
+                                <tr class="work"><td>2</td><td>12</td><td>14</td></tr>
+                                <tr class="work"><td>3</td><td>12</td><td>14</td></tr>
+                                <tr class="work"><td>4</td><td>10</td><td>14</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="session cardio-session">
+                <div class="session-head">
+                    <div class="day-num">21</div>
+                    <div class="day-meta"><div class="month" style="color:var(--cardio)">MAR · SAT</div><div>08:00 · 58m</div></div>
+                </div>
+                <div class="session-title-row">
+                    <div class="session-title">Outdoor Bike</div>
+                    <div class="session-vol">
+                        <span><b style="color:var(--cardio)">22.4</b>km</span>
+                        <span><b style="color:var(--zone)">18</b>zone</span>
+                        <span><b>680</b>kcal</span>
+                    </div>
+                </div>
+                <div class="cardio-stats-grid">
+                    <div class="ks"><span class="v cardio">23.2</span><span class="l">Avg km/h</span></div>
+                    <div class="ks"><span class="v">141</span><span class="l">Avg HR</span></div>
+                    <div class="ks"><span class="v">168</span><span class="l">Max HR</span></div>
+                    <div class="ks"><span class="v">+184m</span><span class="l">Elevation</span></div>
+                    <div class="ks"><span class="v">38.4</span><span class="l">Max km/h</span></div>
+                    <div class="ks"><span class="v">680</span><span class="l">Calories</span></div>
+                </div>
+            </div>
+
+            <div class="session">
+                <div class="session-head">
+                    <div class="day-num">20</div>
+                    <div class="day-meta"><div class="month">MAR · FRI</div><div>14:10 · 1h 14m</div></div>
+                </div>
+                <div class="session-title-row">
+                    <div class="session-title">Upper Pull B</div>
+                    <div class="session-vol">
+                        <span class="v maint"><b>13.9k</b>kg</span>
+                        <span><b>19</b>sets</span>
+                        <span><b>5</b>ex</span>
+                    </div>
+                </div>
+                <div class="exercises">
+
+                    <div class="ex-block">
+                        <div class="ex-head">
+                            <span class="ex-name"><span class="mg-pip" style="background:var(--mg-back)"></span>Pull-up</span>
+                            <span class="ex-vol"><b>0.0k</b>kg</span>
+                        </div>
+                        <table class="sets-table">
+                            <thead><tr><th>set</th><th>reps</th><th>weight</th></tr></thead>
+                            <tbody>
+                                <tr class="work"><td>1</td><td>8</td><td>BW</td></tr>
+                                <tr class="work"><td>2</td><td>8</td><td>BW</td></tr>
+                                <tr class="work"><td>3</td><td>7</td><td>BW</td></tr>
+                                <tr class="work"><td>4</td><td>6</td><td>BW</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="ex-block">
+                        <div class="ex-head">
+                            <span class="ex-name"><span class="mg-pip" style="background:var(--mg-back)"></span>Chest Sup. Row</span>
+                            <span class="ex-vol"><b>1.5k</b>kg</span>
+                        </div>
+                        <table class="sets-table">
+                            <thead><tr><th>set</th><th>reps</th><th>weight</th></tr></thead>
+                            <tbody>
+                                <tr class="work"><td>1</td><td>10</td><td>22</td></tr>
+                                <tr class="work"><td>2</td><td>10</td><td>22</td></tr>
+                                <tr class="work"><td>3</td><td>10</td><td>22</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="ex-block">
+                        <div class="ex-head">
+                            <span class="ex-name"><span class="mg-pip" style="background:var(--mg-biceps)"></span>Preacher Curl</span>
+                            <span class="ex-vol"><b>0.9k</b>kg</span>
+                        </div>
+                        <table class="sets-table">
+                            <thead><tr><th>set</th><th>reps</th><th>weight</th></tr></thead>
+                            <tbody>
+                                <tr class="work"><td>1</td><td>10</td><td>30</td></tr>
+                                <tr class="work"><td>2</td><td>10</td><td>30</td></tr>
+                                <tr class="work"><td>3</td><td>10</td><td>30</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="session">
+                <div class="session-head">
+                    <div class="day-num">18</div>
+                    <div class="day-meta"><div class="month">MAR · WED</div><div>13:00 · 1h 22m</div></div>
+                </div>
+                <div class="session-title-row">
+                    <div class="session-title">Lower Squat</div>
+                    <div class="session-vol">
+                        <span class="v maint"><b>16.4k</b>kg</span>
+                        <span><b>21</b>sets</span>
+                        <span><b>5</b>ex</span>
+                    </div>
+                </div>
+                <div class="exercises">
+
+                    <div class="ex-block">
+                        <div class="ex-head">
+                            <span class="ex-name"><span class="mg-pip" style="background:var(--mg-quads)"></span>Hack Squat</span>
+                            <span class="ex-vol"><b>4.2k</b>kg</span>
+                        </div>
+                        <table class="sets-table">
+                            <thead><tr><th>set</th><th>reps</th><th>weight</th></tr></thead>
+                            <tbody>
+                                <tr><td>1</td><td>10</td><td>60</td></tr>
+                                <tr><td>2</td><td>8</td><td>100</td></tr>
+                                <tr class="work"><td>3</td><td>8</td><td>130</td></tr>
+                                <tr class="work"><td>4</td><td>8</td><td>130</td></tr>
+                                <tr class="work"><td>5</td><td>7</td><td>130</td></tr>
+                                <tr class="work"><td>6</td><td>8</td><td>120</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="ex-block">
+                        <div class="ex-head">
+                            <span class="ex-name"><span class="mg-pip" style="background:var(--mg-quads)"></span>Leg Press</span>
+                            <span class="ex-vol"><b>6.8k</b>kg</span>
+                        </div>
+                        <table class="sets-table">
+                            <thead><tr><th>set</th><th>reps</th><th>weight</th></tr></thead>
+                            <tbody>
+                                <tr class="work"><td>1</td><td>12</td><td>190</td></tr>
+                                <tr class="work"><td>2</td><td>12</td><td>190</td></tr>
+                                <tr class="work"><td>3</td><td>12</td><td>190</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="ex-block">
+                        <div class="ex-head">
+                            <span class="ex-name"><span class="mg-pip" style="background:var(--mg-quads)"></span>Bulgarian Split</span>
+                            <span class="ex-vol"><b>1.2k</b>kg</span>
+                        </div>
+                        <table class="sets-table">
+                            <thead><tr><th>set</th><th>reps</th><th>weight</th></tr></thead>
+                            <tbody>
+                                <tr class="work"><td>1</td><td>10</td><td>20</td></tr>
+                                <tr class="work"><td>2</td><td>10</td><td>20</td></tr>
+                                <tr class="work"><td>3</td><td>10</td><td>20</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <footer>Workout Log · 8 of 18 sessions · all controls visible</footer>
+
+</div>
+
+<script src="shared.js"></script>
+</body>
+</html>

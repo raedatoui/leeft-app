@@ -1,5 +1,5 @@
-import HomePage from '@/pageComponents/homePage';
+import WorkoutLogPageV2 from '@/pageComponents/v2/workoutLogPageV2';
 
 export default function Page() {
-    return <HomePage />;
+    return <WorkoutLogPageV2 />;
 }

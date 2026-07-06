@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Leeft — design mocks</title>
+<link rel="stylesheet" href="shared.css" />
+<style>
+.mock-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1px;
+    background: var(--border-soft);
+    border: 1px solid var(--border-soft);
+    margin-bottom: 32px;
+}
+.mock-card {
+    background: var(--bg);
+    padding: 32px;
+    cursor: pointer;
+    transition: background 200ms;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+.mock-card:hover { background: var(--surface); }
+.mock-card .num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted-2);
+    letter-spacing: 0.16em;
+    margin-bottom: 12px;
+}
+.mock-card h3 {
+    font-family: var(--display);
+    font-size: 32px;
+    line-height: 0.95;
+    margin-bottom: 8px;
+    letter-spacing: 0.005em;
+}
+.mock-card .desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+}
+.mock-card .arrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted-2);
+    margin-top: 18px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: color 200ms;
+}
+.mock-card:hover .arrow { color: var(--strength); }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+    <nav class="nav">
+        <div class="brand"><span class="lift">🏋️</span>LEEFT<span class="lift flip">🏋️</span><span class="sub">DESIGN</span></div>
+        <div class="nav-links">
+            <a href="index.html" class="active">Mocks</a>
+            <a href="https://github.com/raedatoui" target="_blank">GH</a>
+        </div>
+    </nav>
+
+    <section class="hero-row">
+        <div class="hero-block">
+            <div class="hero-title">Mocks</div>
+            <div class="hero-meta">
+                <span class="label">Design Prototypes · 2026</span>
+                <span class="stats">
+                    <span><b>8</b>pages</span>
+                    <span><b>1</b>aesthetic</span>
+                    <span><b>0</b>frameworks</span>
+                </span>
+            </div>
+        </div>
+    </section>
+
+    <main class="stagger">
+
+        <div class="mock-grid">
+
+            <a class="mock-card" href="log.html">
+                <div class="num">01 / Home</div>
+                <h3>Workout Log</h3>
+                <div class="desc">Recent workouts as a horizontal slider with year/month jump.</div>
+                <div class="arrow">View →</div>
+            </a>
+
+            <a class="mock-card" href="cycles.html">
+                <div class="num">02 / Cycles</div>
+                <h3>Training Cycles</h3>
+                <div class="desc">Annual timeline as the hero, editorial cycle cards below.</div>
+                <div class="arrow">View →</div>
+            </a>
+
+            <a class="mock-card" href="cycle-detail.html">
+                <div class="num">03 / Cycle</div>
+                <h3>Cycle Detail</h3>
+                <div class="desc">Two-zone layout with muscle-group chart that doubles as filter.</div>
+                <div class="arrow">View →</div>
+            </a>
+
+            <a class="mock-card" href="stats.html">
+                <div class="num">04 / Stats</div>
+                <h3>Overview</h3>
+                <div class="desc">Yearly breakdown chart with drillable bars and stat strip.</div>
+                <div class="arrow">View →</div>
+            </a>
+
+            <a class="mock-card" href="exercises.html">
+                <div class="num">05 / Exercises</div>
+                <h3>Exercise Library</h3>
+                <div class="desc">Filterable list of every exercise with muscle/equipment/category.</div>
+                <div class="arrow">View →</div>
+            </a>
+
+            <a class="mock-card" href="exercise.html">
+                <div class="num">06 / Exercise</div>
+                <h3>Exercise Detail</h3>
+                <div class="desc">PR history, set-by-set log and workouts that hit it.</div>
+                <div class="arrow">View →</div>
+            </a>
+
+            <a class="mock-card" href="cardio.html">
+                <div class="num">07 / Cardio</div>
+                <h3>Cardio</h3>
+                <div class="desc">Type filters, distribution + trend charts, session grid.</div>
+                <div class="arrow">View →</div>
+            </a>
+
+            <a class="mock-card" href="analysis.html">
+                <div class="num">08 / Analysis</div>
+                <h3>Monthly Analysis</h3>
+                <div class="desc">Month-by-month rollup combining lifting & cardio.</div>
+                <div class="arrow">View →</div>
+            </a>
+
+        </div>
+
+        <p class="label-mono" style="text-align:center; padding-top:24px;">All mocks share <code style="color:var(--strength); font-family:var(--mono);">shared.css</code> — change the system once, propagate everywhere.</p>
+
+    </main>
+
+    <footer>Leeft · design prototypes · open in any browser</footer>
+
+</div>
+
+<script src="shared.js"></script>
+</body>
+</html>

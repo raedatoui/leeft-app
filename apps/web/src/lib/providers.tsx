@@ -2,10 +2,10 @@
 
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
+import Loader from '@/components/common/loader';
 import { getUniqueValues } from '@/lib/exercises';
 import { fetchCardioWorkouts, fetchCardioWorkoutsStrict, fetchCycles, fetchExerciseMap, fetchWorkouts } from '@/lib/fetchData';
 import { CardioSettingsContext, type MuscleGroup, WorkoutDataContext, type WorkoutDataContextType } from './contexts';
-import Loader from '@/components/common/loader';
 
 interface ProvidersProps {
     children: React.ReactNode;

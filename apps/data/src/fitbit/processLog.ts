@@ -25,6 +25,13 @@ function loadRawEntries(filePath: string): RawActivity[] {
     return z.array(RawActivitySchema).parse(arr);
 }
 
+// Normalize distance to kilometers. Fitbit emits 'Kilometer' for our data today; convert Miles defensively if it ever changes.
+function toKm(d: number | undefined, unit: string | undefined): number | undefined {
+    if (d === undefined) return undefined;
+    if (unit === 'Mile') return d * 1.609344;
+    return d;
+}
+
 // Transform raw entries into simplified, validated parsed entries
 function transformEntries(raw: RawActivity[]): FitbitActivity[] {
     return raw.map((entry) => {
@@ -43,6 +50,10 @@ function transformEntries(raw: RawActivity[]): FitbitActivity[] {
             zoneMinutes: entry.activeZoneMinutes.totalMinutes,
             effort: entry.activityLevel,
             averageHeartRate: entry.averageHeartRate,
+            distance: toKm(entry.distance, entry.distanceUnit),
+            pace: entry.pace,
+            calories: entry.calories,
+            steps: entry.steps,
         };
         return FitbitActivitySchema.parse(parsed);
     });

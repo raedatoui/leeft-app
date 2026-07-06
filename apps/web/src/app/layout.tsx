@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
+import { Anton, DM_Sans, JetBrains_Mono } from 'next/font/google';
 import localFont from 'next/font/local';
 import './globals.css';
+import './v2.css';
 import Background from '@/components/layout/background';
 import Providers from '@/lib/providers';
 
@@ -13,6 +15,27 @@ const geistMono = localFont({
     src: './fonts/GeistMonoVF.woff',
     variable: '--font-geist-mono',
     weight: '100 900',
+});
+
+const anton = Anton({
+    subsets: ['latin'],
+    weight: '400',
+    variable: '--font-display',
+    display: 'swap',
+});
+
+const dmSans = DM_Sans({
+    subsets: ['latin'],
+    weight: ['400', '500', '600', '700'],
+    variable: '--font-body',
+    display: 'swap',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+    subsets: ['latin'],
+    weight: ['400', '500', '600'],
+    variable: '--font-mono',
+    display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -29,7 +52,11 @@ export default function RootLayout({
         <html lang="en" className="dark">
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
                 <Background />
-                <Providers>{children}</Providers>
+                <Providers>
+                    <div data-theme="v2" className={`${anton.variable} ${dmSans.variable} ${jetbrainsMono.variable}`}>
+                        {children}
+                    </div>
+                </Providers>
             </body>
         </html>
     );

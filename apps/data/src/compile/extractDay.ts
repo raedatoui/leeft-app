@@ -4,7 +4,7 @@ import { type BaseExercise, type BaseWorkout, BaseWorkoutSchema, type RawWorkout
 
 type ParsedSet = { reps?: number; time?: string; weight: number };
 
-export function parseAbr(abr: string): ParsedSet[] {
+export function parseAbr(abr: string, context = ''): ParsedSet[] {
     let repsSetsPart: string;
     let weightsPart: string | undefined;
     if (abr.includes('@')) {
@@ -18,7 +18,14 @@ export function parseAbr(abr: string): ParsedSet[] {
     let weights: number[] = [];
 
     if (weightsPart) {
-        weights = weightsPart.split(',').map((w) => Number.parseFloat(w.trim()));
+        weights = weightsPart.split(',').map((token) => {
+            const weight = Number.parseFloat(token.trim());
+            if (Number.isNaN(weight)) {
+                logger.warning(`Non-numeric weight "${token.trim()}" in abr "${abr}"${context ? ` (${context})` : ''} — treating as 0 (bodyweight)`);
+                return 0;
+            }
+            return weight;
+        });
     }
 
     if (repsSetsPart.includes(':')) {
@@ -76,10 +83,12 @@ export function parseTrainHeroicWorkout(rawWorkout: RawWorkout): BaseWorkout {
                 ws.workoutSetExercises
                     //.sort((a, b) => a.order - b.order)
                     .map((exercise, exerciseIndex) => {
-                        const sets = parseAbr(exercise.abr).map((set, index) => ({
-                            ...set,
-                            order: index,
-                        }));
+                        const sets = parseAbr(exercise.abr, `${saved_workout.title} · ${exercise.exercise_title} (id ${exercise.exercise_id})`).map(
+                            (set, index) => ({
+                                ...set,
+                                order: index,
+                            })
+                        );
                         // Use ws.order for the first exercise, then increment for subsequent exercises
                         const exerciseOrder = exerciseIndex === 0 ? ws.order : ++nextOrder;
                         if (exerciseIndex === 0) {

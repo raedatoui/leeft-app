@@ -23,6 +23,10 @@ function convertFitbitToCardioWorkout(activity: FitbitActivity): CardioWorkout {
         zoneMinutes: activity.zoneMinutes,
         effort: activity.effort,
         averageHeartRate: activity.averageHeartRate,
+        distance: activity.distance,
+        pace: activity.pace,
+        calories: activity.calories,
+        steps: activity.steps,
     });
 }
 

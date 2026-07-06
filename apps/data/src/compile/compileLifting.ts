@@ -1,7 +1,9 @@
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { logger } from '@leeft/utils';
+import { z } from 'zod';
 import { classifyAllWorkouts } from './classifySets';
+import { annotatePersonalRecords } from './computePersonalRecords';
 import { parseTrainHeroicWorkout } from './extractDay';
 import { readLog, readTrainHeroicFiles } from './readFiles';
 import { type BaseWorkout, type ExerciseMetadata, ExerciseMetadataSchema, RawWorkoutSchema } from './types';
@@ -68,7 +70,11 @@ function compileTrainHeroicWorkouts(): BaseWorkout[] {
                 mapOfWorkoutTitle.set(workout.title, true);
             } else logger.warning(`No exercises found in ${file.name}`);
         } catch (error) {
-            logger.error(`Error processing file ${file.name}: ${error}`);
+            if (error instanceof z.ZodError) {
+                logger.error(`Error processing file ${file.name}:\n${z.prettifyError(error)}`);
+            } else {
+                logger.error(`Error processing file ${file.name}: ${error}`);
+            }
         }
     }
     return workouts;
@@ -125,7 +131,10 @@ export function main(): void {
     // Classify Sets and Compute Work Volume
     const classifiedWorkouts = classifyAllWorkouts(allWorkouts);
 
+    // Annotate per-rep-count personal records (PR-at-the-time, tiered)
+    const annotatedWorkouts = annotatePersonalRecords(classifiedWorkouts);
+
     const filename = join(__dirname, '../', '../', 'data', 'out', 'lifting-log.json');
-    writeFileSync(filename, JSON.stringify({ workouts: classifiedWorkouts }, null, 2));
+    writeFileSync(filename, JSON.stringify({ workouts: annotatedWorkouts }, null, 2));
     logger.success('Lifting log generated in directory: data/out/lifting-log.json');
 }

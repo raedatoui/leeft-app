@@ -1,5 +1,5 @@
-import CyclesPage from '@/pageComponents/cyclesPage';
+import CyclesPageV2 from '@/pageComponents/v2/cyclesPageV2';
 
 export default function Page() {
-    return <CyclesPage />;
+    return <CyclesPageV2 />;
 }

@@ -38,6 +38,7 @@
         "fitbit:process": "bun src/fitbit/index.ts process",
         "format": "biome format --write .",
         "lint": "biome lint .",
+        "test": "bun test",
         "trainheroic:compare": "bun src/trainheroic/compare.ts",
         "trainheroic:download": "bun src/trainheroic/index.ts download",
         "trainheroic:supersets": " jq '.saved_workout.workoutSets[] | select(.exercise_count > 1) | {date: .date_completed, exercises: [.workoutSetExercises[].exercise_title]}' data/download/trainheroic/workouts/*.json",

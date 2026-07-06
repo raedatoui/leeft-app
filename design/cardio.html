@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Leeft — cardio</title>
+<link rel="stylesheet" href="shared.css" />
+<style>
+.charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 1px;
+    background: var(--border-soft);
+    border: 1px solid var(--border-soft);
+    margin-bottom: 32px;
+}
+@media (max-width: 1000px) { .charts-row { grid-template-columns: 1fr; } }
+.chart-zone { background: var(--bg); padding: 32px; }
+
+/* donut/distribution */
+.donut-wrap {
+    display: flex;
+    gap: 32px;
+    align-items: center;
+    margin: 24px 0;
+}
+.donut {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: conic-gradient(
+        var(--cardio) 0% 42%,
+        var(--strength) 42% 68%,
+        var(--maint) 68% 86%,
+        var(--hyper) 86% 100%
+    );
+    position: relative;
+}
+.donut::after {
+    content: '';
+    position: absolute;
+    inset: 36px;
+    background: var(--bg);
+    border-radius: 50%;
+}
+.donut-center {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    z-index: 1;
+}
+.donut-center .num {
+    font-family: var(--display);
+    font-size: 36px;
+    line-height: 1;
+}
+.donut-center .lbl {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted-2);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-top: 4px;
+}
+.donut-legend {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.donut-legend .row {
+    display: grid;
+    grid-template-columns: 12px 1fr auto auto;
+    gap: 12px;
+    align-items: center;
+    cursor: pointer;
+    transition: opacity 200ms;
+    padding: 4px 0;
+}
+.donut-legend .row:hover { opacity: 0.85; }
+.donut-legend .swatch { width: 12px; height: 12px; border-radius: 2px; }
+.donut-legend .name {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--fg);
+}
+.donut-legend .pct {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+}
+.donut-legend .count {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted-2);
+    min-width: 30px;
+    text-align: right;
+}
+
+/* trends */
+.trend-chart {
+    height: 180px;
+    margin: 24px 0 12px;
+    position: relative;
+}
+.trend-svg { width: 100%; height: 100%; }
+.trend-x {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted-2);
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-soft);
+}
+
+.cardio-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border-soft);
+    border: 1px solid var(--border-soft);
+}
+@media (max-width: 1100px) { .cardio-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .cardio-grid { grid-template-columns: 1fr; } }
+
+.cardio-cell {
+    background: var(--bg);
+    padding: 24px;
+    transition: background 200ms;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 200px;
+}
+.cardio-cell:hover { background: var(--surface); }
+.cardio-cell .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-soft);
+}
+.cardio-cell .top .icon {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--surface);
+    display: grid;
+    place-items: center;
+    color: var(--cardio);
+}
+.cardio-cell[data-type="bike"] .top .icon { color: var(--strength); }
+.cardio-cell[data-type="rowing"] .top .icon { color: var(--maint); }
+.cardio-cell[data-type="aerobic"] .top .icon { color: var(--hyper); }
+.cardio-cell .top .day {
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted-2);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    line-height: 1.6;
+}
+.cardio-cell .top .day .d { color: var(--fg); font-size: 14px; font-weight: 500; }
+.cardio-cell h3 {
+    font-family: var(--display);
+    font-size: 22px;
+    line-height: 1;
+    letter-spacing: 0.005em;
+}
+.cardio-cell .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+.cardio-cell .stat-mini {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.cardio-cell .stat-mini .v {
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--fg);
+    font-weight: 500;
+}
+.cardio-cell .stat-mini .l {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted-2);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+    <nav class="nav">
+        <div class="brand"><span class="lift">🏋️</span>LEEFT<span class="lift flip">🏋️</span><span class="sub">2026</span></div>
+        <div class="nav-links">
+            <a href="log.html">Log</a>
+            <a href="cycles.html">Cycles</a>
+            <a href="stats.html">Stats</a>
+            <a href="exercises.html">Exercises</a>
+            <a href="cardio.html">Cardio</a>
+            <a href="analysis.html">Analysis</a>
+        </div>
+    </nav>
+
+    <main class="stagger">
+
+        <section class="hero-row">
+            <div class="hero-block">
+                <div class="hero-title medium" style="color:var(--cardio)">Cardio</div>
+                <div class="hero-meta">
+                    <span class="label">2026 · Year-to-date</span>
+                    <span class="stats">
+                        <span class="cardio"><b>62</b>sessions</span>
+                        <span class="cardio"><b>38h</b>duration</span>
+                        <span class="zone"><b>724</b>zone min</span>
+                        <span><b>184</b>km</span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="hero-actions">
+                <div class="year-nav">
+                    <button class="icon-btn" aria-label="Previous">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <button class="icon-btn" aria-label="Next" disabled>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+                <div class="filter-pills">
+                    <button class="filter-pill active">All <span class="count">62</span></button>
+                    <button class="filter-pill" data-type="treadmill"><span class="swatch" style="background:var(--cardio)"></span>Run <span class="count">26</span></button>
+                    <button class="filter-pill" data-type="bike"><span class="swatch" style="background:var(--strength)"></span>Bike <span class="count">16</span></button>
+                    <button class="filter-pill" data-type="rowing"><span class="swatch" style="background:var(--maint)"></span>Row <span class="count">12</span></button>
+                    <button class="filter-pill" data-type="aerobic"><span class="swatch" style="background:var(--hyper)"></span>Aerobic <span class="count">8</span></button>
+                </div>
+            </div>
+        </section>
+
+        <!-- cardio mode toggle + 6-stat strip -->
+        <div class="toolbar mb-4">
+            <div class="toolbar-grp">
+                <span class="label-mono" style="padding:0 8px;">Cardio mode</span>
+                <div class="seg" role="radiogroup">
+                    <button class="seg-btn active">Active</button>
+                    <button class="seg-btn">Strict</button>
+                    <button class="seg-btn">Both</button>
+                </div>
+            </div>
+            <span class="toolbar-divider"></span>
+            <div class="toolbar-grp">
+                <span class="label-mono" style="padding:0 8px;">Period</span>
+                <select class="select sm"><option>Year to date</option><option>Last 30 days</option><option>Last 90 days</option><option>All time</option></select>
+            </div>
+        </div>
+
+        <section class="stat-strip-icons mb-8">
+            <div class="stat-icn" data-tone="maint">
+                <span class="icn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+                <span class="body"><span class="l">Workouts</span><span class="v">62</span></span>
+            </div>
+            <div class="stat-icn" data-tone="cardio">
+                <span class="icn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+                <span class="body"><span class="l">Total Hours</span><span class="v">38</span></span>
+            </div>
+            <div class="stat-icn" data-tone="cardio">
+                <span class="icn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>
+                <span class="body"><span class="l">Avg Duration</span><span class="v">37m</span></span>
+            </div>
+            <div class="stat-icn" data-tone="hyper">
+                <span class="icn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></span>
+                <span class="body"><span class="l">Calories</span><span class="v">24.8k</span></span>
+            </div>
+            <div class="stat-icn" data-tone="hyper">
+                <span class="icn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
+                <span class="body"><span class="l">Avg HR</span><span class="v">148<span style="color:var(--muted-2); font-size:13px;">bpm</span></span></span>
+            </div>
+            <div class="stat-icn" data-tone="zone">
+                <span class="icn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
+                <span class="body"><span class="l">Zone Minutes</span><span class="v">724</span></span>
+            </div>
+        </section>
+
+        <section class="charts-row">
+
+            <div class="chart-zone">
+                <div class="panel-label" style="margin: 0;">
+                    <span>Distribution</span>
+                    <span class="hint">click to filter</span>
+                </div>
+                <div class="donut-wrap">
+                    <div style="position:relative;">
+                        <div class="donut"></div>
+                        <div class="donut-center"><div><div class="num">62</div><div class="lbl">Total</div></div></div>
+                    </div>
+                    <div class="donut-legend">
+                        <div class="row">
+                            <div class="swatch" style="background:var(--cardio)"></div>
+                            <div class="name">Treadmill</div>
+                            <div class="pct">42%</div>
+                            <div class="count">26</div>
+                        </div>
+                        <div class="row">
+                            <div class="swatch" style="background:var(--strength)"></div>
+                            <div class="name">Outdoor Bike</div>
+                            <div class="pct">26%</div>
+                            <div class="count">16</div>
+                        </div>
+                        <div class="row">
+                            <div class="swatch" style="background:var(--maint)"></div>
+                            <div class="name">Rowing</div>
+                            <div class="pct">19%</div>
+                            <div class="count">12</div>
+                        </div>
+                        <div class="row">
+                            <div class="swatch" style="background:var(--hyper)"></div>
+                            <div class="name">Aerobic</div>
+                            <div class="pct">13%</div>
+                            <div class="count">8</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-zone">
+                <div class="panel-label" style="margin: 0;">
+                    <span>Monthly Trend · Duration & Zone Min</span>
+                    <span class="hint">2026</span>
+                </div>
+                <div class="trend-chart">
+                    <svg class="trend-svg" viewBox="0 0 600 180" preserveAspectRatio="none">
+                        <!-- duration line (cardio color) -->
+                        <polyline fill="none" stroke="#00d4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            points="20,140 70,120 120,90 170,110 220,70 270,50 320,60 370,80 420,150 470,160 520,170 570,170" />
+                        <!-- zone min line (zone color) -->
+                        <polyline fill="none" stroke="#ffd60a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 4"
+                            points="20,150 70,130 120,110 170,120 220,80 270,60 320,70 370,90 420,150 470,160 520,170 570,170" />
+                        <!-- dots -->
+                        <g fill="#00d4ff">
+                            <circle cx="20" cy="140" r="3"/><circle cx="70" cy="120" r="3"/><circle cx="120" cy="90" r="3"/>
+                            <circle cx="170" cy="110" r="3"/><circle cx="220" cy="70" r="3"/><circle cx="270" cy="50" r="3"/>
+                            <circle cx="320" cy="60" r="3"/><circle cx="370" cy="80" r="3"/><circle cx="420" cy="150" r="3"/>
+                        </g>
+                    </svg>
+                </div>
+                <div class="trend-x">
+                    <div>Jan</div><div>Feb</div><div>Mar</div><div>Apr</div><div>May</div><div>Jun</div>
+                    <div>Jul</div><div>Aug</div><div>Sep</div><div>Oct</div><div>Nov</div><div>Dec</div>
+                </div>
+                <div style="display:flex; gap:24px; margin-top:18px; padding-top:14px; border-top:1px solid var(--border-soft); justify-content:flex-end;">
+                    <span class="label-mono" style="display:flex; align-items:center; gap:8px;"><span style="width:14px; height:2px; background:var(--cardio); display:inline-block;"></span>Duration (min)</span>
+                    <span class="label-mono" style="display:flex; align-items:center; gap:8px;"><span style="width:14px; height:2px; background:var(--zone); display:inline-block;"></span>Zone min</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="cardio-grid">
+
+            <div class="cardio-cell" data-type="treadmill">
+                <div class="top">
+                    <div class="icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m4 17 6-6 4 4 8-8"/><circle cx="6" cy="20" r="2"/><circle cx="18" cy="20" r="2"/></svg>
+                    </div>
+                    <div class="day"><div class="d">Mar 25</div>WED · 07:20</div>
+                </div>
+                <h3>Treadmill Run</h3>
+                <div class="stats-grid">
+                    <div class="stat-mini"><span class="v">6.4 km</span><span class="l">Distance</span></div>
+                    <div class="stat-mini"><span class="v">34 min</span><span class="l">Duration</span></div>
+                    <div class="stat-mini"><span class="v">5:18</span><span class="l">Avg Pace</span></div>
+                    <div class="stat-mini"><span class="v">152</span><span class="l">Avg HR</span></div>
+                </div>
+            </div>
+
+            <div class="cardio-cell" data-type="bike">
+                <div class="top">
+                    <div class="icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3-3 4-3 2 3h2"/></svg>
+                    </div>
+                    <div class="day"><div class="d">Mar 21</div>SAT · 08:00</div>
+                </div>
+                <h3>Outdoor Bike</h3>
+                <div class="stats-grid">
+                    <div class="stat-mini"><span class="v">22.4 km</span><span class="l">Distance</span></div>
+                    <div class="stat-mini"><span class="v">58 min</span><span class="l">Duration</span></div>
+                    <div class="stat-mini"><span class="v">23.2</span><span class="l">Avg km/h</span></div>
+                    <div class="stat-mini"><span class="v">141</span><span class="l">Avg HR</span></div>
+                </div>
+            </div>
+
+            <div class="cardio-cell" data-type="rowing">
+                <div class="top">
+                    <div class="icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 16s5-3 10-3 10 3 10 3M3 8s4-3 9-3 9 3 9 3"/></svg>
+                    </div>
+                    <div class="day"><div class="d">Mar 19</div>THU · 06:40</div>
+                </div>
+                <h3>Rowing</h3>
+                <div class="stats-grid">
+                    <div class="stat-mini"><span class="v">5.0 km</span><span class="l">Distance</span></div>
+                    <div class="stat-mini"><span class="v">22 min</span><span class="l">Duration</span></div>
+                    <div class="stat-mini"><span class="v">2:12</span><span class="l">Avg /500m</span></div>
+                    <div class="stat-mini"><span class="v">158</span><span class="l">Avg HR</span></div>
+                </div>
+            </div>
+
+            <div class="cardio-cell" data-type="treadmill">
+                <div class="top">
+                    <div class="icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m4 17 6-6 4 4 8-8"/><circle cx="6" cy="20" r="2"/><circle cx="18" cy="20" r="2"/></svg>
+                    </div>
+                    <div class="day"><div class="d">Mar 17</div>TUE · 06:50</div>
+                </div>
+                <h3>Treadmill Run</h3>
+                <div class="stats-grid">
+                    <div class="stat-mini"><span class="v">5.2 km</span><span class="l">Distance</span></div>
+                    <div class="stat-mini"><span class="v">28 min</span><span class="l">Duration</span></div>
+                    <div class="stat-mini"><span class="v">5:24</span><span class="l">Avg Pace</span></div>
+                    <div class="stat-mini"><span class="v">148</span><span class="l">Avg HR</span></div>
+                </div>
+            </div>
+
+            <div class="cardio-cell" data-type="aerobic">
+                <div class="top">
+                    <div class="icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    </div>
+                    <div class="day"><div class="d">Mar 15</div>SUN · 10:00</div>
+                </div>
+                <h3>Aerobic Class</h3>
+                <div class="stats-grid">
+                    <div class="stat-mini"><span class="v">45 min</span><span class="l">Duration</span></div>
+                    <div class="stat-mini"><span class="v">312</span><span class="l">Calories</span></div>
+                    <div class="stat-mini"><span class="v">142</span><span class="l">Avg HR</span></div>
+                    <div class="stat-mini"><span class="v">22</span><span class="l">Zone Min</span></div>
+                </div>
+            </div>
+
+            <div class="cardio-cell" data-type="bike">
+                <div class="top">
+                    <div class="icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3-3 4-3 2 3h2"/></svg>
+                    </div>
+                    <div class="day"><div class="d">Mar 14</div>SAT · 09:30</div>
+                </div>
+                <h3>Outdoor Bike</h3>
+                <div class="stats-grid">
+                    <div class="stat-mini"><span class="v">28.0 km</span><span class="l">Distance</span></div>
+                    <div class="stat-mini"><span class="v">72 min</span><span class="l">Duration</span></div>
+                    <div class="stat-mini"><span class="v">23.3</span><span class="l">Avg km/h</span></div>
+                    <div class="stat-mini"><span class="v">144</span><span class="l">Avg HR</span></div>
+                </div>
+            </div>
+
+            <div class="cardio-cell" data-type="rowing">
+                <div class="top">
+                    <div class="icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 16s5-3 10-3 10 3 10 3M3 8s4-3 9-3 9 3 9 3"/></svg>
+                    </div>
+                    <div class="day"><div class="d">Mar 12</div>THU · 06:35</div>
+                </div>
+                <h3>Rowing</h3>
+                <div class="stats-grid">
+                    <div class="stat-mini"><span class="v">6.0 km</span><span class="l">Distance</span></div>
+                    <div class="stat-mini"><span class="v">26 min</span><span class="l">Duration</span></div>
+                    <div class="stat-mini"><span class="v">2:10</span><span class="l">Avg /500m</span></div>
+                    <div class="stat-mini"><span class="v">160</span><span class="l">Avg HR</span></div>
+                </div>
+            </div>
+
+            <div class="cardio-cell" data-type="treadmill">
+                <div class="top">
+                    <div class="icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m4 17 6-6 4 4 8-8"/><circle cx="6" cy="20" r="2"/><circle cx="18" cy="20" r="2"/></svg>
+                    </div>
+                    <div class="day"><div class="d">Mar 10</div>TUE · 07:00</div>
+                </div>
+                <h3>Treadmill Run</h3>
+                <div class="stats-grid">
+                    <div class="stat-mini"><span class="v">5.8 km</span><span class="l">Distance</span></div>
+                    <div class="stat-mini"><span class="v">31 min</span><span class="l">Duration</span></div>
+                    <div class="stat-mini"><span class="v">5:21</span><span class="l">Avg Pace</span></div>
+                    <div class="stat-mini"><span class="v">150</span><span class="l">Avg HR</span></div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <footer>Cardio · 8 of 62 sessions</footer>
+
+</div>
+
+<script src="shared.js"></script>
+</body>
+</html>

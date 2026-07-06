@@ -47,6 +47,11 @@ export const BaseSetSchema = z.object({
 
 export const SetSchema = BaseSetSchema.extend({
 	isWorkSet: z.boolean(),
+	// True only on sets that were a PR-at-the-time (per exact rep count). Absent otherwise.
+	isPR: z.boolean().optional(),
+	// Display tier for a PR set: allTime = heaviest set ever (any rep count);
+	// active = current record for this rep count; beaten = later surpassed. Present iff isPR.
+	prTier: z.enum(["allTime", "active", "beaten"]).optional(),
 });
 
 export const BaseExerciseSchema = z.object({
@@ -141,6 +146,8 @@ export const CardioWorkoutSchema = z.object({
 	calories: z.number().optional(),
 	averageHeartRate: z.number().optional(),
 	steps: z.number().optional(),
+	distance: z.number().optional(),
+	pace: z.number().optional(),
 });
 
 // Combined day workout (lifting + cardio for same day)
