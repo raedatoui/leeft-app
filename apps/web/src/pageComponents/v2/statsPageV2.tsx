@@ -6,6 +6,7 @@ import EffortTierToggle from '@/components/cardio/v2/effortTierToggle';
 import PageTemplateV2 from '@/components/layout/v2/pageTemplateV2';
 import DropdownV2 from '@/components/ui/v2/dropdownV2';
 import PagerControls from '@/components/ui/v2/pagerControls';
+import SwipePager from '@/components/ui/v2/swipePager';
 import TablePager from '@/components/ui/v2/tablePager';
 import { WorkoutCard } from '@/components/workouts/v2/workoutCard';
 import { type EffortTier, matchesTier } from '@/lib/cardio-effort';
@@ -218,6 +219,15 @@ export default function StatsPageV2() {
 
     const selectedRow = useMemo(() => rows.find((r) => r.workout.uuid === selectedKey) ?? pageRows[0] ?? null, [rows, selectedKey, pageRows]);
 
+    const goPrevPage = () => {
+        setTablePage((p) => Math.max(0, p - 1));
+        setSelectedKey(null);
+    };
+    const goNextPage = () => {
+        setTablePage((p) => Math.min(totalPages - 1, p + 1));
+        setSelectedKey(null);
+    };
+
     if (!dateBounds || !currentBucket) {
         return (
             <PageTemplateV2>
@@ -243,15 +253,6 @@ export default function StatsPageV2() {
         anchorRef.current = currentBucket.end;
         setGroupBy(g);
         setTablePage(0);
-        setSelectedKey(null);
-    };
-
-    const goPrevPage = () => {
-        setTablePage((p) => Math.max(0, p - 1));
-        setSelectedKey(null);
-    };
-    const goNextPage = () => {
-        setTablePage((p) => Math.min(totalPages - 1, p + 1));
         setSelectedKey(null);
     };
 
@@ -382,7 +383,13 @@ export default function StatsPageV2() {
                             }
                         />
 
-                        <div className="pr-table">
+                        <SwipePager
+                            pageKey={currentPage}
+                            onPrev={goPrevPage}
+                            onNext={goNextPage}
+                            disabled={{ prev: currentPage === 0, next: currentPage >= totalPages - 1 }}
+                            className="pr-table"
+                        >
                             <div className="pr-row head stats-row">
                                 <div>Date</div>
                                 <div>Activity</div>
@@ -401,7 +408,7 @@ export default function StatsPageV2() {
                                     />
                                 );
                             })}
-                        </div>
+                        </SwipePager>
                     </div>
 
                     <div className="zone-2">

@@ -7,6 +7,7 @@ import ExercisePRChart from '@/components/charts/exercisePRChart';
 import ExerciseLookupV2 from '@/components/exercises/v2/exerciseLookupV2';
 import PageTemplateV2 from '@/components/layout/v2/pageTemplateV2';
 import DropdownV2, { type DropdownV2Option } from '@/components/ui/v2/dropdownV2';
+import SwipePager from '@/components/ui/v2/swipePager';
 import TablePager from '@/components/ui/v2/tablePager';
 import { WorkoutCard } from '@/components/workouts/v2/workoutCard';
 import { type CalculationMethod, defaultMaxCalculator, maxCalculators, oneRepMaxCalculators } from '@/lib/calc';
@@ -161,6 +162,16 @@ export default function ExercisePageV2() {
         [isOneRm]
     );
 
+    const totalPages = Math.max(1, Math.ceil(sessions.length / PAGE_SIZE));
+    const currentPage = Math.min(tablePage, totalPages - 1);
+    const pageStart = currentPage * PAGE_SIZE;
+    const pageRows = reversed.slice(pageStart, pageStart + PAGE_SIZE);
+    const pageRangeStart = pageRows[0]?.workout.date;
+    const pageRangeEnd = pageRows[pageRows.length - 1]?.workout.date;
+
+    const goPrevPage = () => setTablePage((p) => Math.max(0, p - 1));
+    const goNextPage = () => setTablePage((p) => Math.min(totalPages - 1, p + 1));
+
     if (!exercise) {
         return (
             <PageTemplateV2>
@@ -168,13 +179,6 @@ export default function ExercisePageV2() {
             </PageTemplateV2>
         );
     }
-
-    const totalPages = Math.max(1, Math.ceil(sessions.length / PAGE_SIZE));
-    const currentPage = Math.min(tablePage, totalPages - 1);
-    const pageStart = currentPage * PAGE_SIZE;
-    const pageRows = reversed.slice(pageStart, pageStart + PAGE_SIZE);
-    const pageRangeStart = pageRows[0]?.workout.date;
-    const pageRangeEnd = pageRows[pageRows.length - 1]?.workout.date;
 
     const hoveredSession = hoveredIndex !== null && hoveredIndex >= 0 && hoveredIndex < sessions.length ? sessions[hoveredIndex] : null;
     const detail = hoveredSession ?? sessions[sessions.length - 1];
@@ -357,14 +361,20 @@ export default function ExercisePageV2() {
                         <TablePager
                             currentPage={currentPage}
                             totalPages={totalPages}
-                            onPrev={() => setTablePage((p) => Math.max(0, p - 1))}
-                            onNext={() => setTablePage((p) => Math.min(totalPages - 1, p + 1))}
+                            onPrev={goPrevPage}
+                            onNext={goNextPage}
                             rangeLabel={
                                 pageRangeStart && pageRangeEnd ? `${formatTableDate(pageRangeStart)} → ${formatTableDate(pageRangeEnd)}` : undefined
                             }
                         />
 
-                        <div className="pr-table">
+                        <SwipePager
+                            pageKey={currentPage}
+                            onPrev={goPrevPage}
+                            onNext={goNextPage}
+                            disabled={{ prev: currentPage === 0, next: currentPage >= totalPages - 1 }}
+                            className="pr-table"
+                        >
                             <div className="pr-row head">
                                 <div>Date</div>
                                 <div>{selectedMethod.name}</div>
@@ -392,7 +402,7 @@ export default function ExercisePageV2() {
                                     </div>
                                 </div>
                             ))}
-                        </div>
+                        </SwipePager>
                     </div>
 
                     <div className="zone-2">

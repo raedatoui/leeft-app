@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import PageTemplateV2 from '@/components/layout/v2/pageTemplateV2';
+import SwipePager from '@/components/ui/v2/swipePager';
 import { CYCLE_TYPE_DATA, CYCLE_TYPE_LABEL, CYCLE_TYPE_LABEL_SHORT, cycleDays } from '@/lib/cycleTypes';
 import { formatDayMonth, MONTHS_SHORT } from '@/lib/dateFormatters';
 import { useCyclesPageState } from '@/lib/hooks/useCyclesPageState';
@@ -223,11 +224,17 @@ export default function CyclesPageV2() {
                             Cycles · {filteredCycles.length} of {visibleCycles.length}
                         </span>
                     </div>
-                    <section className="cycles-grid">
+                    <SwipePager
+                        pageKey={visibleYear}
+                        onPrev={goPrevYear}
+                        onNext={goNextYear}
+                        disabled={{ prev: !hasPrevYear, next: !hasNextYear }}
+                        className="cycles-grid"
+                    >
                         {[...filteredCycles].reverse().map((cycle, revIdx) => (
                             <CycleCardV2 key={cycle.uuid} cycle={cycle} index={filteredCycles.length - 1 - revIdx} exerciseMap={exerciseMap} />
                         ))}
-                    </section>
+                    </SwipePager>
                 </>
             )}
         </PageTemplateV2>

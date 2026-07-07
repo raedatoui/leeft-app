@@ -775,11 +775,12 @@
         gap: 24px;
         align-items: flex-start;
     }
-    .calendar-split .month-cal {
+    /* the SwipePager wrapper around MonthCalendar is the real flex item */
+    .calendar-split .swipe-pager {
         flex: 1;
         min-width: 0;
     }
-    .calendar-split.with-panel .month-cal {
+    .calendar-split.with-panel .swipe-pager {
         flex: 0 0 55%;
     }
     .day-panel-inline {
@@ -815,7 +816,7 @@
         .calendar-split {
             flex-direction: column;
         }
-        .calendar-split.with-panel .month-cal {
+        .calendar-split.with-panel .swipe-pager {
             flex: 1;
         }
     }
@@ -2303,6 +2304,18 @@
     }
     .stagger > *:nth-child(6) {
         animation-delay: 440ms;
+    }
+
+    /* SwipePager wrapper (components/ui/v2/swipePager.tsx): motion drives the page transforms
+       inline; the wrapper just clips the horizontal travel of exiting/entering pages. During a
+       popLayout exit the outgoing page is absolutely positioned — hence position: relative. */
+    .swipe-pager {
+        position: relative;
+        overflow-x: clip;
+    }
+    /* native link-dragging would cancel the pager's pointer gesture mid-swipe */
+    .swipe-pager a {
+        -webkit-user-drag: none;
     }
 
     /* ============== footer ============== */

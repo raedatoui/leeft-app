@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import EffortTierToggle from '@/components/cardio/v2/effortTierToggle';
 import PageTemplateV2 from '@/components/layout/v2/pageTemplateV2';
 import DropdownV2, { type DropdownV2Option } from '@/components/ui/v2/dropdownV2';
+import SwipePager from '@/components/ui/v2/swipePager';
 import MonthCalendar from '@/components/workouts/v2/monthCalendar';
 import { WorkoutCard } from '@/components/workouts/v2/workoutCard';
 import { useWorkoutData } from '@/lib/contexts';
@@ -98,6 +99,23 @@ export default function WorkoutLogPageV2() {
         const start = state.currentIndex * state.effectiveSlidesToShow;
         return reversed.slice(start, start + state.effectiveSlidesToShow);
     }, [state.workouts, state.currentIndex, state.effectiveSlidesToShow]);
+
+    // Calendar cells are only clickable when they have data, so "adjacent day" for the panel
+    // means the nearest day with data in the visible month, not calendar-day ± 1.
+    const visibleMonthDays = useMemo(
+        () =>
+            state.workouts
+                .filter((day) => day.date.getUTCFullYear() === viewYear && day.date.getUTCMonth() === viewMonth)
+                .sort((a, b) => a.date.getTime() - b.date.getTime()),
+        [state.workouts, viewYear, viewMonth]
+    );
+
+    const selectedDayIndex = selectedDay ? visibleMonthDays.findIndex((d) => d.date.getTime() === selectedDay.date.getTime()) : -1;
+
+    const goAdjacentDay = (direction: 1 | -1) => {
+        const neighbor = visibleMonthDays[selectedDayIndex + direction];
+        if (neighbor) setSelectedDay(neighbor);
+    };
 
     return (
         <PageTemplateV2 footer={`${monthLabel} · ${monthStats.lift} lift · ${monthStats.cardio} cardio`}>
@@ -251,26 +269,38 @@ export default function WorkoutLogPageV2() {
                         <span className="hint">click a day for detail</span>
                     </div>
                     <div className={`calendar-split${selectedDay ? ' with-panel' : ''}`}>
-                        <MonthCalendar
-                            days={state.workouts}
-                            viewYear={viewYear}
-                            viewMonth={viewMonth}
-                            selectedDate={selectedDay?.date ?? null}
-                            onDaySelect={handleDaySelect}
-                        />
+                        <SwipePager pageKey={viewYear * 12 + viewMonth} onPrev={goPrevMonth} onNext={goNextMonth}>
+                            <MonthCalendar
+                                days={state.workouts}
+                                viewYear={viewYear}
+                                viewMonth={viewMonth}
+                                selectedDate={selectedDay?.date ?? null}
+                                onDaySelect={handleDaySelect}
+                            />
+                        </SwipePager>
                         {selectedDay && (
                             <aside className="day-panel-inline" aria-label="Workout details">
                                 <button type="button" className="day-panel-close" aria-label="Close" onClick={() => setSelectedDay(null)}>
                                     <X size={14} aria-hidden="true" />
                                 </button>
-                                <WorkoutCard
-                                    key={`${selectedDay.date.toISOString()}-${allExpanded}`}
-                                    day={selectedDay}
-                                    exerciseMap={state.exerciseMap}
-                                    includeWarmup={state.includeWarmup}
-                                    muscleGroupColor={muscleGroupColor}
-                                    initialCompact={!allExpanded}
-                                />
+                                <SwipePager
+                                    pageKey={selectedDay.date.getTime()}
+                                    onPrev={() => goAdjacentDay(-1)}
+                                    onNext={() => goAdjacentDay(1)}
+                                    disabled={{
+                                        prev: selectedDayIndex <= 0,
+                                        next: selectedDayIndex === -1 || selectedDayIndex >= visibleMonthDays.length - 1,
+                                    }}
+                                >
+                                    <WorkoutCard
+                                        key={`${selectedDay.date.toISOString()}-${allExpanded}`}
+                                        day={selectedDay}
+                                        exerciseMap={state.exerciseMap}
+                                        includeWarmup={state.includeWarmup}
+                                        muscleGroupColor={muscleGroupColor}
+                                        initialCompact={!allExpanded}
+                                    />
+                                </SwipePager>
                             </aside>
                         )}
                     </div>
@@ -283,7 +313,13 @@ export default function WorkoutLogPageV2() {
                             {state.slideCount}
                         </span>
                     </div>
-                    <div className="log-grid">
+                    <SwipePager
+                        pageKey={state.currentIndex}
+                        onPrev={state.slideLeft}
+                        onNext={state.slideRight}
+                        disabled={{ prev: state.currentIndex === 0, next: state.currentIndex >= state.slideCount - 1 }}
+                        className="log-grid"
+                    >
                         {dailyDays.map((day) => (
                             <WorkoutCard
                                 key={`${day.date.toISOString()}-${allExpanded}`}
@@ -294,7 +330,7 @@ export default function WorkoutLogPageV2() {
                                 initialCompact={!allExpanded}
                             />
                         ))}
-                    </div>
+                    </SwipePager>
                 </>
             ) : (
                 <div className="empty-state">No workouts to show.</div>

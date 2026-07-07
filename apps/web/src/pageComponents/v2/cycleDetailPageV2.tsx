@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import PageTemplateV2 from '@/components/layout/v2/pageTemplateV2';
 import DropdownV2 from '@/components/ui/v2/dropdownV2';
 import PagerControls from '@/components/ui/v2/pagerControls';
+import SwipePager from '@/components/ui/v2/swipePager';
 import { WorkoutCard } from '@/components/workouts/v2/workoutCard';
 import { useWorkoutData } from '@/lib/contexts';
 import { CYCLE_TYPE_COLOR, CYCLE_TYPE_DATA, CYCLE_TYPE_LABEL, cycleDays } from '@/lib/cycleTypes';
@@ -76,6 +77,9 @@ export default function CycleDetailPageV2({ id }: CycleDetailPageV2Props) {
         return filteredWorkouts.slice(start, start + columns);
     }, [filteredWorkouts, safeIndex, columns]);
 
+    const goPrev = () => setCurrentIndex(Math.max(0, safeIndex - 1));
+    const goNext = () => setCurrentIndex(Math.min(slideCount - 1, safeIndex + 1));
+
     if (!cycle) {
         return (
             <PageTemplateV2>
@@ -86,9 +90,6 @@ export default function CycleDetailPageV2({ id }: CycleDetailPageV2Props) {
 
     const dataType = CYCLE_TYPE_DATA[cycle.type];
     const startYear = cycle.dates[0].getUTCFullYear();
-
-    const goPrev = () => setCurrentIndex(Math.max(0, safeIndex - 1));
-    const goNext = () => setCurrentIndex(Math.min(slideCount - 1, safeIndex + 1));
 
     return (
         <PageTemplateV2 footer={`Cycle Detail · ${cycle.name}`}>
@@ -259,7 +260,13 @@ export default function CycleDetailPageV2({ id }: CycleDetailPageV2Props) {
                     </div>
 
                     {visibleWorkouts.length > 0 ? (
-                        <div className={`workouts-grid cols-${columns}`}>
+                        <SwipePager
+                            pageKey={safeIndex}
+                            onPrev={goPrev}
+                            onNext={goNext}
+                            disabled={{ prev: safeIndex === 0, next: safeIndex >= slideCount - 1 }}
+                            className={`workouts-grid cols-${columns}`}
+                        >
                             {visibleWorkouts.map((workout) => (
                                 <WorkoutCard
                                     key={`${workout.uuid}-${miniMode}`}
@@ -273,7 +280,7 @@ export default function CycleDetailPageV2({ id }: CycleDetailPageV2Props) {
                                     muscleGroupFilter={selectedMuscleGroup}
                                 />
                             ))}
-                        </div>
+                        </SwipePager>
                     ) : (
                         <div className="empty-state">No workouts in this cycle.</div>
                     )}

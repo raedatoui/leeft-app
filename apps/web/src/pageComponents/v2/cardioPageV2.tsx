@@ -9,6 +9,7 @@ import MonthlyBars from '@/components/cardio/v2/monthlyBars';
 import TypeMix from '@/components/cardio/v2/typeMix';
 import PageTemplateV2 from '@/components/layout/v2/pageTemplateV2';
 import DropdownV2, { type DropdownV2Option } from '@/components/ui/v2/dropdownV2';
+import SwipePager from '@/components/ui/v2/swipePager';
 import { type CardioLoggedByFilter, type CardioPeriod, useCardioPageState } from '@/lib/hooks/useCardioPageState';
 
 const PERIOD_OPTIONS: DropdownV2Option[] = [
@@ -226,11 +227,17 @@ export default function CardioPageV2() {
             </section>
 
             {sortedWorkouts.length > 0 ? (
-                <section className="cardio-grid">
+                <SwipePager
+                    pageKey={selectedYear}
+                    onPrev={goToPrevYear}
+                    onNext={goToNextYear}
+                    disabled={{ prev: period !== 'ytd' || prevDisabled, next: period !== 'ytd' || nextDisabled }}
+                    className="cardio-grid"
+                >
                     {sortedWorkouts.map((w) => (
                         <CardioSessionCard key={w.uuid} workout={w} />
                     ))}
-                </section>
+                </SwipePager>
             ) : (
                 <div className="empty-state">No cardio sessions match the current filters.</div>
             )}
