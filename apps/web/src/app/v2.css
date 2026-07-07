@@ -3076,10 +3076,12 @@
             padding: 0 18px calc(80px + env(safe-area-inset-bottom));
         }
 
-        /* ---- chrome: compact top bar; nav links live in the dock ---- */
+        /* ---- chrome: compact top bar; nav links live in the dock ----
+           padding-top respects the notch/Dynamic Island cutout in standalone
+           PWA mode, where there's no browser chrome to absorb it ---- */
         .nav {
             margin: 0 -18px 28px;
-            padding: 10px 18px;
+            padding: max(10px, env(safe-area-inset-top)) 18px 10px;
         }
         .nav-links {
             display: none;
@@ -3214,6 +3216,14 @@
         }
         .dd-v2-trigger-label {
             max-width: 220px;
+        }
+
+        /* ---- inputs need >=16px or iOS Safari auto-zooms the page on
+           focus, which throws off the position:fixed sheets below ---- */
+        .search-input,
+        .dd-v2-input,
+        .exercise-lookup-input {
+            font-size: 16px;
         }
 
         /* ---- dropdown panels become bottom sheets. position:fixed escapes
@@ -3387,6 +3397,18 @@
         .detail-hero .right {
             gap: 18px;
             padding-bottom: 0;
+        }
+        /* ---- exercise detail: 4 stats as a 2x2 grid instead of an
+           uneven 3-then-1 flex-wrap ---- */
+        .detail-hero .right.stat-grid-4 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            width: 100%;
+            gap: 16px 20px;
+        }
+        .detail-hero .right.stat-grid-4 .stat {
+            align-items: flex-start;
+            text-align: left;
         }
         .stat .v {
             font-size: 30px;

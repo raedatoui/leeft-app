@@ -215,7 +215,7 @@ export default function ExercisePageV2() {
                     </div>
                     {exercise.description && <p className="exercise-description">{exercise.description}</p>}
                 </div>
-                <div className="right">
+                <div className="right stat-grid-4">
                     <div className="stat right">
                         <span className="v" style={{ color: 'var(--maint)' }}>
                             {stats.pr ? formatWeight(stats.pr) : '—'}
