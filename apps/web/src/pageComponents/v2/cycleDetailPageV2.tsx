@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import PageTemplateV2 from '@/components/layout/v2/pageTemplateV2';
 import DropdownV2 from '@/components/ui/v2/dropdownV2';
 import PagerControls from '@/components/ui/v2/pagerControls';
@@ -24,8 +24,19 @@ export default function CycleDetailPageV2({ id }: CycleDetailPageV2Props) {
     const [miniMode, setMiniMode] = useState(false);
     const [includeWarmup, setIncludeWarmup] = useState(true);
     const [columns, setColumns] = useState(2);
+    const [isMobile, setIsMobile] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<string | null>(null);
+
+    useEffect(() => {
+        const mql = window.matchMedia('(max-width: 768px)');
+        const updateIsMobile = () => setIsMobile(mql.matches);
+        updateIsMobile();
+        mql.addEventListener('change', updateIsMobile);
+        return () => mql.removeEventListener('change', updateIsMobile);
+    }, []);
+
+    const effectiveColumns = isMobile ? 1 : columns;
 
     const muscleGroupColor = useMuscleGroupColor(muscleGroups);
 
@@ -68,14 +79,17 @@ export default function CycleDetailPageV2({ id }: CycleDetailPageV2Props) {
         );
     }, [cycle?.workouts, exerciseMap, selectedMuscleGroup]);
 
-    const slideCount = useMemo(() => Math.max(1, Math.ceil(filteredWorkouts.length / columns)), [filteredWorkouts.length, columns]);
+    const slideCount = useMemo(
+        () => Math.max(1, Math.ceil(filteredWorkouts.length / effectiveColumns)),
+        [filteredWorkouts.length, effectiveColumns]
+    );
 
     const safeIndex = Math.min(currentIndex, Math.max(0, slideCount - 1));
 
     const visibleWorkouts = useMemo(() => {
-        const start = safeIndex * columns;
-        return filteredWorkouts.slice(start, start + columns);
-    }, [filteredWorkouts, safeIndex, columns]);
+        const start = safeIndex * effectiveColumns;
+        return filteredWorkouts.slice(start, start + effectiveColumns);
+    }, [filteredWorkouts, safeIndex, effectiveColumns]);
 
     const goPrev = () => setCurrentIndex(Math.max(0, safeIndex - 1));
     const goNext = () => setCurrentIndex(Math.min(slideCount - 1, safeIndex + 1));
@@ -265,7 +279,7 @@ export default function CycleDetailPageV2({ id }: CycleDetailPageV2Props) {
                             onPrev={goPrev}
                             onNext={goNext}
                             disabled={{ prev: safeIndex === 0, next: safeIndex >= slideCount - 1 }}
-                            className={`workouts-grid cols-${columns}`}
+                            className={`workouts-grid cols-${effectiveColumns}`}
                         >
                             {visibleWorkouts.map((workout) => (
                                 <WorkoutCard
