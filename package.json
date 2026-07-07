@@ -15,6 +15,7 @@
     "check": "pnpm -r --no-bail check",
     "check:fix": "pnpm -r check:fix",
     "deploy:web": "pnpm --filter @leeft/web build && cd apps/web && firebase deploy",
+    "release:desktop": "pnpm --filter @leeft/web build:desktop",
     "pipeline": "bun scripts/pipeline.ts",
     "pipeline:sync": "bun scripts/pipeline.ts --sync-only",
     "pipeline:sh": "./scripts/shell/pipeline.sh",
