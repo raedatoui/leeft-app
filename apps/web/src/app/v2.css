@@ -147,6 +147,9 @@
         text-transform: uppercase;
     }
     .nav-links a {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
         color: var(--muted);
         transition: color 200ms;
         padding-bottom: 6px;

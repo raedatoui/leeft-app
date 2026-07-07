@@ -33,16 +33,20 @@ export default function HeaderV2() {
 
                 <div className="u-flex u-items-center u-gap-6">
                     <div className="nav-links">
-                        {NAV.map((item) => (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                className={isActivePath(pathname, item.href) ? 'active' : ''}
-                                style={{ color: item.color }}
-                            >
-                                {item.label}
-                            </Link>
-                        ))}
+                        {NAV.map((item) => {
+                            const Icon = item.icon;
+                            return (
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    className={isActivePath(pathname, item.href) ? 'active' : ''}
+                                    style={{ color: item.color }}
+                                >
+                                    <Icon size={15} strokeWidth={1.75} aria-hidden="true" />
+                                    {item.label}
+                                </Link>
+                            );
+                        })}
                     </div>
                     <ThemeToggleV2 />
                 </div>
