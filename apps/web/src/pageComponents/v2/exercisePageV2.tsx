@@ -9,12 +9,14 @@ import PageTemplateV2 from '@/components/layout/v2/pageTemplateV2';
 import DropdownV2, { type DropdownV2Option } from '@/components/ui/v2/dropdownV2';
 import SwipePager from '@/components/ui/v2/swipePager';
 import TablePager from '@/components/ui/v2/tablePager';
+import TimeRangeSeg from '@/components/ui/v2/timeRangeSeg';
 import { WorkoutCard } from '@/components/workouts/v2/workoutCard';
 import { type CalculationMethod, defaultMaxCalculator, maxCalculators, oneRepMaxCalculators } from '@/lib/calc';
 import { useWorkoutData } from '@/lib/contexts';
 import { CYCLE_TYPE_COLOR, CYCLE_TYPE_LABEL_SHORT } from '@/lib/cycleTypes';
 import { formatTableDate, MONTHS_SHORT } from '@/lib/dateFormatters';
 import { formatVolume } from '@/lib/statsUtils';
+import { inTimeRange, resolveTimeRange, type TimeRangeValue } from '@/lib/timeRange';
 import type { MappedWorkout, RepRange, SetDetail } from '@/types';
 
 const PAGE_SIZE = 10;
@@ -56,8 +58,11 @@ export default function ExercisePageV2() {
 
     const [selectedMethod, setSelectedMethod] = useState<CalculationMethod>(defaultMaxCalculator);
     const [repRange, setRepRange] = useState<RepRange>({ min: 1, max: 50 });
+    const [timeRange, setTimeRange] = useState<TimeRangeValue>({ preset: 'all' });
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
     const [tablePage, setTablePage] = useState(0);
+
+    const resolvedRange = useMemo(() => resolveTimeRange(timeRange), [timeRange]);
 
     const muscleColor = useMemo(() => {
         if (!exercise) return undefined;
@@ -81,6 +86,7 @@ export default function ExercisePageV2() {
 
         const filtered = workouts
             .filter((w) => w.exercises.some((e) => e.exerciseId === exercise.id))
+            .filter((w) => inTimeRange(w.date, resolvedRange))
             .filter((w) => !cycleWorkoutIds || cycleWorkoutIds.has(w.uuid))
             .filter((w) => {
                 const sel = w.exercises.find((e) => e.exerciseId === exercise.id);
@@ -118,7 +124,7 @@ export default function ExercisePageV2() {
             });
         }
         return rows;
-    }, [workouts, exercise, cycleId, cycles, repRange, selectedMethod]);
+    }, [workouts, exercise, cycleId, cycles, repRange, selectedMethod, resolvedRange]);
 
     const stats = useMemo(() => {
         let pr = 0;
@@ -307,6 +313,19 @@ export default function ExercisePageV2() {
                     />
                 </div>
 
+                <span className="toolbar-divider" />
+
+                <div className="toolbar-grp">
+                    <span className="label-mono">Range</span>
+                    <TimeRangeSeg
+                        value={timeRange}
+                        onChange={(v) => {
+                            setTimeRange(v);
+                            setTablePage(0);
+                        }}
+                    />
+                </div>
+
                 <div className="toolbar-grp" style={{ marginLeft: 'auto' }}>
                     <DropdownV2
                         value={cycleId ?? ''}
@@ -349,13 +368,20 @@ export default function ExercisePageV2() {
                     <div className="zone-2">
                         <div className="panel-label" style={{ margin: '0 0 12px' }}>
                             <span>{selectedMethod.name} Over Time</span>
-                            <span className="hint">★ = PR (gold all-time · green active · gray beaten) · hover bar to inspect</span>
+                            <span className="hint">★ = PR (gold all-time · green active · gray beaten) · hover to inspect · drag to filter range</span>
                         </div>
 
                         <ExercisePRChart
                             sessions={sessions.map((s) => ({ date: s.workout.date, metric: s.metric, prTier: s.prTier }))}
                             methodName={selectedMethod.name}
                             onHover={setHoveredIndex}
+                            onRangeSelect={(startIndex, endIndex) => {
+                                const start = sessions[startIndex]?.workout.date;
+                                const end = sessions[endIndex]?.workout.date;
+                                if (!start || !end) return;
+                                setTimeRange({ preset: 'custom', start, end });
+                                setTablePage(0);
+                            }}
                         />
 
                         <TablePager

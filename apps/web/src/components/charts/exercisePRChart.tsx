@@ -75,9 +75,14 @@ interface ExercisePRChartProps {
     sessions: ChartSession[];
     methodName: string;
     onHover: (index: number) => void;
+    /**
+     * When set, drag-selecting on the x-axis reports the selected session index range
+     * instead of zooming the axis — the caller filters the data upstream, which is the zoom.
+     */
+    onRangeSelect?: (startIndex: number, endIndex: number) => void;
 }
 
-export default function ExercisePRChart({ sessions, methodName, onHover }: ExercisePRChartProps) {
+export default function ExercisePRChart({ sessions, methodName, onHover, onRangeSelect }: ExercisePRChartProps) {
     const { resolvedTheme } = useTheme();
     const v2 = V2_PALETTES[resolvedTheme === 'light' ? 'light' : 'dark'];
     const TIER_COLOR: Record<PrTier, string> = {
@@ -88,6 +93,19 @@ export default function ExercisePRChart({ sessions, methodName, onHover }: Exerc
 
     const options: Options = {
         chart: {
+            events: onRangeSelect
+                ? {
+                      selection(event) {
+                          const sel = event.xAxis?.[0];
+                          if (!sel) return true;
+                          const last = sessions.length - 1;
+                          const startIndex = Math.max(0, Math.min(last, Math.round(sel.min)));
+                          const endIndex = Math.max(0, Math.min(last, Math.round(sel.max)));
+                          if (endIndex >= startIndex) onRangeSelect(startIndex, endIndex);
+                          return false;
+                      },
+                  }
+                : undefined,
             zooming: {
                 type: 'x',
                 resetButton: {
