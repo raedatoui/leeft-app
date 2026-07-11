@@ -18,6 +18,6 @@ export interface MobilityProgramSession {
 export interface MobilityProgram {
     title: string;
     intro: string[];
-    warmup: MobilityProgramWarmup;
+    warmup?: MobilityProgramWarmup;
     sessions: MobilityProgramSession[];
 }

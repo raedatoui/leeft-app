@@ -89,3 +89,19 @@ export const mobilityProgram: MobilityProgram = {
         },
     ],
 };
+
+export const thoracicProgram: MobilityProgram = {
+    title: 'Daily Desk Reset - Thoracic',
+    intro: [
+        'Four moves, ten slow reps each, once a day - a no-equipment counter to a day of sitting, anchored on thoracic extension (vanja.moves). Run it right after work; it stacks fine on top of the weekly block.',
+    ],
+    sessions: [
+        {
+            letter: 'T',
+            title: 'Thoracic & Un-Sitting Reset',
+            focus: 'Thoracic extension + hip rotation, glute drive, deep squat',
+            time: '~8 min',
+            items: ['Thoracic Extension (over bolster)', '90/90 Hip Rotation Switches', 'Single Leg Bridge', 'Deep Squat'],
+        },
+    ],
+};
