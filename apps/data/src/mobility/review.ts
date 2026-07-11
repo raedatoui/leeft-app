@@ -9,7 +9,7 @@ interface Progress {
     decided: Record<string, Decision>;
 }
 
-const MOVEMENTS_PATH = join(import.meta.dir, 'mobility-movements.json');
+const MOVEMENTS_PATH = join(import.meta.dir, '../../data/mobility-movements.json');
 const PROGRESS_PATH = join(import.meta.dir, '../../data/mobility-review-progress.json');
 const PROGRAM_PATH = join(import.meta.dir, '../../../web/src/data/mobilityProgram.ts');
 

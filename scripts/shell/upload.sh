@@ -48,7 +48,7 @@ upload_compressed_log "apps/data/data/out/all-workouts-log.json" "$timestamp" "$
 upload_compressed_log "apps/data/data/out/cycles-lifting.json" "$timestamp" "$gsc_path"
 upload_compressed_log "apps/data/data/out/cycles-all-workouts.json" "$timestamp" "$gsc_path"
 upload_compressed_log "apps/data/data/exercise-classified.json" "$timestamp" "$gsc_path"
-upload_compressed_log "apps/data/src/mobility/mobility-movements.json" "$timestamp" "$gsc_path"
+upload_compressed_log "apps/data/data/mobility-movements.json" "$timestamp" "$gsc_path"
 
 # Publish latest.json pointer so running apps can discover this timestamp
 latest_file="apps/data/data/out/latest.json"
