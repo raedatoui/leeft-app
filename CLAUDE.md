@@ -131,7 +131,7 @@ Never duplicate types between apps. Add shared types to `packages/types`.
 
 ## Gotchas
 - **Static export**: Web app uses `output: 'export'` — no SSR, no API routes, no server components with data fetching
-- **Timestamp after pipeline**: After running the data pipeline, update `NEXT_PUBLIC_TIMESTAMP` in `apps/web/.env.local` to match the new upload
+- **Data timestamp is resolved at runtime**: the upload scripts publish a mutable `latest.json` pointer (`{"timestamp": ...}`, `Cache-Control: no-cache`) to GCS alongside the immutable timestamped artifacts; the app fetches it on load/refresh (`fetchLatestTimestamp` in `lib/fetchData.ts`), so fresh data needs **no rebuild** of web or desktop. `NEXT_PUBLIC_TIMESTAMP` in `apps/web/.env.local` (still auto-rewritten by upload) is only the fallback and feeds build-time `generateStaticParams` — so a **brand-new** cycle/exercise ID still needs a rebuild for its detail page to exist
 - **pnpm catalog**: Shared dependency versions (TypeScript, Biome, Zod) are managed in `pnpm-workspace.yaml` `catalog:` — update there, not in individual package.json files
 - **Data files gitignored**: All `apps/data/data/` contents are gitignored
 - **Date grouping is UTC**: `groupWorkoutsByDay` in `lib/contexts.ts` keys by `toISOString().slice(0, 10)` (UTC). UI must format dates with `getUTC*` methods or off-by-one bugs appear in non-UTC timezones. v2 components do this; v1 uses `toLocaleDateString` (mostly fine because v1 doesn't show full dates in places that would expose the offset).

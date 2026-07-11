@@ -97,6 +97,33 @@ async function uploadCompressedLog(inputFile: string, timestamp: string): Promis
     }
 }
 
+async function uploadLatestPointer(timestamp: string): Promise<boolean> {
+    const latestPath = join(projectRoot, 'apps/data/data/out/latest.json');
+    writeFileSync(latestPath, JSON.stringify({ timestamp }));
+
+    console.log('Uploading latest.json pointer...');
+
+    const uploadOk = await runCommand('gsutil', [
+        '-h',
+        'Content-Type:application/json',
+        '-h',
+        '"Cache-Control:no-cache, max-age=0"',
+        'cp',
+        latestPath,
+        `${GCS_PATH}latest.json`,
+    ]);
+
+    await runCommand('rm', ['-f', latestPath]);
+
+    if (uploadOk) {
+        console.log(`Successfully uploaded to ${GCS_PATH}latest.json`);
+        return true;
+    } else {
+        console.error('Error: latest.json upload failed');
+        return false;
+    }
+}
+
 async function main() {
     // Get timestamp from args or generate new one
     const timestamp =
@@ -115,6 +142,14 @@ async function main() {
     for (const file of FILES_TO_UPLOAD) {
         const success = await uploadCompressedLog(file, timestamp);
         if (!success) {
+            allSuccess = false;
+        }
+    }
+
+    // Publish the latest.json pointer so running apps can discover this timestamp
+    if (allSuccess) {
+        const pointerOk = await uploadLatestPointer(timestamp);
+        if (!pointerOk) {
             allSuccess = false;
         }
     }

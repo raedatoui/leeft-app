@@ -41,6 +41,12 @@
     }
 }
 
+@keyframes leeft-v2-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 [data-theme="v2"] {
     /* ============== design tokens ============== */
     --bg: #0b0a08;
@@ -272,6 +278,9 @@
     .icon-btn.sm {
         width: 32px;
         height: 32px;
+    }
+    .icon-btn svg.spin {
+        animation: leeft-v2-spin 0.9s linear infinite;
     }
 
     .year-nav {

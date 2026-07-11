@@ -4,6 +4,7 @@ import { BicepsFlexed, CalendarDays, ChartColumn, Dumbbell, HeartPulse, PersonSt
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { CSSProperties } from 'react';
+import RefreshButtonV2 from './refreshButtonV2';
 import ThemeToggleV2 from './themeToggleV2';
 
 const NAV = [
@@ -48,6 +49,7 @@ export default function HeaderV2() {
                             );
                         })}
                     </div>
+                    <RefreshButtonV2 />
                     <ThemeToggleV2 />
                 </div>
             </nav>

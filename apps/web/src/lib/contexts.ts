@@ -9,7 +9,7 @@ export interface MuscleGroup {
     color: string;
 }
 
-// WorkoutDataContext — immutable after load
+// WorkoutDataContext — data is replaced wholesale via refresh(), never mutated in place
 export interface WorkoutDataContextType {
     workouts: Workout[];
     cardioWorkouts: CardioWorkout[];
@@ -19,6 +19,8 @@ export interface WorkoutDataContextType {
     equipmentList: string[];
     cycles: MappedCycle[];
     mobilityMovements: MobilityMovement[];
+    refresh: () => Promise<void>;
+    refreshing: boolean;
 }
 
 export const WorkoutDataContext = React.createContext<WorkoutDataContextType | null>(null);

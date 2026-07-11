@@ -14,10 +14,23 @@ import {
 } from '@/types';
 
 const CDN_BASE_URL = process.env.NEXT_PUBLIC_CDN_URL;
-const TIMESTAMP = process.env.NEXT_PUBLIC_TIMESTAMP;
+const TIMESTAMP = process.env.NEXT_PUBLIC_TIMESTAMP ?? '';
 
-export async function fetchWorkouts(): Promise<Workout[]> {
-    const response = await fetch(`${CDN_BASE_URL}/lifting-log_${TIMESTAMP}.json.gz`, {
+// Resolves the current data timestamp from the mutable latest.json pointer on GCS,
+// falling back to the build-time env timestamp (e.g. offline, pointer not yet uploaded).
+export async function fetchLatestTimestamp(): Promise<string> {
+    try {
+        const response = await fetch(`${CDN_BASE_URL}/latest.json`, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`latest.json fetch failed: ${response.status}`);
+        const { timestamp } = z.object({ timestamp: z.string() }).parse(await response.json());
+        return timestamp;
+    } catch {
+        return TIMESTAMP;
+    }
+}
+
+export async function fetchWorkouts(timestamp: string = TIMESTAMP): Promise<Workout[]> {
+    const response = await fetch(`${CDN_BASE_URL}/lifting-log_${timestamp}.json.gz`, {
         cache: 'no-cache', // or 'force-cache' or 'reload' depending on needs
     });
     const data = await response.json();
@@ -34,8 +47,8 @@ export async function fetchWorkouts(): Promise<Workout[]> {
     });
 }
 
-export async function fetchExerciseMap(): Promise<ExerciseMap> {
-    const response = await fetch(`${CDN_BASE_URL}/exercise-classified_${TIMESTAMP}.json.gz`, {
+export async function fetchExerciseMap(timestamp: string = TIMESTAMP): Promise<ExerciseMap> {
+    const response = await fetch(`${CDN_BASE_URL}/exercise-classified_${timestamp}.json.gz`, {
         cache: 'no-cache', // or 'force-cache' or 'reload' depending on needs
     });
     const data = await response.json();
@@ -47,16 +60,16 @@ export async function fetchExerciseMap(): Promise<ExerciseMap> {
     );
 }
 
-export async function fetchCycles(): Promise<Cycle[]> {
-    const response = await fetch(`${CDN_BASE_URL}/cycles-lifting_${TIMESTAMP}.json.gz`, {
+export async function fetchCycles(timestamp: string = TIMESTAMP): Promise<Cycle[]> {
+    const response = await fetch(`${CDN_BASE_URL}/cycles-lifting_${timestamp}.json.gz`, {
         cache: 'no-cache', // or 'force-cache' or 'reload' depending on needs
     });
     const data = await response.json();
     return z.array(CycleSchema).parse(data);
 }
 
-export async function fetchMobilityMovements(): Promise<MobilityMovement[]> {
-    const response = await fetch(`${CDN_BASE_URL}/mobility-movements_${TIMESTAMP}.json.gz`, {
+export async function fetchMobilityMovements(timestamp: string = TIMESTAMP): Promise<MobilityMovement[]> {
+    const response = await fetch(`${CDN_BASE_URL}/mobility-movements_${timestamp}.json.gz`, {
         cache: 'no-cache',
     });
     const data = await response.json();
@@ -66,8 +79,8 @@ export async function fetchMobilityMovements(): Promise<MobilityMovement[]> {
         .filter((m) => m.status === 'active');
 }
 
-export async function fetchCardioWorkouts(): Promise<CardioWorkout[]> {
-    const response = await fetch(`${CDN_BASE_URL}/cardio-log_${TIMESTAMP}.json.gz`, {
+export async function fetchCardioWorkouts(timestamp: string = TIMESTAMP): Promise<CardioWorkout[]> {
+    const response = await fetch(`${CDN_BASE_URL}/cardio-log_${timestamp}.json.gz`, {
         cache: 'no-cache',
     });
     const data = await response.json();

@@ -50,6 +50,18 @@ upload_compressed_log "apps/data/data/out/cycles-all-workouts.json" "$timestamp"
 upload_compressed_log "apps/data/data/exercise-classified.json" "$timestamp" "$gsc_path"
 upload_compressed_log "apps/data/src/mobility/mobility-movements.json" "$timestamp" "$gsc_path"
 
+# Publish latest.json pointer so running apps can discover this timestamp
+latest_file="apps/data/data/out/latest.json"
+echo "{\"timestamp\": \"${timestamp}\"}" > "$latest_file"
+echo "Uploading latest.json pointer..."
+gsutil -h "Content-Type:application/json" -h "Cache-Control:no-cache, max-age=0" cp "$latest_file" "${gsc_path}latest.json"
+if [ $? -eq 0 ]; then
+    echo "Successfully uploaded to ${gsc_path}latest.json"
+else
+    echo "Error: latest.json upload failed"
+fi
+rm -f "$latest_file"
+
 # Update .env.local
 env_file="apps/web/.env.local"
 if [ -f "$env_file" ]; then
