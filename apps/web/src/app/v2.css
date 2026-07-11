@@ -2053,6 +2053,98 @@
         font-size: 12px;
     }
 
+    /* ============== exercise compare ============== */
+    .compare-legend {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+    .compare-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border: 1px solid var(--border);
+        font-family: var(--mono);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--fg);
+    }
+    .compare-chip .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+    .compare-chip a {
+        color: inherit;
+    }
+    .compare-chip .x {
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1;
+    }
+    .compare-chip .x:hover {
+        color: var(--fg);
+    }
+    .compare-chart {
+        border: 1px solid var(--border-soft);
+        background: var(--bg);
+        padding: 28px 32px;
+        margin-bottom: 32px;
+    }
+    .compare-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1px;
+        background: var(--border-soft);
+        border: 1px solid var(--border-soft);
+        margin-bottom: 32px;
+    }
+    .compare-col {
+        background: var(--bg);
+        padding: 24px;
+        min-width: 0;
+    }
+    .compare-col .col-head {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+    }
+    .compare-col .col-head h2 {
+        font-family: var(--display);
+        font-size: 26px;
+        line-height: 1.05;
+    }
+    .compare-col .col-head .icon-btn {
+        margin-left: auto;
+        align-self: center;
+    }
+    .compare-col .col-stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px 20px;
+        margin: 14px 0 18px;
+    }
+    .compare-col .pr-row {
+        grid-template-columns: 96px 76px 1fr 24px;
+        gap: 10px;
+    }
+    .compare-col .pr-note {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted-2);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding-top: 12px;
+    }
+    .compare-col .empty-state {
+        padding: 24px 0;
+    }
+
     /* ============== cycles list page ============== */
     .timeline-hero {
         background: var(--surface);
@@ -3454,6 +3546,17 @@
         }
         .mg-row .name {
             font-size: 12px;
+        }
+
+        /* ---- exercise compare: columns stack ---- */
+        .compare-grid {
+            grid-template-columns: 1fr;
+        }
+        .compare-col {
+            padding: 20px 16px;
+        }
+        .compare-chart {
+            padding: 20px 14px;
         }
 
         /* cycle detail: user-picked 3/4 columns otherwise beat the 700px collapse */

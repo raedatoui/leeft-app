@@ -7,9 +7,15 @@ import type { ExerciseMetadata } from '@/types';
 interface ExerciseLookupV2Props {
     exerciseMap: Map<string, ExerciseMetadata>;
     currentExerciseId?: string;
+    /** Additional ids to hide from results (compare page: already-selected exercises). */
+    excludeIds?: string[];
+    /** Trigger text; defaults to 'Search exercises…'. */
+    triggerLabel?: string;
+    /** Called with the picked id; defaults to navigating to the exercise detail page. */
+    onSelect?: (id: string) => void;
 }
 
-export default function ExerciseLookupV2({ exerciseMap, currentExerciseId }: ExerciseLookupV2Props) {
+export default function ExerciseLookupV2({ exerciseMap, currentExerciseId, excludeIds, triggerLabel, onSelect }: ExerciseLookupV2Props) {
     const router = useRouter();
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
@@ -18,9 +24,9 @@ export default function ExerciseLookupV2({ exerciseMap, currentExerciseId }: Exe
 
     const exercises = useMemo(() => {
         return Array.from(exerciseMap.values())
-            .filter((e) => e.id.toString() !== currentExerciseId)
+            .filter((e) => e.id.toString() !== currentExerciseId && !excludeIds?.includes(e.id.toString()))
             .sort((a, b) => a.name.localeCompare(b.name));
-    }, [exerciseMap, currentExerciseId]);
+    }, [exerciseMap, currentExerciseId, excludeIds]);
 
     const filtered = useMemo(() => {
         if (!query) return exercises;
@@ -52,7 +58,8 @@ export default function ExerciseLookupV2({ exerciseMap, currentExerciseId }: Exe
     }, [open]);
 
     const handleSelect = (id: string) => {
-        router.push(`/exercises/${id}`);
+        if (onSelect) onSelect(id);
+        else router.push(`/exercises/${id}`);
         setOpen(false);
         setQuery('');
     };
@@ -72,7 +79,7 @@ export default function ExerciseLookupV2({ exerciseMap, currentExerciseId }: Exe
                     <circle cx="11" cy="11" r="7" />
                     <line x1="21" y1="21" x2="16.65" y2="16.65" />
                 </svg>
-                <span>Search exercises…</span>
+                <span>{triggerLabel ?? 'Search exercises…'}</span>
             </button>
             {open && (
                 <div className="exercise-lookup-panel" role="listbox">

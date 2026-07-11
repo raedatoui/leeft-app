@@ -3,31 +3,7 @@
 import Highcharts, { type Options, type Point, type SVGPathArray } from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import { useTheme } from 'next-themes';
-
-// Highcharts renders to inline SVG/style attributes rather than the page's CSS cascade,
-// so these can't just reference the v2 CSS custom properties — pick the palette per resolvedTheme.
-const V2_PALETTES = {
-    dark: {
-        bg: '#0b0a08',
-        fg: '#ecebe2',
-        muted: '#807a6c',
-        muted2: '#5a5448',
-        border: '#2a2722',
-        maint: '#ffa000',
-        maintRgb: '255, 160, 0',
-        strength: '#19e68c',
-    },
-    light: {
-        bg: '#ecebe2',
-        fg: '#0b0a08',
-        muted: '#6b6454',
-        muted2: '#9a927d',
-        border: '#cfc9b7',
-        maint: '#945e00',
-        maintRgb: '148, 94, 0',
-        strength: '#067947',
-    },
-} as const;
+import { fonts, V2_PALETTES } from '@/components/charts/chartPaletteV2';
 
 // Custom 5-point star with tight inner radius for sharp, dramatic points.
 // Registered once at module load; Highcharts looks it up by symbol name.
@@ -52,11 +28,6 @@ if (!symbols[PR_STAR]) {
         return path;
     };
 }
-
-const fonts = {
-    body: '"DM Sans", system-ui, sans-serif',
-    mono: '"JetBrains Mono", ui-monospace, monospace',
-};
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 

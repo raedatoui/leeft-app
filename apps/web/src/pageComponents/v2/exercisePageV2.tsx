@@ -15,9 +15,10 @@ import { type CalculationMethod, defaultMaxCalculator, maxCalculators, oneRepMax
 import { useWorkoutData } from '@/lib/contexts';
 import { CYCLE_TYPE_COLOR, CYCLE_TYPE_LABEL_SHORT } from '@/lib/cycleTypes';
 import { formatTableDate, MONTHS_SHORT } from '@/lib/dateFormatters';
+import { computeExerciseSessions, computeExerciseStats } from '@/lib/exerciseSessions';
 import { formatVolume } from '@/lib/statsUtils';
-import { inTimeRange, resolveTimeRange, type TimeRangeValue } from '@/lib/timeRange';
-import type { MappedWorkout, RepRange, SetDetail } from '@/types';
+import { resolveTimeRange, type TimeRangeValue } from '@/lib/timeRange';
+import type { RepRange } from '@/types';
 
 const PAGE_SIZE = 10;
 
@@ -31,17 +32,6 @@ function formatCycleRange(start: Date, end: Date): string {
 
 function formatWeight(n: number): string {
     return Math.round(n).toLocaleString();
-}
-
-interface SessionRow {
-    workout: MappedWorkout;
-    sets: SetDetail[];
-    topSet: SetDetail | undefined;
-    workSetCount: number;
-    workVolume: number;
-    metric: number;
-    /** PR tier of this session's top set (from the data pipeline), or undefined if not a PR. */
-    prTier: SetDetail['prTier'];
 }
 
 const REPS_OPTIONS = Array.from({ length: 50 }, (_, i) => i + 1);
@@ -79,64 +69,13 @@ export default function ExercisePageV2() {
         return map;
     }, [cycles]);
 
-    const sessions: SessionRow[] = useMemo(() => {
+    const sessions = useMemo(() => {
         if (!exercise) return [];
         const cycleWorkoutIds = cycleId ? new Set(cycles.find((c) => c.uuid === cycleId)?.workouts.map((w) => w.uuid) ?? []) : null;
-        const showPRSet = selectedMethod === defaultMaxCalculator || oneRepMaxCalculators.some((m) => m === selectedMethod);
-
-        const filtered = workouts
-            .filter((w) => w.exercises.some((e) => e.exerciseId === exercise.id))
-            .filter((w) => inTimeRange(w.date, resolvedRange))
-            .filter((w) => !cycleWorkoutIds || cycleWorkoutIds.has(w.uuid))
-            .filter((w) => {
-                const sel = w.exercises.find((e) => e.exerciseId === exercise.id);
-                return sel?.sets.some((s) => s.reps && s.reps >= repRange.min && s.reps <= repRange.max);
-            })
-            .sort((a, b) => a.date.getTime() - b.date.getTime());
-
-        const rows: SessionRow[] = [];
-        for (const w of filtered) {
-            const selected = w.exercises.find((e) => e.exerciseId === exercise.id);
-            if (!selected) continue;
-            const mw: MappedWorkout = { ...w, selected, weight: 0 };
-            const metric = selectedMethod.calculator(mw, repRange);
-            if (metric <= 0) continue;
-            mw.weight = metric;
-
-            const filteredSets = selected.sets.filter((s) => s.reps && s.reps >= repRange.min && s.reps <= repRange.max);
-            let topSet: SetDetail | undefined;
-            for (const s of filteredSets) {
-                if (!topSet || s.weight > topSet.weight) topSet = s;
-            }
-            // PR markers come from the data pipeline (per-rep-count, tiered), not a per-filter running max.
-            // Shown for weight / 1RM methods, where the top set is the meaningful PR set.
-            const prTier = showPRSet ? topSet?.prTier : undefined;
-            const workSetCount = selected.sets.filter((s) => s.isWorkSet).length;
-
-            rows.push({
-                workout: mw,
-                sets: selected.sets,
-                topSet,
-                workSetCount,
-                workVolume: selected.workVolume,
-                metric,
-                prTier,
-            });
-        }
-        return rows;
+        return computeExerciseSessions(workouts, exercise.id, { method: selectedMethod, repRange, range: resolvedRange, cycleWorkoutIds });
     }, [workouts, exercise, cycleId, cycles, repRange, selectedMethod, resolvedRange]);
 
-    const stats = useMemo(() => {
-        let pr = 0;
-        let totalSets = 0;
-        let volume = 0;
-        for (const s of sessions) {
-            if (s.metric > pr) pr = s.metric;
-            totalSets += s.workSetCount;
-            volume += s.workVolume;
-        }
-        return { pr, totalSets, sessionCount: sessions.length, volume };
-    }, [sessions]);
+    const stats = useMemo(() => computeExerciseStats(sessions), [sessions]);
 
     const reversed = useMemo(() => [...sessions].reverse(), [sessions]);
 
@@ -207,6 +146,12 @@ export default function ExercisePageV2() {
                 <span className="sep">/</span>
                 <span className="current">{exercise.name}</span>
                 <ExerciseLookupV2 exerciseMap={exerciseMap} currentExerciseId={exercise.id.toString()} />
+                <ExerciseLookupV2
+                    exerciseMap={exerciseMap}
+                    currentExerciseId={exercise.id.toString()}
+                    triggerLabel="+ Compare"
+                    onSelect={(id) => router.push(`/exercises/compare?ids=${exercise.id},${id}`)}
+                />
             </div>
 
             <section className="detail-hero">
