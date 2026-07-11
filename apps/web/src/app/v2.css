@@ -1455,6 +1455,9 @@
     .chip.outline {
         background: transparent;
     }
+    a.chip:hover {
+        text-decoration: underline;
+    }
     .chip.strength {
         color: var(--strength);
         border-color: var(--strength);
@@ -1550,6 +1553,17 @@
     .mg-row .v b {
         color: var(--fg);
         font-weight: 500;
+    }
+
+    /* muscle page: per-exercise distribution reuses mg-chart, exercise names need a wider column */
+    .muscle-dist .mg-row {
+        grid-template-columns: minmax(140px, 300px) 1fr 70px;
+    }
+    .muscle-dist .mg-row .name {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     /* ============== breadcrumb ============== */
@@ -2525,6 +2539,26 @@
         border-color: var(--fg);
     }
 
+    .date-input {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--fg);
+        font-family: var(--mono);
+        font-size: 12px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        color-scheme: dark;
+        transition: border-color 200ms;
+    }
+    .date-input:focus {
+        outline: none;
+        border-color: var(--fg);
+    }
+    .date-input::-webkit-calendar-picker-indicator {
+        opacity: 0.5;
+        cursor: pointer;
+    }
+
     .exercise-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -3339,7 +3373,8 @@
            focus, which throws off the position:fixed sheets below ---- */
         .search-input,
         .dd-v2-input,
-        .exercise-lookup-input {
+        .exercise-lookup-input,
+        .date-input {
             font-size: 16px;
         }
 

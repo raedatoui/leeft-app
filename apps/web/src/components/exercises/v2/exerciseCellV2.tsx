@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import DetailCardV2, { type DetailCardRow } from '@/components/ui/v2/detailCardV2';
 import type { MuscleGroup } from '@/lib/contexts';
 import type { ExerciseUsageStats } from '@/lib/hooks/useExercisesLibraryState';
@@ -28,9 +29,15 @@ export default function ExerciseCellV2({ exercise, muscleGroup, stats }: Exercis
             title={exercise.name}
             tags={
                 <>
-                    <span className="chip outline" style={muscleGroup ? { color: muscleGroup.color, borderColor: muscleGroup.color } : undefined}>
-                        {muscleGroup?.name ?? exercise.primaryMuscleGroup}
-                    </span>
+                    {exercise.primaryMuscleGroup && (
+                        <Link
+                            href={`/muscle/${exercise.primaryMuscleGroup}`}
+                            className="chip outline"
+                            style={muscleGroup ? { color: muscleGroup.color, borderColor: muscleGroup.color } : undefined}
+                        >
+                            {muscleGroup?.name ?? exercise.primaryMuscleGroup}
+                        </Link>
+                    )}
                     {exercise.category && <span className="chip">{exercise.category}</span>}
                     {exercise.equipment?.map((eq) => (
                         <span key={eq} className="chip">

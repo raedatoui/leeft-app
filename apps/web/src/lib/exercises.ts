@@ -1,5 +1,10 @@
 import type { ExerciseMap } from '@/types';
 
+/** Canonical muscle-group slug: used as MuscleGroup.id and in /muscle/<slug> routes. */
+export function muscleGroupSlug(name: string): string {
+    return name.toLowerCase().replace(/\s+/g, '-');
+}
+
 export function getUniqueValues(exerciseMap: ExerciseMap) {
     const muscles = new Set<string>();
     const cats = new Set<string>();

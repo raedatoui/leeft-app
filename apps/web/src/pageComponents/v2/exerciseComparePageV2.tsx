@@ -220,12 +220,15 @@ export default function ExerciseComparePageV2() {
                                 <div key={c.exercise.id} className="compare-col">
                                     <div className="col-head">
                                         <h2 style={{ color: SERIES_TOKENS[i] }}>{c.exercise.name}</h2>
-                                        <span
-                                            className="chip outline"
-                                            style={muscleColor ? { color: muscleColor, borderColor: muscleColor } : undefined}
-                                        >
-                                            {c.exercise.primaryMuscleGroup}
-                                        </span>
+                                        {c.exercise.primaryMuscleGroup && (
+                                            <Link
+                                                href={`/muscle/${c.exercise.primaryMuscleGroup}`}
+                                                className="chip outline"
+                                                style={muscleColor ? { color: muscleColor, borderColor: muscleColor } : undefined}
+                                            >
+                                                {c.exercise.primaryMuscleGroup}
+                                            </Link>
+                                        )}
                                         <button
                                             type="button"
                                             className="icon-btn sm"

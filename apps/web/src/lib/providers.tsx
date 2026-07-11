@@ -3,7 +3,7 @@
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import Loader from '@/components/common/loader';
-import { getUniqueValues } from '@/lib/exercises';
+import { getUniqueValues, muscleGroupSlug } from '@/lib/exercises';
 import { fetchCardioWorkouts, fetchCycles, fetchExerciseMap, fetchLatestTimestamp, fetchMobilityMovements, fetchWorkouts } from '@/lib/fetchData';
 import { type MuscleGroup, WorkoutDataContext, type WorkoutDataContextType } from './contexts';
 
@@ -49,7 +49,7 @@ export function WorkoutProvider({ children }: WorkoutProviderProps) {
         const { muscleGroups: uniqueGroups, categories: uniqueCategories, equipmentList: uniqueEquipment } = getUniqueValues(m);
 
         const canonicalMuscleGroups: MuscleGroup[] = uniqueGroups.map((name, index) => ({
-            id: name.toLowerCase().replace(/\s+/g, '-'),
+            id: muscleGroupSlug(name),
             name,
             color: PALETTE[index % PALETTE.length] ?? '#888888',
         }));
@@ -57,7 +57,7 @@ export function WorkoutProvider({ children }: WorkoutProviderProps) {
         const updatedExerciseMap = new Map();
         for (const [id, ex] of m.entries()) {
             const muscleGroupName = ex.primaryMuscleGroup;
-            const muscleGroupId = muscleGroupName.toLowerCase().replace(/\s+/g, '-');
+            const muscleGroupId = muscleGroupSlug(muscleGroupName);
             updatedExerciseMap.set(id, {
                 ...ex,
                 originalMuscleGroup: muscleGroupName,

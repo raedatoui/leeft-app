@@ -158,9 +158,15 @@ export default function ExercisePageV2() {
                 <div className="left">
                     <h1 style={muscleColor ? { color: muscleColor } : undefined}>{exercise.name}</h1>
                     <div className="meta">
-                        <span className="chip outline" style={muscleColor ? { color: muscleColor, borderColor: muscleColor } : undefined}>
-                            {exercise.primaryMuscleGroup}
-                        </span>
+                        {exercise.primaryMuscleGroup && (
+                            <Link
+                                href={`/muscle/${exercise.primaryMuscleGroup}`}
+                                className="chip outline"
+                                style={muscleColor ? { color: muscleColor, borderColor: muscleColor } : undefined}
+                            >
+                                {exercise.primaryMuscleGroup}
+                            </Link>
+                        )}
                         <span className="chip">{exercise.category}</span>
                         {exercise.equipment.map((e) => (
                             <span key={e} className="chip">
