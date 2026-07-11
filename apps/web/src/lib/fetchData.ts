@@ -33,6 +33,7 @@ export async function fetchWorkouts(timestamp: string = TIMESTAMP): Promise<Work
     const response = await fetch(`${CDN_BASE_URL}/lifting-log_${timestamp}.json.gz`, {
         cache: 'no-cache', // or 'force-cache' or 'reload' depending on needs
     });
+    if (!response.ok) throw new Error(`lifting-log_${timestamp} fetch failed: ${response.status}`);
     const data = await response.json();
     const { workouts } = z
         .object({
@@ -51,7 +52,9 @@ export async function fetchExerciseMap(timestamp: string = TIMESTAMP): Promise<E
     const response = await fetch(`${CDN_BASE_URL}/exercise-classified_${timestamp}.json.gz`, {
         cache: 'no-cache', // or 'force-cache' or 'reload' depending on needs
     });
+    if (!response.ok) throw new Error(`exercise-classified_${timestamp} fetch failed: ${response.status}`);
     const data = await response.json();
+    if (!Array.isArray(data)) throw new Error(`exercise-classified_${timestamp} payload is not an array`);
     return new Map(
         data.map((exercise: unknown) => {
             const ex = ExerciseMetadataSchema.parse(exercise);
@@ -64,6 +67,7 @@ export async function fetchCycles(timestamp: string = TIMESTAMP): Promise<Cycle[
     const response = await fetch(`${CDN_BASE_URL}/cycles-lifting_${timestamp}.json.gz`, {
         cache: 'no-cache', // or 'force-cache' or 'reload' depending on needs
     });
+    if (!response.ok) throw new Error(`cycles-lifting_${timestamp} fetch failed: ${response.status}`);
     const data = await response.json();
     return z.array(CycleSchema).parse(data);
 }
@@ -72,6 +76,7 @@ export async function fetchMobilityMovements(timestamp: string = TIMESTAMP): Pro
     const response = await fetch(`${CDN_BASE_URL}/mobility-movements_${timestamp}.json.gz`, {
         cache: 'no-cache',
     });
+    if (!response.ok) throw new Error(`mobility-movements_${timestamp} fetch failed: ${response.status}`);
     const data = await response.json();
     return z
         .array(MobilityMovementSchema)
@@ -83,6 +88,7 @@ export async function fetchCardioWorkouts(timestamp: string = TIMESTAMP): Promis
     const response = await fetch(`${CDN_BASE_URL}/cardio-log_${timestamp}.json.gz`, {
         cache: 'no-cache',
     });
+    if (!response.ok) throw new Error(`cardio-log_${timestamp} fetch failed: ${response.status}`);
     const data = await response.json();
     return z
         .array(z.object({ date: z.string() }).and(z.record(z.string(), z.unknown())))

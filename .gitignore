@@ -29,8 +29,6 @@ pnpm-debug.log*
 
 # Testing
 coverage/
-test-results/
-playwright-report/
 screenshots/
 
 # Platform Specific

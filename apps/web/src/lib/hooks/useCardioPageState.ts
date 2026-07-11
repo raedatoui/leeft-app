@@ -136,8 +136,8 @@ function computeMonthlyTrend(workouts: CardioWorkout[], year: number): CardioMon
     }));
 
     for (const w of workouts) {
-        if (w.date.getFullYear() !== year) continue;
-        const bucket = buckets[w.date.getMonth()];
+        if (w.date.getUTCFullYear() !== year) continue;
+        const bucket = buckets[w.date.getUTCMonth()];
         if (!bucket) continue;
         bucket.byType[w.type] = (bucket.byType[w.type] ?? 0) + 1;
         bucket.byTypeDurationMin[w.type] = (bucket.byTypeDurationMin[w.type] ?? 0) + w.durationMin;
@@ -150,8 +150,8 @@ function computeMonthlyTrend(workouts: CardioWorkout[], year: number): CardioMon
 
 function rollingWindowStart(days: number): Date {
     const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() - days + 1);
+    d.setUTCHours(0, 0, 0, 0);
+    d.setUTCDate(d.getUTCDate() - days + 1);
     return d;
 }
 
@@ -169,7 +169,7 @@ export function useCardioPageState(opts: CardioPageStateOptions = {}): CardioPag
     const workoutsByYear = useMemo(() => {
         return cardioWorkouts.reduce(
             (acc, w) => {
-                const y = w.date.getFullYear();
+                const y = w.date.getUTCFullYear();
                 if (!acc[y]) acc[y] = [];
                 acc[y].push(w);
                 return acc;

@@ -63,7 +63,7 @@ export function useWorkoutLogState(opts: WorkoutLogStateOptions = {}): WorkoutLo
     const availableYears = useMemo(() => {
         const years = new Set<number>();
         allWorkouts.forEach((day) => {
-            years.add(day.date.getFullYear());
+            years.add(day.date.getUTCFullYear());
         });
         return Array.from(years).sort((a, b) => b - a);
     }, [allWorkouts]);
@@ -135,7 +135,7 @@ export function useWorkoutLogState(opts: WorkoutLogStateOptions = {}): WorkoutLo
         setSelectedMonth(undefined);
 
         const reversedWorkouts = [...allWorkouts].reverse();
-        const workoutIndex = reversedWorkouts.findIndex((day) => day.date.getFullYear() === Number(year));
+        const workoutIndex = reversedWorkouts.findIndex((day) => day.date.getUTCFullYear() === Number(year));
 
         if (workoutIndex !== -1) {
             const slideIndex = Math.floor(workoutIndex / effectiveSlidesToShow);
@@ -149,7 +149,7 @@ export function useWorkoutLogState(opts: WorkoutLogStateOptions = {}): WorkoutLo
 
         const month = Number(monthStr);
         const reversedWorkouts = [...allWorkouts].reverse();
-        const workoutIndex = reversedWorkouts.findIndex((day) => day.date.getFullYear() === activeYear && day.date.getMonth() === month);
+        const workoutIndex = reversedWorkouts.findIndex((day) => day.date.getUTCFullYear() === activeYear && day.date.getUTCMonth() === month);
 
         if (workoutIndex !== -1) {
             const slideIndex = Math.floor(workoutIndex / effectiveSlidesToShow);

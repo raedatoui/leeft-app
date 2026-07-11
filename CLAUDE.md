@@ -79,11 +79,6 @@ bun analyze:exercises:full       # Comprehensive (exact, substring, fuzzy, attri
 bun analyze:exercises:semantic   # Semantic detection with normalization
 ```
 
-### Testing
-```bash
-pnpm --filter @leeft/web exec playwright test   # Run Playwright E2E tests
-```
-
 ### Deployment
 ```bash
 pnpm deploy:web         # Build and deploy web app to Firebase

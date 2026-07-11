@@ -31,8 +31,8 @@ export function useCyclesPageState() {
     const cyclesByYear = useMemo(() => {
         const acc: Record<number, MappedCycle[]> = {};
         for (const cycle of rawCycles ?? []) {
-            const startYear = cycle.dates[0].getFullYear();
-            const endYear = cycle.dates[1].getFullYear();
+            const startYear = cycle.dates[0].getUTCFullYear();
+            const endYear = cycle.dates[1].getUTCFullYear();
             for (let year = startYear; year <= endYear; year++) {
                 if (!acc[year]) acc[year] = [];
                 acc[year]?.push(cycle);
@@ -70,8 +70,8 @@ export function useCyclesPageState() {
         const workoutUuids = new Set<string>();
         const typeCounts: Record<string, number> = {};
         let breakDays = 0;
-        const startOfYear = new Date(safeYear, 0, 1).getTime();
-        const endOfYear = new Date(safeYear, 11, 31, 23, 59, 59).getTime();
+        const startOfYear = Date.UTC(safeYear, 0, 1);
+        const endOfYear = Date.UTC(safeYear, 11, 31, 23, 59, 59);
 
         for (const cycle of visibleCycles) {
             for (const w of cycle.workouts) workoutUuids.add(w.uuid);
@@ -79,7 +79,8 @@ export function useCyclesPageState() {
             if (cycle.type === 'break') {
                 const t0 = Math.max(cycle.dates[0].getTime(), startOfYear);
                 const t1 = Math.min(cycle.dates[1].getTime(), endOfYear);
-                breakDays += Math.max(0, Math.ceil((t1 - t0) / (1000 * 60 * 60 * 24)));
+                // Inclusive of both endpoints, matching cycleDays (floor: t1 may be the 23:59:59 year clamp).
+                breakDays += Math.max(0, Math.floor((t1 - t0) / (1000 * 60 * 60 * 24)) + 1);
             }
         }
 
@@ -92,8 +93,8 @@ export function useCyclesPageState() {
     }, [visibleCycles, safeYear]);
 
     const getCyclePosition = (cycle: MappedCycle): CyclePosition => {
-        const startOfYear = new Date(safeYear, 0, 1).getTime();
-        const endOfYear = new Date(safeYear, 11, 31, 23, 59, 59).getTime();
+        const startOfYear = Date.UTC(safeYear, 0, 1);
+        const endOfYear = Date.UTC(safeYear, 11, 31, 23, 59, 59);
         const total = endOfYear - startOfYear;
         const t0 = Math.max(cycle.dates[0].getTime(), startOfYear);
         const t1 = Math.min(cycle.dates[1].getTime(), endOfYear);
