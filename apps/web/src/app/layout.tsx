@@ -1,22 +1,10 @@
 import type { Metadata, Viewport } from 'next';
 import { Anton, DM_Sans, JetBrains_Mono } from 'next/font/google';
-import localFont from 'next/font/local';
 import { ThemeProvider } from 'next-themes';
 import './globals.css';
 import './v2.css';
 import ServiceWorkerRegister from '@/components/common/serviceWorkerRegister';
 import Providers from '@/lib/providers';
-
-const geistSans = localFont({
-    src: './fonts/GeistVF.woff',
-    variable: '--font-geist-sans',
-    weight: '100 900',
-});
-const geistMono = localFont({
-    src: './fonts/GeistMonoVF.woff',
-    variable: '--font-geist-mono',
-    weight: '100 900',
-});
 
 const anton = Anton({
     subsets: ['latin'],
@@ -40,7 +28,10 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-    title: 'Leeft',
+    title: {
+        default: 'Leeft',
+        template: '%s · Leeft',
+    },
     description: 'Lifting log',
     manifest: '/manifest.webmanifest',
     appleWebApp: {
@@ -56,7 +47,10 @@ export const viewport: Viewport = {
     width: 'device-width',
     initialScale: 1,
     viewportFit: 'cover',
-    themeColor: '#0b0a08',
+    themeColor: [
+        { media: '(prefers-color-scheme: dark)', color: '#0b0a08' },
+        { media: '(prefers-color-scheme: light)', color: '#ecebe2' },
+    ],
 };
 
 export default function RootLayout({
@@ -65,15 +59,14 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en" className="dark" suppressHydrationWarning>
-            <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <html lang="en" suppressHydrationWarning>
+            <body className="antialiased">
                 <ThemeProvider attribute="data-mode" defaultTheme="system" enableSystem storageKey="leeft-theme">
                     <ServiceWorkerRegister />
-                    <Providers>
-                        <div data-theme="v2" className={`${anton.variable} ${dmSans.variable} ${jetbrainsMono.variable}`}>
-                            {children}
-                        </div>
-                    </Providers>
+                    {/* v2 wrapper sits outside Providers so the loader and load-error states render themed */}
+                    <div data-theme="v2" className={`${anton.variable} ${dmSans.variable} ${jetbrainsMono.variable}`}>
+                        <Providers>{children}</Providers>
+                    </div>
                 </ThemeProvider>
             </body>
         </html>

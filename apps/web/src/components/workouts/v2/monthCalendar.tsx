@@ -57,7 +57,10 @@ export const MonthCalendar: FC<MonthCalendarProps> = ({ days, viewYear, viewMont
     // Pad the trailing row so the grid is always a multiple of 7.
     while (cells.length % 7 !== 0) cells.push(null);
 
-    const todayKey = utcDateKey(new Date());
+    // "Today" is the user's wall-clock date (local components), while day keys are
+    // UTC-midnight calendar dates — utcDateKey(new Date()) would ring tomorrow's cell every evening.
+    const now = new Date();
+    const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const selectedKey = selectedDate ? utcDateKey(selectedDate) : null;
 
     return (

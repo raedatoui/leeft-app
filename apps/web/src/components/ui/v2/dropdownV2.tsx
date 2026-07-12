@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo } from 'react';
+import { useDropdownPanel } from '@/lib/hooks/useDropdownPanel';
 
 export interface DropdownV2Option {
     value: string;
@@ -38,12 +39,9 @@ export default function DropdownV2({
     panelWidth,
     triggerMinWidth,
 }: DropdownV2Props) {
-    const [open, setOpen] = useState(false);
-    const [query, setQuery] = useState('');
-    const wrapperRef = useRef<HTMLDivElement>(null);
-    const inputRef = useRef<HTMLInputElement>(null);
-
     const isSearchable = searchable ?? options.length >= SEARCH_AUTO_THRESHOLD;
+    const { open, close, toggle, query, setQuery, wrapperRef, inputRef } = useDropdownPanel({ autofocus: isSearchable });
+
     const selected = options.find((o) => o.value === value);
 
     const filtered = useMemo(() => {
@@ -57,36 +55,9 @@ export default function DropdownV2({
         );
     }, [options, query]);
 
-    useEffect(() => {
-        if (!open) return;
-        const onDown = (e: MouseEvent) => {
-            if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-                setOpen(false);
-            }
-        };
-        const onKey = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') setOpen(false);
-        };
-        document.addEventListener('mousedown', onDown);
-        document.addEventListener('keydown', onKey);
-        return () => {
-            document.removeEventListener('mousedown', onDown);
-            document.removeEventListener('keydown', onKey);
-        };
-    }, [open]);
-
-    useEffect(() => {
-        // no autofocus on touch devices: the panel renders as a bottom sheet there and the keyboard would cover it
-        if (open && isSearchable && !window.matchMedia('(pointer: coarse)').matches) inputRef.current?.focus();
-    }, [open, isSearchable]);
-
-    useEffect(() => {
-        if (!open) setQuery('');
-    }, [open]);
-
     const handleSelect = (v: string) => {
         onChange(v);
-        setOpen(false);
+        close();
     };
 
     const handleInputKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -101,7 +72,7 @@ export default function DropdownV2({
             <button
                 type="button"
                 className={`dd-v2-trigger${size === 'sm' ? ' sm' : ''}`}
-                onClick={() => setOpen((o) => !o)}
+                onClick={toggle}
                 aria-expanded={open}
                 aria-haspopup="listbox"
                 aria-label={ariaLabel}

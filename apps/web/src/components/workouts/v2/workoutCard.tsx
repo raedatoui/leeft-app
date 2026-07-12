@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { type FC, useState } from 'react';
+import { type FC, useEffect, useRef, useState } from 'react';
+import CardioStatsGrid from '@/components/cardio/v2/cardioStatsGrid';
 import { EffortChart } from '@/components/cardio/v2/effortChart';
 import { startTime } from '@/lib/contexts';
 import { formatLongDate, formatShortDate, formatTimeOfDay } from '@/lib/dateFormatters';
@@ -163,6 +164,13 @@ const LiftingWorkoutBody: FC<LiftingBodyProps> = ({
     selectedExercise,
 }) => {
     const [copied, setCopied] = useState(false);
+    const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    useEffect(
+        () => () => {
+            if (copiedTimer.current) clearTimeout(copiedTimer.current);
+        },
+        []
+    );
 
     let exercises = workout.exercises;
     if (muscleGroupFilter) {
@@ -173,7 +181,14 @@ const LiftingWorkoutBody: FC<LiftingBodyProps> = ({
     }
     if (exercises.length === 0) return null;
 
-    const totalVolume = includeWarmup ? workout.volume : workout.workVolume;
+    // When a filter hides exercises, the header volume must match the visible ones,
+    // not the whole workout's — otherwise sets/ex counts and volume contradict.
+    const isFiltered = exercises.length !== workout.exercises.length;
+    const totalVolume = isFiltered
+        ? exercises.reduce((sum, ex) => sum + (includeWarmup ? ex.volume : ex.workVolume), 0)
+        : includeWarmup
+          ? workout.volume
+          : workout.workVolume;
     const totalSets = exercises.reduce((sum, ex) => sum + (includeWarmup ? ex.sets.length : ex.sets.filter((s) => s.isWorkSet).length), 0);
 
     const handleCopy = async () => {
@@ -186,7 +201,8 @@ const LiftingWorkoutBody: FC<LiftingBodyProps> = ({
         try {
             await navigator.clipboard.writeText(text);
             setCopied(true);
-            setTimeout(() => setCopied(false), 1500);
+            if (copiedTimer.current) clearTimeout(copiedTimer.current);
+            copiedTimer.current = setTimeout(() => setCopied(false), 1500);
         } catch {
             // clipboard unavailable (e.g. insecure context) — silently no-op
         }
@@ -249,16 +265,6 @@ const LiftingWorkoutBody: FC<LiftingBodyProps> = ({
     );
 };
 
-function formatDistanceKm(km: number): string {
-    return `${km.toFixed(km >= 10 ? 1 : 2)} km`;
-}
-
-function formatPaceSecPerKm(sec: number): string {
-    const min = Math.floor(sec / 60);
-    const rem = Math.round(sec - min * 60);
-    return `${min}:${String(rem).padStart(2, '0')} /km`;
-}
-
 const CardioWorkoutBody: FC<{ workout: CardioWorkout; compact: boolean }> = ({ workout, compact }) => {
     return (
         <>
@@ -270,50 +276,7 @@ const CardioWorkoutBody: FC<{ workout: CardioWorkout; compact: boolean }> = ({ w
                 </span>
             </div>
 
-            {!compact && (
-                <div className="cardio-stats-grid">
-                    {workout.distance != null && workout.distance > 0 && (
-                        <div className="ks">
-                            <span className="v" style={{ color: 'var(--cardio)' }}>
-                                {formatDistanceKm(workout.distance)}
-                            </span>
-                            <span className="l">Distance</span>
-                        </div>
-                    )}
-                    {workout.pace != null && workout.pace > 0 && (
-                        <div className="ks">
-                            <span className="v">{formatPaceSecPerKm(workout.pace)}</span>
-                            <span className="l">Pace</span>
-                        </div>
-                    )}
-                    {workout.zoneMinutes != null && (
-                        <div className="ks">
-                            <span className="v" style={{ color: 'var(--zone)' }}>
-                                {workout.zoneMinutes}
-                            </span>
-                            <span className="l">Zone Min</span>
-                        </div>
-                    )}
-                    {workout.averageHeartRate != null && (
-                        <div className="ks">
-                            <span className="v">{workout.averageHeartRate}</span>
-                            <span className="l">Avg HR</span>
-                        </div>
-                    )}
-                    {workout.calories != null && (
-                        <div className="ks">
-                            <span className="v">{workout.calories.toLocaleString()}</span>
-                            <span className="l">Calories</span>
-                        </div>
-                    )}
-                    {workout.steps != null && (
-                        <div className="ks">
-                            <span className="v">{workout.steps.toLocaleString()}</span>
-                            <span className="l">Steps</span>
-                        </div>
-                    )}
-                </div>
-            )}
+            {!compact && <CardioStatsGrid workout={workout} />}
 
             {workout.effort && workout.effort.length > 0 && <EffortChart effort={workout.effort} showLegend={!compact} />}
         </>

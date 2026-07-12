@@ -141,7 +141,7 @@ v1 has been removed; v2 is the only UI, served at the root routes (`/`, `/stats`
 ```
 apps/web/src/
 ├── app/
-│   ├── layout.tsx               # root: Geist + v2 fonts, <div data-theme="v2"> wrapper, imports globals.css + v2.css
+│   ├── layout.tsx               # root: v2 fonts, <div data-theme="v2"> wrapper, imports globals.css + v2.css
 │   ├── page.tsx                 # / entry → WorkoutLogPageV2
 │   └── v2.css                   # scoped design system, all rules under [data-theme="v2"]
 ├── components/
@@ -175,7 +175,7 @@ apps/web/src/
 - `.lift-headline`, `.cardio-headline` — yellow / cyan label rows above per-modality bodies
 - `.ex-block`, `.ex-name`, `.ex-vol`, `.sets-table`, `.ex-summary` — exercise renderer (sets table when expanded; one-line summary when compact)
 - `.month-cal`, `.month-cal-grid`, `.month-cal-cell` — calendar grid
-- `.day-panel`, `.day-panel-backdrop` — right-side slide-in panel
+- `.day-panel-inline`, `.day-panel-close` — right-side slide-in panel
 - `.effort-chart`, `.effort-bar`, `.effort-seg`, `.effort-legend` — cardio zone breakdown
 - `.stagger > *` — page-load animation utility
 
@@ -203,6 +203,5 @@ All mobile rules live in one nested `@media (max-width: 768px)` block at the end
 
 ### Gotchas specific to v2
 - **Radix portals leak**: shadcn's Radix-based primitives (Select, Dialog, Popover) mount to `document.body`, escaping `[data-theme="v2"]`. v2 components avoid Radix; use plain `<select>`, custom dropdowns, or anchor portals via the `container` prop.
-- **Geist fonts still load**: the root `app/layout.tsx` still applies Geist on `<body>` even though v2 uses Anton/DM Sans/JetBrains Mono on the inner `data-theme="v2"` wrapper. Harmless dead weight; can be dropped later.
 - **Per-card local state resets on day key change**: `<WorkoutTable key={day.date.toISOString()} />` in `DayPanel` forces remount when the panel switches days, so `initialCompact` is re-applied.
 - **`useWorkoutLogState` defaults are SSR-safe**: state defaults are derived from `opts` arg, not from `window`/`document`. The `useEffect` that adjusts `responsiveColumns` runs only client-side.

@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { type EffortTier, matchesTier } from '@/lib/cardio-effort';
 import { cardioColors } from '@/lib/cardio-theme';
 import { useActiveCardio } from '@/lib/contexts';
-import { filterCardioWorkoutsByDateRange } from '@/lib/statsUtils';
+import { filterByDateRange } from '@/lib/utils';
 import type { CardioWorkout } from '@/types';
 
 export type CardioPeriod = 'ytd' | '30d' | '90d' | 'all';
@@ -37,12 +37,8 @@ export interface CardioMonthlyTrendBucket {
 }
 
 export interface CardioPageState {
-    // Raw
-    cardioWorkouts: CardioWorkout[];
-
     // UI state
     selectedYear: number;
-    setSelectedYear: (y: number) => void;
     activeType: string | null;
     setActiveType: (t: string | null) => void;
     period: CardioPeriod;
@@ -55,15 +51,9 @@ export interface CardioPageState {
     setLoggedBy: (l: CardioLoggedByFilter) => void;
 
     // Derived data
-    workoutsByYear: Record<number, CardioWorkout[]>;
     years: number[];
-    yearWorkouts: CardioWorkout[];
-    periodWorkouts: CardioWorkout[];
     scopedWorkouts: CardioWorkout[];
-    filteredWorkouts: CardioWorkout[];
     sortedWorkouts: CardioWorkout[];
-    typeCounts: Partial<Record<string, number>>;
-    availableTypes: string[];
 
     // Precomputed shapes
     stats: CardioStats;
@@ -73,11 +63,6 @@ export interface CardioPageState {
     // Methods
     goToPrevYear: () => void;
     goToNextYear: () => void;
-}
-
-export interface CardioPageStateOptions {
-    defaultYear?: number;
-    defaultPeriod?: CardioPeriod;
 }
 
 const EMPTY_STATS: CardioStats = {
@@ -155,13 +140,13 @@ function rollingWindowStart(days: number): Date {
     return d;
 }
 
-export function useCardioPageState(opts: CardioPageStateOptions = {}): CardioPageState {
+export function useCardioPageState(): CardioPageState {
     const cardioWorkouts = useActiveCardio();
 
     const currentYear = new Date().getFullYear();
-    const [selectedYear, setSelectedYear] = useState<number>(opts.defaultYear ?? currentYear);
+    const [selectedYear, setSelectedYear] = useState<number>(currentYear);
     const [activeType, setActiveType] = useState<string | null>(null);
-    const [period, setPeriod] = useState<CardioPeriod>(opts.defaultPeriod ?? 'ytd');
+    const [period, setPeriod] = useState<CardioPeriod>('ytd');
     const [effortTier, setEffortTier] = useState<EffortTier>('medium');
     const [minDuration, setMinDuration] = useState(0);
     const [loggedBy, setLoggedBy] = useState<CardioLoggedByFilter>('all');
@@ -193,9 +178,9 @@ export function useCardioPageState(opts: CardioPageStateOptions = {}): CardioPag
             case 'ytd':
                 return yearWorkouts;
             case '30d':
-                return filterCardioWorkoutsByDateRange(cardioWorkouts, rollingWindowStart(30), new Date());
+                return filterByDateRange(cardioWorkouts, rollingWindowStart(30), new Date());
             case '90d':
-                return filterCardioWorkoutsByDateRange(cardioWorkouts, rollingWindowStart(90), new Date());
+                return filterByDateRange(cardioWorkouts, rollingWindowStart(90), new Date());
             case 'all':
                 return cardioWorkouts;
         }
@@ -209,18 +194,6 @@ export function useCardioPageState(opts: CardioPageStateOptions = {}): CardioPag
             ),
         [periodWorkouts, effortTier, minDuration, loggedBy]
     );
-
-    const typeCounts = useMemo(() => {
-        return scopedWorkouts.reduce(
-            (acc, w) => {
-                acc[w.type] = (acc[w.type] ?? 0) + 1;
-                return acc;
-            },
-            {} as Partial<Record<string, number>>
-        );
-    }, [scopedWorkouts]);
-
-    const availableTypes = useMemo(() => Object.keys(typeCounts), [typeCounts]);
 
     const filteredWorkouts = useMemo(() => {
         if (!activeType) return scopedWorkouts;
@@ -248,9 +221,7 @@ export function useCardioPageState(opts: CardioPageStateOptions = {}): CardioPag
     }, [years, selectedYear]);
 
     return {
-        cardioWorkouts,
         selectedYear,
-        setSelectedYear,
         activeType,
         setActiveType,
         period,
@@ -261,15 +232,9 @@ export function useCardioPageState(opts: CardioPageStateOptions = {}): CardioPag
         setMinDuration,
         loggedBy,
         setLoggedBy,
-        workoutsByYear,
         years,
-        yearWorkouts,
-        periodWorkouts,
         scopedWorkouts,
-        filteredWorkouts,
         sortedWorkouts,
-        typeCounts,
-        availableTypes,
         stats,
         distribution,
         monthlyTrend,

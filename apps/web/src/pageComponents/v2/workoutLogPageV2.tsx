@@ -67,6 +67,22 @@ export default function WorkoutLogPageV2() {
         setSelectedDay(null);
     };
 
+    // Clamp against dataset shrink (e.g. stricter effort tier): a stale deep index
+    // would otherwise slice an empty page and show "102 / 40".
+    const pageIndex = Math.min(state.currentIndex, Math.max(0, state.slideCount - 1));
+
+    // Daily view: latest-first slider — slice the reversed workouts by the hook's slider state.
+    const dailyDays = useMemo(() => {
+        const reversed = [...state.workouts].reverse();
+        const start = pageIndex * state.effectiveSlidesToShow;
+        return reversed.slice(start, start + state.effectiveSlidesToShow);
+    }, [state.workouts, pageIndex, state.effectiveSlidesToShow]);
+
+    // In daily mode the hero tracks the visible page; in month mode, the dropdowns.
+    const heroDate = viewMode === 'daily' ? dailyDays[0]?.date : undefined;
+    const heroYear = heroDate ? heroDate.getUTCFullYear() : viewYear;
+    const heroMonth = heroDate ? heroDate.getUTCMonth() : viewMonth;
+
     // Stats for the visible month — drives the headline meta line.
     const monthStats = useMemo(() => {
         let lift = 0;
@@ -74,7 +90,7 @@ export default function WorkoutLogPageV2() {
         let liftVolume = 0;
         let zoneMin = 0;
         for (const day of state.workouts) {
-            if (day.date.getUTCFullYear() !== viewYear || day.date.getUTCMonth() !== viewMonth) continue;
+            if (day.date.getUTCFullYear() !== heroYear || day.date.getUTCMonth() !== heroMonth) continue;
             lift += day.liftingWorkouts.length;
             cardio += day.cardioWorkouts.length;
             for (const w of day.liftingWorkouts) {
@@ -85,20 +101,13 @@ export default function WorkoutLogPageV2() {
             }
         }
         return { lift, cardio, liftVolume, zoneMin };
-    }, [state.workouts, state.includeWarmup, viewYear, viewMonth]);
+    }, [state.workouts, state.includeWarmup, heroYear, heroMonth]);
 
     const handleDaySelect = (day: DayWorkout) => {
         setSelectedDay((current) => (current && current.date.getTime() === day.date.getTime() ? null : day));
     };
 
-    const monthLabel = `${MONTHS_LONG[viewMonth]} ${viewYear}`;
-
-    // Daily view: latest-first slider — slice the reversed workouts by the hook's slider state.
-    const dailyDays = useMemo(() => {
-        const reversed = [...state.workouts].reverse();
-        const start = state.currentIndex * state.effectiveSlidesToShow;
-        return reversed.slice(start, start + state.effectiveSlidesToShow);
-    }, [state.workouts, state.currentIndex, state.effectiveSlidesToShow]);
+    const monthLabel = `${MONTHS_LONG[heroMonth]} ${heroYear}`;
 
     // Calendar cells are only clickable when they have data, so "adjacent day" for the panel
     // means the nearest day with data in the visible month, not calendar-day ± 1.
@@ -150,7 +159,7 @@ export default function WorkoutLogPageV2() {
                         type="button"
                         className="icon-btn sm"
                         onClick={viewMode === 'month' ? goPrevMonth : state.slideLeft}
-                        disabled={viewMode === 'daily' && state.currentIndex === 0}
+                        disabled={viewMode === 'daily' && pageIndex === 0}
                         aria-label={viewMode === 'month' ? 'Previous month' : 'Newer'}
                     >
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -160,7 +169,7 @@ export default function WorkoutLogPageV2() {
                     </button>
                     {viewMode === 'daily' && (
                         <span className="toolbar-pos">
-                            <b>{state.currentIndex + 1}</b>
+                            <b>{pageIndex + 1}</b>
                             <span className="sep">/</span>
                             {state.slideCount}
                         </span>
@@ -191,7 +200,7 @@ export default function WorkoutLogPageV2() {
                         type="button"
                         className="icon-btn sm"
                         onClick={viewMode === 'month' ? goNextMonth : state.slideRight}
-                        disabled={viewMode === 'daily' && state.currentIndex >= state.slideCount - 1}
+                        disabled={viewMode === 'daily' && pageIndex >= state.slideCount - 1}
                         aria-label={viewMode === 'month' ? 'Next month' : 'Older'}
                     >
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -309,15 +318,14 @@ export default function WorkoutLogPageV2() {
                 <>
                     <div className="panel-label">
                         <span>
-                            Daily · {dailyDays.length} session{dailyDays.length === 1 ? '' : 's'} · page {state.currentIndex + 1} of{' '}
-                            {state.slideCount}
+                            Daily · {dailyDays.length} session{dailyDays.length === 1 ? '' : 's'} · page {pageIndex + 1} of {state.slideCount}
                         </span>
                     </div>
                     <SwipePager
-                        pageKey={state.currentIndex}
+                        pageKey={pageIndex}
                         onPrev={state.slideLeft}
                         onNext={state.slideRight}
-                        disabled={{ prev: state.currentIndex === 0, next: state.currentIndex >= state.slideCount - 1 }}
+                        disabled={{ prev: pageIndex === 0, next: pageIndex >= state.slideCount - 1 }}
                         className="log-grid"
                     >
                         {dailyDays.map((day) => (

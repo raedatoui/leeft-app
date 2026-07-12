@@ -8,22 +8,11 @@ import type { DayWorkout, ExerciseMap } from '@/types';
 export interface WorkoutLogState {
     workouts: DayWorkout[];
     exerciseMap: ExerciseMap;
-    miniMode: boolean;
-    setMiniMode: (val: boolean) => void;
     currentIndex: number;
-    setCurrentIndex: (val: number) => void;
-    slidesToShow: number;
-    setSlidesToShow: (val: number) => void;
-    responsiveColumns: number;
     includeWarmup: boolean;
     setIncludeWarmup: (val: boolean) => void;
     effortTier: EffortTier;
     setEffortTier: (val: EffortTier) => void;
-    selectedYear: string | undefined;
-    activeYear: number | undefined;
-    selectedMonth: string | undefined;
-    availableYears: number[];
-    allMonths: { value: string; label: string }[];
     slideCount: number;
     effectiveSlidesToShow: number;
     slideLeft: () => void;
@@ -33,24 +22,19 @@ export interface WorkoutLogState {
 }
 
 export interface WorkoutLogStateOptions {
-    /** Default includeWarmup. v1 uses true; v2 page passes false. */
+    /** Default includeWarmup (the log page passes false). */
     includeWarmup?: boolean;
-    /** Default miniMode. v1 uses true (compact list per exercise). */
-    miniMode?: boolean;
 }
 
 export function useWorkoutLogState(opts: WorkoutLogStateOptions = {}): WorkoutLogState {
     const allDayWorkouts = useActiveAllWorkouts();
     const { exerciseMap } = useWorkoutData();
-    const [miniMode, setMiniMode] = useState(opts.miniMode ?? true);
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [slidesToShow, setSlidesToShow] = useState(4);
     const [responsiveColumns, setResponsiveColumns] = useState(4);
     const [includeWarmup, setIncludeWarmup] = useState(opts.includeWarmup ?? true);
     // 'medium' default keeps the daily view clean (mirrors the old strict-mode default).
     const [effortTier, setEffortTier] = useState<EffortTier>('medium');
     const [selectedYear, setSelectedYear] = useState<string | undefined>();
-    const [selectedMonth, setSelectedMonth] = useState<string | undefined>();
 
     // Trim each day's cardio to the selected tier; days left with nothing drop out.
     const allWorkouts = useMemo(() => {
@@ -68,25 +52,6 @@ export function useWorkoutLogState(opts: WorkoutLogStateOptions = {}): WorkoutLo
         return Array.from(years).sort((a, b) => b - a);
     }, [allWorkouts]);
 
-    const allMonths = useMemo(
-        () =>
-            [
-                { value: '0', label: 'January' },
-                { value: '1', label: 'February' },
-                { value: '2', label: 'March' },
-                { value: '3', label: 'April' },
-                { value: '4', label: 'May' },
-                { value: '5', label: 'June' },
-                { value: '6', label: 'July' },
-                { value: '7', label: 'August' },
-                { value: '8', label: 'September' },
-                { value: '9', label: 'October' },
-                { value: '10', label: 'November' },
-                { value: '11', label: 'December' },
-            ].reverse(),
-        []
-    );
-
     const activeYear = useMemo(() => {
         if (selectedYear) return Number(selectedYear);
         return availableYears.length > 0 ? availableYears[0] : undefined;
@@ -102,8 +67,6 @@ export function useWorkoutLogState(opts: WorkoutLogStateOptions = {}): WorkoutLo
                 newColumns = 2;
             } else if (width < 1280) {
                 newColumns = 3;
-            } else {
-                newColumns = slidesToShow;
             }
             setResponsiveColumns((prev) => {
                 if (prev !== newColumns) {
@@ -116,13 +79,14 @@ export function useWorkoutLogState(opts: WorkoutLogStateOptions = {}): WorkoutLo
         updateColumns();
         window.addEventListener('resize', updateColumns);
         return () => window.removeEventListener('resize', updateColumns);
-    }, [slidesToShow]);
+    }, []);
 
     const effectiveSlidesToShow = responsiveColumns;
     const slideCount = useMemo(() => Math.ceil(allWorkouts.length / effectiveSlidesToShow), [allWorkouts.length, effectiveSlidesToShow]);
 
     const slideLeft = () => {
-        setCurrentIndex((prev) => Math.max(prev - 1, 0));
+        // pre-clamp: currentIndex can point past the end after the dataset shrinks (effort tier)
+        setCurrentIndex((prev) => Math.max(Math.min(prev, slideCount - 1) - 1, 0));
     };
 
     const slideRight = () => {
@@ -132,7 +96,6 @@ export function useWorkoutLogState(opts: WorkoutLogStateOptions = {}): WorkoutLo
     const jumpToYear = (year: string) => {
         if (!year) return;
         setSelectedYear(year);
-        setSelectedMonth(undefined);
 
         const reversedWorkouts = [...allWorkouts].reverse();
         const workoutIndex = reversedWorkouts.findIndex((day) => day.date.getUTCFullYear() === Number(year));
@@ -145,7 +108,6 @@ export function useWorkoutLogState(opts: WorkoutLogStateOptions = {}): WorkoutLo
 
     const jumpToMonth = (monthStr: string) => {
         if (!activeYear || !monthStr) return;
-        setSelectedMonth(monthStr);
 
         const month = Number(monthStr);
         const reversedWorkouts = [...allWorkouts].reverse();
@@ -160,22 +122,11 @@ export function useWorkoutLogState(opts: WorkoutLogStateOptions = {}): WorkoutLo
     return {
         workouts: allWorkouts,
         exerciseMap,
-        miniMode,
-        setMiniMode,
         currentIndex,
-        setCurrentIndex,
-        slidesToShow,
-        setSlidesToShow,
-        responsiveColumns,
         includeWarmup,
         setIncludeWarmup,
         effortTier,
         setEffortTier,
-        selectedYear,
-        activeYear,
-        selectedMonth,
-        availableYears,
-        allMonths,
         slideCount,
         effectiveSlidesToShow,
         slideLeft,

@@ -4,13 +4,12 @@ import Highcharts, { type Options } from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import { useTheme } from 'next-themes';
 import { useMemo } from 'react';
-import { chartFonts, getChartPalette } from '@/lib/chart-theme';
+import { fonts, V2_PALETTES } from '@/components/charts/chartPaletteV2';
 import type { AggregateBy, ChartDataPoint } from '@/lib/statsUtils';
 
 interface Props {
     data: ChartDataPoint[];
     aggregateBy: AggregateBy;
-    dateRange: { start: Date; end: Date };
     onPointClick?: (point: ChartDataPoint, index: number) => void;
     selectedIndex?: number | null;
 }
@@ -19,7 +18,7 @@ const DESELECTED_OPACITY = 0.3;
 
 export default function WorkoutBreakdownChartV2({ data, aggregateBy, onPointClick, selectedIndex }: Props) {
     const { resolvedTheme } = useTheme();
-    const chartColors = getChartPalette(resolvedTheme === 'light' ? 'light' : 'dark');
+    const pal = V2_PALETTES[resolvedTheme === 'light' ? 'light' : 'dark'];
 
     const { categories, tooltips, liftingSeries, cardioSeries } = useMemo(() => {
         const hasSelection = selectedIndex !== null && selectedIndex !== undefined;
@@ -28,14 +27,14 @@ export default function WorkoutBreakdownChartV2({ data, aggregateBy, onPointClic
             tooltips: data.map((d) => d.tooltip),
             liftingSeries: data.map((d, i) => ({
                 y: d.liftingCount,
-                color: hasSelection && i !== selectedIndex ? `rgba(${chartColors.liftingRgb}, ${DESELECTED_OPACITY})` : chartColors.lifting,
+                color: hasSelection && i !== selectedIndex ? `rgba(${pal.maintRgb}, ${DESELECTED_OPACITY})` : pal.maint,
             })),
             cardioSeries: data.map((d, i) => ({
                 y: d.cardioCount,
-                color: hasSelection && i !== selectedIndex ? `rgba(${chartColors.cardioRgb}, ${DESELECTED_OPACITY})` : chartColors.cardio,
+                color: hasSelection && i !== selectedIndex ? `rgba(${pal.cardioRgb}, ${DESELECTED_OPACITY})` : pal.cardio,
             })),
         };
-    }, [data, selectedIndex, chartColors]);
+    }, [data, selectedIndex, pal]);
 
     const hasData = liftingSeries.some((v) => v.y > 0) || cardioSeries.some((v) => v.y > 0);
 
@@ -49,7 +48,7 @@ export default function WorkoutBreakdownChartV2({ data, aggregateBy, onPointClic
         chart: {
             type: 'column',
             backgroundColor: 'transparent',
-            style: { fontFamily: chartFonts.sans },
+            style: { fontFamily: fonts.body },
             height: 280,
             spacing: [16, 0, 8, 0],
             zooming: { type: 'x' },
@@ -59,40 +58,40 @@ export default function WorkoutBreakdownChartV2({ data, aggregateBy, onPointClic
             categories,
             labels: {
                 style: {
-                    color: chartColors.mutedForeground,
-                    fontFamily: chartFonts.mono,
+                    color: pal.muted,
+                    fontFamily: fonts.mono,
                     fontSize: data.length > 30 ? '9px' : '11px',
                 },
                 rotation: data.length > 20 ? -45 : 0,
             },
-            lineColor: chartColors.border,
-            tickColor: chartColors.border,
+            lineColor: pal.border,
+            tickColor: pal.border,
         },
         yAxis: {
             min: 0,
             title: { text: undefined },
-            gridLineColor: chartColors.border,
+            gridLineColor: pal.border,
             labels: {
                 style: {
-                    color: chartColors.mutedForeground,
-                    fontFamily: chartFonts.mono,
+                    color: pal.muted,
+                    fontFamily: fonts.mono,
                 },
             },
             stackLabels: {
                 enabled: data.length <= 20,
                 style: {
                     fontWeight: 'bold',
-                    color: chartColors.foreground,
+                    color: pal.fg,
                     textOutline: 'none',
                 },
             },
         },
         legend: {
             itemStyle: {
-                color: chartColors.mutedForeground,
-                fontFamily: chartFonts.sans,
+                color: pal.muted,
+                fontFamily: fonts.body,
             },
-            itemHoverStyle: { color: chartColors.foreground },
+            itemHoverStyle: { color: pal.fg },
         },
         tooltip: {
             formatter: function () {
@@ -102,9 +101,9 @@ export default function WorkoutBreakdownChartV2({ data, aggregateBy, onPointClic
                 const total = (ctx.point.stackTotal as number) || 0;
                 return `<b>${tooltips[i]}</b><br/>${ctx.series.name}: ${ctx.y}<br/>Total: ${total}`;
             },
-            backgroundColor: chartColors.background,
-            borderColor: chartColors.border,
-            style: { color: chartColors.foreground },
+            backgroundColor: pal.bg,
+            borderColor: pal.border,
+            style: { color: pal.fg },
         },
         plotOptions: {
             column: {
@@ -126,8 +125,8 @@ export default function WorkoutBreakdownChartV2({ data, aggregateBy, onPointClic
             },
         },
         series: [
-            { name: 'Lifting', type: 'column', data: liftingSeries, color: chartColors.lifting },
-            { name: 'Cardio', type: 'column', data: cardioSeries, color: chartColors.cardio },
+            { name: 'Lifting', type: 'column', data: liftingSeries, color: pal.maint },
+            { name: 'Cardio', type: 'column', data: cardioSeries, color: pal.cardio },
         ],
         credits: { enabled: false },
     };

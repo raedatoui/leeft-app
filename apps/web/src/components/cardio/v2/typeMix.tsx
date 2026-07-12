@@ -39,7 +39,8 @@ const TypeMix: FC<TypeMixProps> = ({ distribution, activeType, onTypeSelect }) =
         const active = distribution.find((s) => s.type === activeType);
         if (active) rows = [...rows, active];
     }
-    const hiddenCount = distribution.length - VISIBLE_ROWS;
+    // Count against rows actually shown — the active type may be appended below the fold.
+    const hiddenCount = distribution.length - rows.length;
 
     return (
         <>
@@ -72,7 +73,7 @@ const TypeMix: FC<TypeMixProps> = ({ distribution, activeType, onTypeSelect }) =
                         <span className="count">{slice.count}</span>
                     </button>
                 ))}
-                {hiddenCount > 0 && (
+                {(expanded || hiddenCount > 0) && (
                     <button type="button" className="mix-more" onClick={() => setExpanded((e) => !e)}>
                         {expanded ? 'Show fewer types' : `+ ${hiddenCount} more types`}
                     </button>

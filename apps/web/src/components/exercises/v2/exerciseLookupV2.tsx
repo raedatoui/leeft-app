@@ -1,7 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo } from 'react';
+import { useDropdownPanel } from '@/lib/hooks/useDropdownPanel';
 import type { ExerciseMetadata } from '@/types';
 
 interface ExerciseLookupV2Props {
@@ -17,10 +18,7 @@ interface ExerciseLookupV2Props {
 
 export default function ExerciseLookupV2({ exerciseMap, currentExerciseId, excludeIds, triggerLabel, onSelect }: ExerciseLookupV2Props) {
     const router = useRouter();
-    const [open, setOpen] = useState(false);
-    const [query, setQuery] = useState('');
-    const wrapperRef = useRef<HTMLDivElement>(null);
-    const inputRef = useRef<HTMLInputElement>(null);
+    const { open, close, toggle, query, setQuery, wrapperRef, inputRef } = useDropdownPanel();
 
     const exercises = useMemo(() => {
         return Array.from(exerciseMap.values())
@@ -34,34 +32,10 @@ export default function ExerciseLookupV2({ exerciseMap, currentExerciseId, exclu
         return exercises.filter((e) => e.name.toLowerCase().includes(q) || e.primaryMuscleGroup.toLowerCase().includes(q));
     }, [exercises, query]);
 
-    useEffect(() => {
-        if (!open) return;
-        const onDown = (e: MouseEvent) => {
-            if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-                setOpen(false);
-            }
-        };
-        const onKey = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') setOpen(false);
-        };
-        document.addEventListener('mousedown', onDown);
-        document.addEventListener('keydown', onKey);
-        return () => {
-            document.removeEventListener('mousedown', onDown);
-            document.removeEventListener('keydown', onKey);
-        };
-    }, [open]);
-
-    useEffect(() => {
-        // no autofocus on touch devices: the panel renders as a bottom sheet there and the keyboard would cover it
-        if (open && !window.matchMedia('(pointer: coarse)').matches) inputRef.current?.focus();
-    }, [open]);
-
     const handleSelect = (id: string) => {
         if (onSelect) onSelect(id);
         else router.push(`/exercises/${id}`);
-        setOpen(false);
-        setQuery('');
+        close();
     };
 
     const handleInputKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -73,7 +47,7 @@ export default function ExerciseLookupV2({ exerciseMap, currentExerciseId, exclu
 
     return (
         <div className="exercise-lookup" ref={wrapperRef}>
-            <button type="button" className="exercise-lookup-trigger" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-haspopup="listbox">
+            <button type="button" className="exercise-lookup-trigger" onClick={toggle} aria-expanded={open} aria-haspopup="listbox">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                     <title>Search</title>
                     <circle cx="11" cy="11" r="7" />
