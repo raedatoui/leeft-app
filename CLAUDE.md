@@ -35,13 +35,13 @@ OPENAI_API_KEY=<key>
 ### Development
 ```bash
 pnpm install            # Install all dependencies
-pnpm dev:web            # Run web app dev server (Next.js)
-pnpm dev:data           # Run data pipeline dev mode
+pnpm dev                # Run web app dev server (Next.js)
 ```
 
 ### Building & Quality
 ```bash
-pnpm build              # Build all apps
+pnpm build:web          # Build web app (Next.js static export)
+pnpm build:desktop      # Build desktop app (Tauri)
 pnpm lint               # Lint all apps (Biome)
 pnpm check              # Type check and lint all apps
 pnpm format             # Format code (Biome)
@@ -49,9 +49,10 @@ pnpm format             # Format code (Biome)
 
 ### Data Pipeline (run from root)
 ```bash
-pnpm pipeline               # Full pipeline + deploy (interactive)
-pnpm pipeline:sync          # Data sync only (no deploy)
-pnpm upload                 # Upload data to GCS
+pnpm pipeline                 # Full pipeline + deploy (interactive; scripts/shell/pipeline.sh)
+pnpm pipeline --sync-only     # Data sync only (no deploy); --skip-download also supported
+pnpm refresh                  # Recompile data from existing downloads + push to GCS
+pnpm push                     # Upload data artifacts to GCS (scripts/shell/upload.sh)
 ```
 
 ### Data Pipeline (run from apps/data)
@@ -67,9 +68,9 @@ Pipeline dependency chain: `download → compile → combine → upload`
 
 | Input changed | Minimum re-run (from `apps/data`) | Then |
 |---|---|---|
-| `data/in/cycles.json` | `bun combine:lifting` and/or `bun combine:all` | `pnpm upload` + update timestamp |
-| TrainHeroic workouts | `bun compile:lifting` → `bun combine:lifting` → `bun combine:all` | `pnpm upload` + update timestamp |
-| Fitbit raw data | `bun fitbit:process` → `bun compile:cardio` → `bun compile:all` → `bun combine:all` | `pnpm upload` + update timestamp |
+| `data/in/cycles.json` | `bun combine:lifting` and/or `bun combine:all` | `pnpm push` + update timestamp |
+| TrainHeroic workouts | `bun compile:lifting` → `bun combine:lifting` → `bun combine:all` | `pnpm push` + update timestamp |
+| Fitbit raw data | `bun fitbit:process` → `bun compile:cardio` → `bun compile:all` → `bun combine:all` | `pnpm push` + update timestamp |
 
 ### Analysis Scripts (run from apps/data)
 ```bash
@@ -89,7 +90,7 @@ pnpm deploy:web         # Build and deploy web app to Firebase
 ### Data Flow
 1. Raw data downloaded to `apps/data/data/in` or `apps/data/data/download`
 2. Scripts compile into structured JSON in `apps/data/data/out`
-3. `pnpm upload` gzips and uploads artifacts to GCS bucket
+3. `pnpm push` gzips and uploads artifacts to GCS bucket
 4. Web UI fetches JSON artifacts via CDN URL + timestamp to render the dashboard
 
 ### Web App Structure

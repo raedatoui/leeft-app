@@ -1,8 +1,6 @@
 {
     "workspaces": {
-        ".": {
-            "entry": ["scripts/**/*.ts"]
-        },
+        ".": {},
         "apps/web": {
             "entry": ["src/app/**/page.tsx", "src/app/**/layout.tsx"],
             "project": ["src/**/*.{ts,tsx}"]

@@ -7,7 +7,7 @@
 	"scripts": {
 		"lint": "biome lint .",
 		"format": "biome format --write .",
-		"check": "biome check --write . && tsc --noEmit",
+		"check": "biome check . && tsc --noEmit",
 		"check:fix": "biome check --write ."
 	},
 	"dependencies": {
