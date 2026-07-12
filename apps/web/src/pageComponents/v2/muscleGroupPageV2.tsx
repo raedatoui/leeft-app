@@ -105,7 +105,8 @@ export default function MuscleGroupPageV2() {
     );
 
     const trainedExercises = useMemo(() => sortedExercises.filter((ex) => statsByExerciseId.has(ex.id)), [sortedExercises, statsByExerciseId]);
-    const maxSets = statsByExerciseId.get(trainedExercises[0]?.id ?? -1)?.setCount ?? 1;
+    // `|| 1` (not ??): a 0 setCount would make the bar-width percentages NaN
+    const maxSets = statsByExerciseId.get(trainedExercises[0]?.id ?? -1)?.setCount || 1;
 
     const muscleOptions = useMemo<DropdownV2Option[]>(
         () => muscleGroups.map((mg) => ({ value: mg.id, label: mg.name, color: mg.color })),

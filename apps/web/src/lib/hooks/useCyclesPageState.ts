@@ -55,10 +55,6 @@ export function useCyclesPageState() {
     // Clamp visibleYear in case rawCycles loaded after first render produced a different set of years.
     const safeYear = years.includes(visibleYear) ? visibleYear : (years[0] ?? visibleYear);
 
-    const setVisibleYear = (year: number) => {
-        setVisibleYearState(year);
-    };
-
     const visibleCycles = useMemo(() => cyclesByYear[safeYear] ?? [], [cyclesByYear, safeYear]);
 
     const filteredCycles = useMemo(
@@ -116,11 +112,9 @@ export function useCyclesPageState() {
     const hasNextYear = years.some((y) => y > safeYear);
 
     return {
-        rawCycles,
         exerciseMap,
         years,
         visibleYear: safeYear,
-        setVisibleYear,
         goPrevYear,
         goNextYear,
         hasPrevYear,

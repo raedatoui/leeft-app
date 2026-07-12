@@ -40,7 +40,9 @@
         --chart-5: 27 87% 67%;
     }
 
-    .dark {
+    /* next-themes toggles data-mode on <html> (see ThemeProvider in layout.tsx);
+       v2.css keys its light-mode overrides on the same attribute */
+    html[data-mode="dark"] {
         --background: 240 10% 12%;
         --foreground: 0 0% 98%;
 
@@ -78,9 +80,6 @@
 }
 
 @layer base {
-    * {
-        @apply border-border;
-    }
     body {
         @apply bg-background text-foreground;
     }

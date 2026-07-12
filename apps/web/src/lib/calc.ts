@@ -1,11 +1,2 @@
-// Re-export all calculation utilities from shared package
-export {
-    type CalculationMethod,
-    defaultMaxCalculator,
-    getMaxWeight,
-    getTopNSets,
-    getTopSet,
-    getVolumeWeight,
-    maxCalculators,
-    oneRepMaxCalculators,
-} from '@leeft/utils';
+// Re-export the calculation utilities the web app consumes from the shared package
+export { type CalculationMethod, defaultMaxCalculator, maxCalculators, oneRepMaxCalculators } from '@leeft/utils';

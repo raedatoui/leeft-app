@@ -10,6 +10,8 @@ export const V2_PALETTES = {
         maint: '#ffa000',
         maintRgb: '255, 160, 0',
         strength: '#19e68c',
+        cardio: '#00d4ff',
+        cardioRgb: '0, 212, 255',
     },
     light: {
         bg: '#ecebe2',
@@ -20,6 +22,8 @@ export const V2_PALETTES = {
         maint: '#945e00',
         maintRgb: '148, 94, 0',
         strength: '#067947',
+        cardio: '#047389',
+        cardioRgb: '4, 115, 137',
     },
 } as const;
 

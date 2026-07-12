@@ -82,11 +82,16 @@ export function WorkoutProvider({ children }: WorkoutProviderProps) {
         });
     }, []);
 
-    useEffect(() => {
+    const initialLoad = useCallback(() => {
+        setError(null);
         loadData().catch((e) => {
             setError(e instanceof Error ? e : new Error('An error occurred fetching data'));
         });
     }, [loadData]);
+
+    useEffect(() => {
+        initialLoad();
+    }, [initialLoad]);
 
     const refresh = useCallback(async () => {
         setRefreshing(true);
@@ -100,7 +105,28 @@ export function WorkoutProvider({ children }: WorkoutProviderProps) {
         }
     }, [loadData]);
 
-    if (error) return <div className="p-8 text-center text-red-500">Error: {error.message}</div>;
+    if (error)
+        return (
+            <div className="flex min-h-screen items-center justify-center px-6">
+                <div className="text-center">
+                    <p className="text-4xl">&#x26A0;</p>
+                    <h1 className="mt-2 text-xl font-semibold" style={{ color: 'var(--fg)' }}>
+                        Couldn&apos;t load workout data
+                    </h1>
+                    <p className="mt-1 text-sm" style={{ color: 'var(--muted)', fontFamily: 'var(--mono)' }}>
+                        {error.message}
+                    </p>
+                    <button
+                        type="button"
+                        onClick={initialLoad}
+                        className="mt-6 rounded-md px-4 py-2 text-sm font-medium"
+                        style={{ background: 'var(--maint)', color: 'var(--bg)' }}
+                    >
+                        Try again
+                    </button>
+                </div>
+            </div>
+        );
     if (!data) return <Loader />;
 
     return <WorkoutDataContext.Provider value={{ ...data, refresh, refreshing }}>{children}</WorkoutDataContext.Provider>;

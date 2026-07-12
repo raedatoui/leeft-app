@@ -1,13 +1,7 @@
 import { DOWS_SHORT, MONTHS_LONG, MONTHS_SHORT } from '@/lib/dateFormatters';
-import type { CardioWorkout, MappedCycle, Workout } from '@/types';
+import type { CardioWorkout, Workout } from '@/types';
 
-export type ViewMode = 'week' | 'month' | 'cycle' | 'year' | 'day';
 export type AggregateBy = 'month' | 'week' | 'day';
-
-export interface Period {
-    label: string;
-    dateRange: { start: Date; end: Date };
-}
 
 export interface ChartDataPoint {
     label: string;
@@ -66,81 +60,6 @@ function formatWeekRange(start: Date, end: Date): string {
         return `${startMonth} ${startDay}-${endDay}, ${year}`;
     }
     return `${startMonth} ${startDay} - ${endMonth} ${endDay}, ${year}`;
-}
-
-/**
- * Compute week periods from all workouts
- */
-export function computeWeekPeriods(workouts: Workout[], cardioWorkouts: CardioWorkout[]): Period[] {
-    const allDates = [...workouts.map((w) => w.date), ...cardioWorkouts.map((w) => w.date)];
-
-    if (allDates.length === 0) return [];
-
-    const minDate = new Date(Math.min(...allDates.map((d) => d.getTime())));
-    const maxDate = new Date(Math.max(...allDates.map((d) => d.getTime())));
-
-    const periods: Period[] = [];
-    let currentStart = getWeekStart(minDate);
-
-    while (currentStart <= maxDate) {
-        const currentEnd = getWeekEnd(currentStart);
-        periods.push({
-            label: formatWeekRange(currentStart, currentEnd),
-            dateRange: { start: new Date(currentStart), end: new Date(currentEnd) },
-        });
-        currentStart = new Date(currentStart);
-        currentStart.setDate(currentStart.getDate() + 7);
-    }
-
-    return periods.reverse();
-}
-
-/**
- * Compute month periods from all workouts
- */
-export function computeMonthPeriods(workouts: Workout[], cardioWorkouts: CardioWorkout[]): Period[] {
-    const allDates = [...workouts.map((w) => w.date), ...cardioWorkouts.map((w) => w.date)];
-
-    if (allDates.length === 0) return [];
-
-    const minDate = new Date(Math.min(...allDates.map((d) => d.getTime())));
-    const maxDate = new Date(Math.max(...allDates.map((d) => d.getTime())));
-
-    const periods: Period[] = [];
-    let currentYear = minDate.getFullYear();
-    let currentMonth = minDate.getMonth();
-
-    while (currentYear < maxDate.getFullYear() || (currentYear === maxDate.getFullYear() && currentMonth <= maxDate.getMonth())) {
-        const start = new Date(currentYear, currentMonth, 1, 0, 0, 0, 0);
-        const end = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999);
-        const label = start.toLocaleString('en-US', { month: 'long', year: 'numeric' });
-
-        periods.push({ label, dateRange: { start, end } });
-
-        currentMonth++;
-        if (currentMonth > 11) {
-            currentMonth = 0;
-            currentYear++;
-        }
-    }
-
-    return periods.reverse();
-}
-
-/**
- * Filter cardio workouts by date range
- */
-export function filterCardioWorkoutsByDateRange(cardioWorkouts: CardioWorkout[], startDate: Date, endDate: Date): CardioWorkout[] {
-    const start = new Date(startDate);
-    start.setUTCHours(0, 0, 0, 0);
-
-    const end = new Date(endDate);
-    end.setUTCHours(23, 59, 59, 999);
-
-    return cardioWorkouts.filter((workout) => {
-        const workoutDate = new Date(workout.date);
-        return workoutDate >= start && workoutDate <= end;
-    });
 }
 
 /**
@@ -323,16 +242,6 @@ export function computeOverviewStats(liftingWorkouts: Workout[], cardioWorkouts:
         cardioCount,
         totalVolume,
         avgRpe,
-    };
-}
-
-/**
- * Get date range from a cycle
- */
-export function getCycleDateRange(cycle: MappedCycle): { start: Date; end: Date } {
-    return {
-        start: cycle.dates[0],
-        end: cycle.dates[1],
     };
 }
 

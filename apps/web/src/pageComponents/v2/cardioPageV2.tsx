@@ -2,7 +2,7 @@
 
 import { Clock, Flame, Heart, Timer, Zap } from 'lucide-react';
 import type { FC } from 'react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import CardioSessionCard from '@/components/cardio/v2/cardioSessionCard';
 import EffortTierToggle from '@/components/cardio/v2/effortTierToggle';
 import MonthlyBars from '@/components/cardio/v2/monthlyBars';
@@ -10,7 +10,11 @@ import TypeMix from '@/components/cardio/v2/typeMix';
 import PageTemplateV2 from '@/components/layout/v2/pageTemplateV2';
 import DropdownV2, { type DropdownV2Option } from '@/components/ui/v2/dropdownV2';
 import SwipePager from '@/components/ui/v2/swipePager';
+import TablePager from '@/components/ui/v2/tablePager';
+import { formatTableDate } from '@/lib/dateFormatters';
 import { type CardioLoggedByFilter, type CardioPeriod, useCardioPageState } from '@/lib/hooks/useCardioPageState';
+
+const PAGE_SIZE = 24;
 
 const PERIOD_OPTIONS: DropdownV2Option[] = [
     { value: 'ytd', label: 'Year to date' },
@@ -69,6 +73,17 @@ export default function CardioPageV2() {
 
     const typeOrder = useMemo(() => distribution.map((slice) => slice.type), [distribution]);
 
+    // "All time" can hold thousands of sessions — render them a page at a time.
+    const [tablePage, setTablePage] = useState(0);
+    const totalPages = Math.max(1, Math.ceil(sortedWorkouts.length / PAGE_SIZE));
+    const currentPage = Math.min(tablePage, totalPages - 1);
+    const pageWorkouts = sortedWorkouts.slice(currentPage * PAGE_SIZE, currentPage * PAGE_SIZE + PAGE_SIZE);
+    const pageRangeStart = pageWorkouts[0]?.date;
+    const pageRangeEnd = pageWorkouts[pageWorkouts.length - 1]?.date;
+
+    const goPrevPage = () => setTablePage((p) => Math.max(0, p - 1));
+    const goNextPage = () => setTablePage((p) => Math.min(totalPages - 1, p + 1));
+
     const yearLabel =
         period === 'ytd' ? `${selectedYear} · Year-to-date` : period === '30d' ? 'Last 30 days' : period === '90d' ? 'Last 90 days' : 'All time';
 
@@ -114,7 +129,10 @@ export default function CardioPageV2() {
                                 <button
                                     type="button"
                                     className="icon-btn sm"
-                                    onClick={goToPrevYear}
+                                    onClick={() => {
+                                        goToPrevYear();
+                                        setTablePage(0);
+                                    }}
                                     disabled={prevDisabled}
                                     aria-label="Previous year"
                                 >
@@ -134,7 +152,16 @@ export default function CardioPageV2() {
                                 <span className="label-mono" style={{ padding: '0 4px' }}>
                                     {selectedYear}
                                 </span>
-                                <button type="button" className="icon-btn sm" onClick={goToNextYear} disabled={nextDisabled} aria-label="Next year">
+                                <button
+                                    type="button"
+                                    className="icon-btn sm"
+                                    onClick={() => {
+                                        goToNextYear();
+                                        setTablePage(0);
+                                    }}
+                                    disabled={nextDisabled}
+                                    aria-label="Next year"
+                                >
                                     <svg
                                         width="12"
                                         height="12"
@@ -154,7 +181,14 @@ export default function CardioPageV2() {
                     </>
                 )}
 
-                <EffortTierToggle value={effortTier} onChange={setEffortTier} label="Effort" />
+                <EffortTierToggle
+                    value={effortTier}
+                    onChange={(v) => {
+                        setEffortTier(v);
+                        setTablePage(0);
+                    }}
+                    label="Effort"
+                />
 
                 <span className="toolbar-divider" />
 
@@ -162,13 +196,19 @@ export default function CardioPageV2() {
                     <DropdownV2
                         value={String(minDuration)}
                         options={MIN_DURATION_OPTIONS}
-                        onChange={(v) => setMinDuration(Number(v))}
+                        onChange={(v) => {
+                            setMinDuration(Number(v));
+                            setTablePage(0);
+                        }}
                         ariaLabel="Minimum duration"
                     />
                     <DropdownV2
                         value={loggedBy}
                         options={LOGGED_BY_OPTIONS}
-                        onChange={(v) => setLoggedBy(v as CardioLoggedByFilter)}
+                        onChange={(v) => {
+                            setLoggedBy(v as CardioLoggedByFilter);
+                            setTablePage(0);
+                        }}
                         ariaLabel="Logged by"
                     />
                 </div>
@@ -177,7 +217,15 @@ export default function CardioPageV2() {
                     <span className="label-mono" style={{ padding: '0 8px' }}>
                         Period
                     </span>
-                    <DropdownV2 value={period} options={PERIOD_OPTIONS} onChange={(v) => setPeriod(v as CardioPeriod)} ariaLabel="Period" />
+                    <DropdownV2
+                        value={period}
+                        options={PERIOD_OPTIONS}
+                        onChange={(v) => {
+                            setPeriod(v as CardioPeriod);
+                            setTablePage(0);
+                        }}
+                        ariaLabel="Period"
+                    />
                 </div>
             </div>
 
@@ -212,7 +260,14 @@ export default function CardioPageV2() {
                         <span>Mix · {allCount} sessions</span>
                         <span className="hint">click a type to filter</span>
                     </div>
-                    <TypeMix distribution={distribution} activeType={activeType} onTypeSelect={setActiveType} />
+                    <TypeMix
+                        distribution={distribution}
+                        activeType={activeType}
+                        onTypeSelect={(t) => {
+                            setActiveType(t);
+                            setTablePage(0);
+                        }}
+                    />
                 </div>
 
                 <div className="chart-zone">
@@ -227,17 +282,28 @@ export default function CardioPageV2() {
             </section>
 
             {sortedWorkouts.length > 0 ? (
-                <SwipePager
-                    pageKey={selectedYear}
-                    onPrev={goToPrevYear}
-                    onNext={goToNextYear}
-                    disabled={{ prev: period !== 'ytd' || prevDisabled, next: period !== 'ytd' || nextDisabled }}
-                    className="cardio-grid"
-                >
-                    {sortedWorkouts.map((w) => (
-                        <CardioSessionCard key={w.uuid} workout={w} />
-                    ))}
-                </SwipePager>
+                <>
+                    <TablePager
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPrev={goPrevPage}
+                        onNext={goNextPage}
+                        rangeLabel={
+                            pageRangeStart && pageRangeEnd ? `${formatTableDate(pageRangeStart)} → ${formatTableDate(pageRangeEnd)}` : undefined
+                        }
+                    />
+                    <SwipePager
+                        pageKey={currentPage}
+                        onPrev={goPrevPage}
+                        onNext={goNextPage}
+                        disabled={{ prev: currentPage === 0, next: currentPage >= totalPages - 1 }}
+                        className="cardio-grid"
+                    >
+                        {pageWorkouts.map((w) => (
+                            <CardioSessionCard key={w.uuid} workout={w} />
+                        ))}
+                    </SwipePager>
+                </>
             ) : (
                 <div className="empty-state">No cardio sessions match the current filters.</div>
             )}

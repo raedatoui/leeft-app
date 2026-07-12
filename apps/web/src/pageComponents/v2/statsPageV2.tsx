@@ -13,16 +13,8 @@ import { type EffortTier, matchesTier } from '@/lib/cardio-effort';
 import { useActiveCardio, useWorkoutData } from '@/lib/contexts';
 import { formatTableDate, MONTHS_LONG, MONTHS_SHORT } from '@/lib/dateFormatters';
 import { useMuscleGroupColor } from '@/lib/hooks/useMuscleGroupColor';
-import {
-    type AggregateBy,
-    aggregateForChart,
-    computeOverviewStats,
-    filterCardioWorkoutsByDateRange,
-    formatNumber,
-    getWeekEnd,
-    getWeekStart,
-} from '@/lib/statsUtils';
-import { filterWorkoutsByDateRange } from '@/lib/utils';
+import { type AggregateBy, aggregateForChart, computeOverviewStats, formatNumber, getWeekEnd, getWeekStart } from '@/lib/statsUtils';
+import { filterByDateRange } from '@/lib/utils';
 import type { CardioWorkout, Workout } from '@/types';
 
 const WorkoutBreakdownChart = dynamic(() => import('@/components/stats/v2/workoutBreakdownChartV2'), { ssr: false });
@@ -119,7 +111,7 @@ function StatsTableRow({ row, isSelected, onSelect }: { row: Row; isSelected: bo
                 {date}
                 <div className="weight">
                     <span className="dot lift">●</span>
-                    {formatNumber(w.volume)} lbs
+                    {formatNumber(w.workVolume)} lbs
                 </div>
                 <div className="sets-detail">{formatDuration(w.duration)}</div>
                 <div className="sets-detail">{w.rpe !== null ? w.rpe.toFixed(1) : '—'}</div>
@@ -161,7 +153,9 @@ export default function StatsPageV2() {
     const [bucketIndex, setBucketIndex] = useState(0);
     const [tablePage, setTablePage] = useState(0);
     const [selectedKey, setSelectedKey] = useState<string | null>(null);
-    // Period to land on when buckets are rebuilt (e.g. on group change). null = jump to today.
+    // End of the bucket being viewed, updated on every navigation. When buckets rebuild
+    // (group change, effort toggle, data refresh) the effect below re-anchors to it
+    // instead of snapping to today. null = never navigated → anchor to today.
     const anchorRef = useRef<Date | null>(null);
 
     const buckets = useMemo(() => {
@@ -184,12 +178,12 @@ export default function StatsPageV2() {
 
     const filteredLifting = useMemo(() => {
         if (!currentBucket) return [];
-        return filterWorkoutsByDateRange(workouts, currentBucket.start, currentBucket.end);
+        return filterByDateRange(workouts, currentBucket.start, currentBucket.end);
     }, [workouts, currentBucket]);
 
     const filteredCardio = useMemo(() => {
         if (!currentBucket) return [];
-        return filterCardioWorkoutsByDateRange(cardioWorkouts, currentBucket.start, currentBucket.end);
+        return filterByDateRange(cardioWorkouts, currentBucket.start, currentBucket.end);
     }, [cardioWorkouts, currentBucket]);
 
     const stats = useMemo(() => computeOverviewStats(filteredLifting, filteredCardio), [filteredLifting, filteredCardio]);
@@ -214,8 +208,9 @@ export default function StatsPageV2() {
     const pageStart = currentPage * PAGE_SIZE;
     const pageRows = rows.slice(pageStart, pageStart + PAGE_SIZE);
 
-    const pageRangeStart = pageRows[pageRows.length - 1]?.date;
-    const pageRangeEnd = pageRows[0]?.date;
+    // newest → oldest, matching the table's top-to-bottom order (same as exercisePageV2)
+    const pageRangeStart = pageRows[0]?.date;
+    const pageRangeEnd = pageRows[pageRows.length - 1]?.date;
 
     const selectedRow = useMemo(() => rows.find((r) => r.workout.uuid === selectedKey) ?? pageRows[0] ?? null, [rows, selectedKey, pageRows]);
 
@@ -236,16 +231,14 @@ export default function StatsPageV2() {
         );
     }
 
-    const goPrevBucket = () => {
-        setBucketIndex(Math.min(buckets.length - 1, safeBucketIndex + 1));
+    const goToBucket = (index: number) => {
+        anchorRef.current = buckets[index]?.end ?? null;
+        setBucketIndex(index);
         setTablePage(0);
         setSelectedKey(null);
     };
-    const goNextBucket = () => {
-        setBucketIndex(Math.max(0, safeBucketIndex - 1));
-        setTablePage(0);
-        setSelectedKey(null);
-    };
+    const goPrevBucket = () => goToBucket(Math.min(buckets.length - 1, safeBucketIndex + 1));
+    const goNextBucket = () => goToBucket(Math.max(0, safeBucketIndex - 1));
 
     const onGroupChange = (g: GroupBy) => {
         if (g === groupBy) return;
@@ -314,11 +307,7 @@ export default function StatsPageV2() {
                     <DropdownV2
                         value={String(safeBucketIndex)}
                         options={buckets.map((b, i) => ({ value: String(i), label: b.label }))}
-                        onChange={(v) => {
-                            setBucketIndex(Number(v));
-                            setTablePage(0);
-                            setSelectedKey(null);
-                        }}
+                        onChange={(v) => goToBucket(Number(v))}
                         ariaLabel="Bucket"
                     />
                 </div>
@@ -353,7 +342,6 @@ export default function StatsPageV2() {
                         <WorkoutBreakdownChart
                             data={chartData}
                             aggregateBy={GROUP_TO_AGGREGATE[groupBy]}
-                            dateRange={{ start: currentBucket.start, end: currentBucket.end }}
                             onPointClick={() => {}}
                             selectedIndex={null}
                         />
