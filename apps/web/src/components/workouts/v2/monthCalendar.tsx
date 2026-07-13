@@ -16,13 +16,13 @@ interface MonthCalendarProps {
 }
 
 const DOW_LABELS = [
-    { key: 'sun', label: 'S' },
     { key: 'mon', label: 'M' },
     { key: 'tue', label: 'T' },
     { key: 'wed', label: 'W' },
     { key: 'thu', label: 'T' },
     { key: 'fri', label: 'F' },
     { key: 'sat', label: 'S' },
+    { key: 'sun', label: 'S' },
 ];
 
 const utcDateKey = (d: Date): string => {
@@ -45,7 +45,8 @@ export const MonthCalendar: FC<MonthCalendarProps> = ({ days, viewYear, viewMont
     // First day of the month and weekday offset for the leading blank cells.
     const first = new Date(Date.UTC(viewYear, viewMonth, 1));
     const lastDayNum = new Date(Date.UTC(viewYear, viewMonth + 1, 0)).getUTCDate();
-    const leadingBlanks = first.getUTCDay();
+    // Monday-first: shift Sunday (getUTCDay() === 0) to the last column.
+    const leadingBlanks = (first.getUTCDay() + 6) % 7;
 
     // Build cells: blanks + days.
     const cells: ({ date: Date; key: string } | null)[] = [];
