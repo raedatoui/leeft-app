@@ -166,9 +166,6 @@ export default function ExerciseDetailV2({ state, muscleGroupColor, exerciseInde
                     +
                 </button>
             </div>
-            <button type="button" className="autofill-link" onClick={() => state.autofillLastSet(exerciseIndex)} disabled={draft.sets.length === 0}>
-                ⧉ autofill last set
-            </button>
         </>
     );
 }

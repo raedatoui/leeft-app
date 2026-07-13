@@ -3,11 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReadinessAnswers } from '@/lib/addWorkoutConstants';
 import { type DraftExercise, type DraftSet, exerciseSummary, exerciseVolume } from '@/lib/addWorkoutFormat';
+import { type AddWorkoutPhase, useAddWorkoutSession } from '@/lib/addWorkoutSession';
 import { useWorkoutData } from '@/lib/contexts';
 import type { ExerciseMap, ExerciseMetadata, Workout } from '@/types';
 
-export type { DraftExercise, DraftSet };
-export type AddWorkoutPhase = 'pre' | 'live' | 'done';
+export type { DraftExercise, DraftSet, AddWorkoutPhase };
 
 export interface ExerciseSummary {
     exerciseId: number;
@@ -68,24 +68,18 @@ export interface AddWorkoutState {
     fillDownSetField: (exerciseIndex: number, setIndex: number, field: 'reps' | 'weight') => void;
     toggleSetDone: (exerciseIndex: number, setIndex: number) => void;
     toggleAllSetsDone: (exerciseIndex: number) => void;
-    autofillLastSet: (exerciseIndex: number) => void;
     finishWorkout: () => void;
     backToWorkout: () => void;
     saveSession: () => void;
 }
 
-const todayUTC = () => new Date().toISOString().slice(0, 10);
-
 export function useAddWorkoutState(): AddWorkoutState {
     const { exerciseMap, workouts } = useWorkoutData();
 
-    const [phase, setPhase] = useState<AddWorkoutPhase>('pre');
-    const [date, setDate] = useState(todayUTC);
-    const [readiness, setReadiness] = useState<ReadinessAnswers>({});
-    const [startedAt, setStartedAt] = useState<number | null>(null);
-    const [endedAt, setEndedAt] = useState<number | null>(null);
-    const [rpe, setRpe] = useState(5);
-    const [exercises, setExercises] = useState<DraftExercise[]>([]);
+    // Session data lives in AddWorkoutSessionContext (mounted at the root) so it survives
+    // navigating away from /add; only UI-transient state below is local to this mount.
+    const { phase, setPhase, date, setDate, readiness, setReadiness, startedAt, setStartedAt, endedAt, setEndedAt, rpe, setRpe, exercises, setExercises, resetSession } =
+        useAddWorkoutSession();
     const [pageIndex, setPageIndex] = useState(0);
     const [exerciseModalIndex, setExerciseModalIndex] = useState<number | null>(null);
     const [confirmRemoveIndex, setConfirmRemoveIndex] = useState<number | null>(null);
@@ -202,12 +196,6 @@ export function useAddWorkoutState(): AddWorkoutState {
             return { ...ex, sets: ex.sets.map((s) => ({ ...s, done: !allDone })) };
         });
 
-    const autofillLastSet = (exerciseIndex: number) =>
-        updateExerciseAt(exerciseIndex, (ex) => {
-            const last = ex.sets[ex.sets.length - 1];
-            return last ? { ...ex, sets: [...ex.sets, { ...last, done: false }] } : ex;
-        });
-
     const finishWorkout = () => {
         setEndedAt(Date.now());
         setPhase('done');
@@ -243,6 +231,7 @@ export function useAddWorkoutState(): AddWorkoutState {
         setToastMessage('Nothing saved — payload logged to console');
         if (toastTimer.current) clearTimeout(toastTimer.current);
         toastTimer.current = setTimeout(() => setToastMessage(null), 2200);
+        resetSession(); // the session is over: clear the global draft so the nav timer stops
     };
 
     // "You've done this N times" — real equivalent of a usage-frequency count, from actual work sets.
@@ -318,7 +307,6 @@ export function useAddWorkoutState(): AddWorkoutState {
         fillDownSetField,
         toggleSetDone,
         toggleAllSetsDone,
-        autofillLastSet,
         finishWorkout,
         backToWorkout,
         saveSession,

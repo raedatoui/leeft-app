@@ -3,6 +3,7 @@
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import Loader from '@/components/common/loader';
+import { AddWorkoutSessionProvider } from '@/lib/addWorkoutSession';
 import { getUniqueValues, muscleGroupSlug } from '@/lib/exercises';
 import { fetchCardioWorkouts, fetchCycles, fetchExerciseMap, fetchLatestTimestamp, fetchMobilityMovements, fetchWorkouts } from '@/lib/fetchData';
 import { type MuscleGroup, WorkoutDataContext, type WorkoutDataContextType } from './contexts';
@@ -133,5 +134,9 @@ export function WorkoutProvider({ children }: WorkoutProviderProps) {
 }
 
 export default function Providers({ children }: ProvidersProps) {
-    return <WorkoutProvider>{children}</WorkoutProvider>;
+    return (
+        <AddWorkoutSessionProvider>
+            <WorkoutProvider>{children}</WorkoutProvider>
+        </AddWorkoutSessionProvider>
+    );
 }

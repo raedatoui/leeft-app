@@ -21,8 +21,9 @@ export function fmtClock(ms: number): string {
     return h ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`;
 }
 
+// Only completed (checked-off) sets count toward volume — an entered but unchecked set is a plan, not work done.
 export function exerciseVolume(ex: DraftExercise, workOnly: boolean): number {
-    return ex.sets.reduce((sum, s) => sum + (workOnly && !s.isWorkSet ? 0 : s.weight * s.reps), 0);
+    return ex.sets.reduce((sum, s) => sum + (!s.done || (workOnly && !s.isWorkSet) ? 0 : s.weight * s.reps), 0);
 }
 
 // TrainHeroic-style summary line: "3 x 12 @ 135lb" when uniform, else "10,14,14 @ 50,65,65lb".

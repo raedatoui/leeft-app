@@ -3,7 +3,9 @@
 import { BicepsFlexed, CalendarDays, ChartColumn, Dumbbell, HeartPulse, PersonStanding, Plus, Repeat2 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import type { CSSProperties } from 'react';
+import { type CSSProperties, useEffect, useState } from 'react';
+import { fmtClock } from '@/lib/addWorkoutFormat';
+import { useAddWorkoutSession } from '@/lib/addWorkoutSession';
 import RefreshButtonV2 from './refreshButtonV2';
 import ThemeToggleV2 from './themeToggleV2';
 
@@ -20,8 +22,24 @@ const NAV = [
 
 const isActivePath = (pathname: string | null, href: string) => pathname === href || (href !== '/' && (pathname?.startsWith(`${href}/`) ?? false));
 
+// Same isolated once-a-second tick as LiveClockV2, so the nav doesn't re-render on it.
+// Frozen at the final time once the session has ended (done phase, not yet saved).
+function SessionTimer({ startedAt, endedAt }: { startedAt: number; endedAt: number | null }) {
+    const [now, setNow] = useState(() => Date.now());
+
+    useEffect(() => {
+        if (endedAt !== null) return;
+        const id = setInterval(() => setNow(Date.now()), 1000);
+        return () => clearInterval(id);
+    }, [endedAt]);
+
+    return <>{fmtClock((endedAt ?? now) - startedAt)}</>;
+}
+
 export default function HeaderV2() {
     const pathname = usePathname();
+    const { startedAt, endedAt } = useAddWorkoutSession();
+    const sessionActive = startedAt !== null;
 
     return (
         <>
@@ -37,6 +55,22 @@ export default function HeaderV2() {
                     <div className="nav-links">
                         {NAV.map((item) => {
                             const Icon = item.icon;
+                            if (item.href === '/add' && sessionActive) {
+                                return (
+                                    <Link
+                                        key={item.href}
+                                        href={item.href}
+                                        className={`nav-live${isActivePath(pathname, item.href) ? ' active' : ''}`}
+                                        style={{ color: 'var(--hyper)' }}
+                                    >
+                                        <span className="rec" aria-hidden="true" />
+                                        <span className="nav-live-time">
+                                            <SessionTimer startedAt={startedAt} endedAt={endedAt} />
+                                        </span>
+                                        Live
+                                    </Link>
+                                );
+                            }
                             return (
                                 <Link
                                     key={item.href}
@@ -59,6 +93,21 @@ export default function HeaderV2() {
             <nav className="dock" aria-label="Primary">
                 {NAV.map((item) => {
                     const Icon = item.icon;
+                    if (item.href === '/add' && sessionActive) {
+                        return (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className={`dock-item dock-live${isActivePath(pathname, item.href) ? ' active' : ''}`}
+                                style={{ '--dock-c': 'var(--hyper)' } as CSSProperties}
+                            >
+                                <span className="dock-live-time">
+                                    <SessionTimer startedAt={startedAt} endedAt={endedAt} />
+                                </span>
+                                <span>Live</span>
+                            </Link>
+                        );
+                    }
                     return (
                         <Link
                             key={item.href}
