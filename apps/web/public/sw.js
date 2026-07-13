@@ -21,13 +21,19 @@ self.addEventListener('fetch', (event) => {
     const { request } = event;
     if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) return;
 
+    // Requests that explicitly ask to revalidate (e.g. the foreground build check
+    // in serviceWorkerRegister.tsx) bypass the SW cache entirely.
+    if (request.cache === 'no-cache' || request.cache === 'reload' || request.cache === 'no-store') return;
+
     // Navigations go network-first so a fresh deploy is picked up immediately;
-    // the cache is only the offline fallback.
+    // the cache is only the offline fallback. Fetch by URL with cache: 'no-cache'
+    // to force HTTP-cache revalidation (fetch(request) would accept stale HTML,
+    // and a navigation Request can't be re-constructed with a RequestInit).
     if (request.mode === 'navigate') {
         event.respondWith(
             caches.open(CACHE_NAME).then(async (cache) => {
                 try {
-                    const response = await fetch(request);
+                    const response = await fetch(request.url, { cache: 'no-cache' });
                     if (response.ok) cache.put(request, response.clone());
                     return response;
                 } catch {
