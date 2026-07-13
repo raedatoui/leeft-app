@@ -1,6 +1,6 @@
 'use client';
 
-import { BicepsFlexed, CalendarDays, ChartColumn, Dumbbell, HeartPulse, PersonStanding, Repeat2 } from 'lucide-react';
+import { BicepsFlexed, CalendarDays, ChartColumn, Dumbbell, HeartPulse, PersonStanding, Plus, Repeat2 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { CSSProperties } from 'react';
@@ -9,6 +9,7 @@ import ThemeToggleV2 from './themeToggleV2';
 
 const NAV = [
     { href: '/', label: 'Log', color: 'var(--maint)', icon: Dumbbell },
+    { href: '/add', label: 'Add', color: 'var(--zone)', icon: Plus },
     { href: '/stats', label: 'Stats', color: 'var(--maint)', icon: ChartColumn },
     { href: '/monthly', label: 'Monthly', color: 'var(--maint)', icon: CalendarDays },
     { href: '/cycles', label: 'Cycles', color: 'var(--strength)', icon: Repeat2 },

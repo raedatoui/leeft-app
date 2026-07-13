@@ -1,0 +1,1180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Leeft — log a session (prototype)</title>
+<link rel="stylesheet" href="shared.css" />
+<style>
+:root { color-scheme: dark; }
+
+/* ---- stage: centers a phone frame on desktop, full-bleed on mobile ---- */
+.stage {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 32px 16px;
+}
+.stage-caption {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted-2);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+}
+.phone {
+    position: relative;
+    width: 393px;
+    height: 800px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+@media (max-width: 480px) {
+    .stage { padding: 0; }
+    .stage-caption { display: none; }
+    .phone { width: 100%; height: 100dvh; border: none; border-radius: 0; box-shadow: none; }
+}
+
+/* ---- app bar ---- */
+.app-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px 10px;
+    border-bottom: 1px solid var(--border-soft);
+    flex-shrink: 0;
+}
+.app-bar .brand { font-family: var(--display); font-size: 15px; letter-spacing: 0.06em; }
+.app-bar .brand b { color: var(--maint); }
+.clock {
+    display: none;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 600;
+}
+.clock .rec {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--hyper);
+    animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse { 50% { opacity: 0.25; } }
+.phone[data-phase='live'] .clock { display: flex; }
+.mode {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px 10px;
+}
+.phone[data-phase='live'] .mode { display: none; }
+
+/* ---- views ---- */
+.view { flex: 1; min-height: 0; display: none; flex-direction: column; }
+.phone[data-phase='pre']  #viewPre,
+.phone[data-phase='live'] #viewLive,
+.phone[data-phase='done'] #viewDone { display: flex; }
+
+/* ================= PAGE 1 — readiness ================= */
+#viewPre .scroll { flex: 1; overflow-y: auto; padding: 20px 18px 16px; }
+.hero-title {
+    font-family: var(--display);
+    font-size: 34px;
+    line-height: 0.95;
+    text-transform: uppercase;
+}
+.hero-title b { color: var(--maint); }
+.hero-sub {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    margin-top: 8px;
+}
+.date-row { margin: 18px 0 6px; }
+.meta-field {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 8px 12px 10px;
+}
+.meta-field label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    margin-bottom: 4px;
+}
+.meta-field input[type='date'] {
+    width: 100%;
+    background: none;
+    border: none;
+    color: var(--fg);
+    font-family: var(--mono);
+    font-size: 14px;
+    padding: 2px 0;
+}
+.meta-field input:focus { outline: none; }
+
+.q { margin-top: 20px; }
+.q-label { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+.q-scale { display: flex; gap: 6px; }
+.q-scale button {
+    flex: 1;
+    height: 44px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 120ms;
+}
+.q-scale button.on { color: var(--bg); font-weight: 700; border-color: transparent; }
+.q-ends {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted-2);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.start-bar {
+    flex-shrink: 0;
+    padding: 12px 16px calc(14px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--border-soft);
+    background: var(--surface);
+}
+.btn-big {
+    width: 100%;
+    height: 54px;
+    border: none;
+    border-radius: 13px;
+    background: var(--maint);
+    color: var(--bg);
+    font-family: var(--display);
+    font-size: 18px;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+}
+.btn-big:active { filter: brightness(1.12); }
+.btn-big.green { background: var(--strength); }
+.btn-big.ghost {
+    background: none;
+    border: 1px dashed var(--border);
+    color: var(--muted);
+}
+.start-hint {
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted-2);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-top: 8px;
+}
+
+/* ================= LIVE — swipe pager ================= */
+.live-strip {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 18px;
+    border-bottom: 1px solid var(--border-soft);
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+.live-strip b { color: var(--maint); font-weight: 600; }
+.pager {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+}
+.pager::-webkit-scrollbar { display: none; }
+.page {
+    flex: 0 0 100%;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    overflow-y: auto;
+    padding: 18px 16px 20px;
+    display: flex;
+    flex-direction: column;
+}
+.page-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted-2);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    margin-bottom: 8px;
+}
+.ex-title-row {
+    display: grid;
+    grid-template-columns: 12px 1fr 28px;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 2px;
+}
+.ex-dot { width: 12px; height: 12px; border-radius: 50%; }
+.ex-title {
+    font-family: var(--display);
+    font-size: 24px;
+    line-height: 1;
+    text-transform: uppercase;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ex-remove {
+    background: none;
+    border: none;
+    color: var(--muted-2);
+    font-size: 17px;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+}
+.ex-vol-line {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--maint);
+    margin: 6px 0 16px;
+}
+/* LAST / working-max hint card (TrainHeroic-style) */
+.last-card {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+}
+.last-card label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    margin-bottom: 3px;
+}
+.last-card b { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--break); }
+
+.sets-head, .set-row {
+    display: grid;
+    grid-template-columns: 34px 1fr 1fr 44px;
+    gap: 10px;
+    align-items: center;
+}
+.sets-head { padding-bottom: 10px; }
+.sets-lbl { font-size: 15px; font-weight: 700; }
+.sets-head .chip {
+    background: var(--surface-2);
+    border-radius: 10px;
+    padding: 9px 0;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--break);
+}
+.set-row { margin-bottom: 10px; }
+.set-num {
+    background: none;
+    border: none;
+    color: var(--fg);
+    font-family: var(--mono);
+    font-size: 19px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+    padding: 4px 0;
+}
+.set-num small { font-size: 8px; color: var(--maint); text-transform: uppercase; margin-top: 3px; }
+.set-num.warmup { color: var(--muted); }
+.num-box {
+    height: 54px;
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface-2);
+    text-align: center;
+    color: var(--fg);
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 600;
+}
+.num-box:focus { outline: none; border-color: var(--muted-2); }
+.chk {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: none;
+    color: var(--muted-2);
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.chk.on { background: var(--strength); border-color: var(--strength); color: var(--bg); }
+.chk.all { font-size: 12px; letter-spacing: -3px; }
+.stepper {
+    display: grid;
+    grid-template-columns: 36px 1fr 36px;
+    height: 46px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface-2);
+    overflow: hidden;
+}
+.stepper button { background: none; border: none; color: var(--muted); font-size: 17px; cursor: pointer; }
+.stepper button:active { background: var(--border-soft); color: var(--fg); }
+.stepper input {
+    width: 100%;
+    background: none;
+    border: none;
+    text-align: center;
+    color: var(--fg);
+    font-family: var(--mono);
+    font-size: 16px;
+    font-weight: 600;
+}
+.stepper input:focus { outline: none; }
+.set-ctl {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    margin-top: 14px;
+}
+.set-ctl .ctl-lbl { font-size: 15px; font-weight: 700; }
+.ctl-circle {
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    border: 2px solid var(--maint);
+    background: none;
+    color: var(--maint);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+}
+.ctl-circle:active { background: var(--surface-2); }
+.ctl-circle:disabled { opacity: 0.3; }
+.autofill-link {
+    margin: 12px auto 0;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    padding: 6px 10px;
+}
+.autofill-link:disabled { opacity: 0.35; }
+.swipe-hint {
+    margin-top: auto;
+    padding-top: 18px;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted-2);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+}
+
+/* last page: session exercise list (empty state: add-or-done) */
+.next-page { justify-content: center; gap: 14px; text-align: center; }
+.next-page .big-q {
+    font-family: var(--display);
+    font-size: 28px;
+    text-transform: uppercase;
+    line-height: 1;
+    margin-bottom: 10px;
+}
+.next-page .big-q b { color: var(--maint); }
+.ex-list { display: flex; flex-direction: column; }
+.ex-list-row {
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    gap: 14px;
+    align-items: center;
+    padding: 16px 6px;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--fg);
+    font-family: var(--body);
+    text-align: left;
+    cursor: pointer;
+}
+.ex-list-row:active { background: var(--surface-2); }
+.ex-badge {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 17px;
+    color: var(--bg);
+}
+.ex-list-name { font-size: 16px; font-weight: 700; letter-spacing: 0.01em; }
+.ex-list-sub {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--fg);
+    opacity: 0.8;
+    margin-top: 3px;
+}
+.ex-del {
+    background: none;
+    border: none;
+    color: var(--break);
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+}
+.ex-del svg { width: 20px; height: 20px; }
+.add-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: none;
+    border: none;
+    color: var(--fg);
+    font-family: var(--body);
+    font-size: 16px;
+    font-weight: 700;
+    padding: 16px 6px;
+    cursor: pointer;
+    text-align: left;
+}
+.add-row .add-plus {
+    width: 30px; height: 30px;
+    border: 2px solid var(--maint);
+    border-radius: 50%;
+    color: var(--maint);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 19px;
+    font-weight: 500;
+    line-height: 1;
+}
+.list-actions {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-top: 12px;
+}
+
+/* pager nav: dots + chevrons */
+.pager-nav {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 10px 0 calc(12px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--border-soft);
+    background: var(--surface);
+}
+.dots { display: flex; gap: 7px; }
+.dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--border);
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: all 150ms;
+}
+.dot.on { background: var(--maint); transform: scale(1.3); }
+.dot.plus { background: none; border: 1px dashed var(--muted-2); }
+.dot.plus.on { border-color: var(--maint); }
+.chev {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 2px 10px;
+}
+.chev:disabled { opacity: 0.25; }
+
+/* ================= DONE — rpe + time ================= */
+#viewDone .scroll { flex: 1; overflow-y: auto; padding: 24px 20px; display: flex; flex-direction: column; }
+.done-time-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+}
+.done-time {
+    font-family: var(--display);
+    font-size: 56px;
+    line-height: 1;
+    color: var(--fg);
+    margin: 6px 0 4px;
+}
+.done-sub { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.done-sub b { color: var(--maint); font-weight: 600; }
+
+.rpe-block { margin-top: 40px; }
+.rpe-q { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.rpe-readout {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin: 14px 0 10px;
+}
+.rpe-num { font-family: var(--display); font-size: 44px; line-height: 1; }
+.rpe-word {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+}
+input[type='range'].rpe-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 12px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #19e68c 0%, #ffd60a 45%, #ff8c42 70%, #ff3b30 100%);
+    outline: none;
+    cursor: pointer;
+}
+input[type='range'].rpe-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--fg);
+    border: 4px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--border), 0 4px 12px rgba(0,0,0,0.5);
+}
+input[type='range'].rpe-slider::-moz-range-thumb {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--fg);
+    border: 4px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--border), 0 4px 12px rgba(0,0,0,0.5);
+}
+.rpe-ends {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted-2);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+.done-actions { margin-top: auto; display: flex; flex-direction: column; gap: 10px; padding-top: 30px; }
+.back-link {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    padding: 8px;
+}
+
+/* ================= full-screen exercise picker ================= */
+.picker {
+    position: absolute;
+    inset: 0;
+    background: var(--bg);
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(102%);
+    transition: transform 240ms cubic-bezier(0.3, 0.9, 0.3, 1);
+}
+.phone.picker-open .picker { transform: translateX(0); }
+.picker-head {
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid var(--border-soft);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.picker-top { display: flex; align-items: center; gap: 10px; }
+.picker-back {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 2px 8px 2px 0;
+}
+.picker-title { font-family: var(--display); font-size: 18px; text-transform: uppercase; letter-spacing: 0.04em; }
+.sheet-search {
+    width: 100%;
+    height: 44px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--fg);
+    font-family: var(--body);
+    font-size: 16px; /* prevents iOS zoom-on-focus */
+    padding: 0 14px;
+}
+.sheet-search:focus { outline: none; border-color: var(--muted-2); }
+.sheet-list { flex: 1; overflow-y: auto; padding: 6px 8px calc(16px + env(safe-area-inset-bottom)); }
+.pick-row {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 10px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 13px 10px;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--fg);
+    text-align: left;
+    cursor: pointer;
+}
+.pick-row:active { background: var(--surface-2); }
+.pick-name { font-size: 14px; font-weight: 600; }
+.pick-sub { font-family: var(--mono); font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+.pick-count { font-family: var(--mono); font-size: 10px; color: var(--muted-2); }
+.empty-note {
+    padding: 26px 16px;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted-2);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+}
+
+/* ---- toast ---- */
+.toast {
+    position: absolute;
+    left: 50%;
+    bottom: 96px;
+    transform: translate(-50%, 20px);
+    background: var(--fg);
+    color: var(--bg);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    opacity: 0;
+    transition: all 220ms;
+    pointer-events: none;
+    z-index: 60;
+    white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+</style>
+</head>
+<body>
+<div class="stage">
+    <div class="stage-caption">prototype · live session flow · nothing is saved</div>
+    <div class="phone" id="phone" data-phase="pre">
+        <header class="app-bar">
+            <div class="brand">🏋️ <b>LEEFT</b></div>
+            <div class="clock"><span class="rec"></span><span id="clock">0:00</span></div>
+            <div class="mode" id="modeChip">check in</div>
+        </header>
+
+        <!-- ============ PAGE 1: readiness questionnaire ============ -->
+        <div class="view" id="viewPre">
+            <div class="scroll">
+                <div class="hero-title">Ready to <b>lift?</b></div>
+                <div class="hero-sub">5 quick questions before you start</div>
+                <div class="date-row meta-field">
+                    <label>Date</label>
+                    <input type="date" id="dateInput" />
+                </div>
+                <div id="questions"></div>
+            </div>
+            <div class="start-bar">
+                <button class="btn-big" id="startBtn">Start Workout</button>
+                <div class="start-hint" id="startHint">start time is captured when you press start</div>
+            </div>
+        </div>
+
+        <!-- ============ LIVE: swipe pager ============ -->
+        <div class="view" id="viewLive">
+            <div class="live-strip">
+                <span id="liveCount">0 exercises</span>
+                <span>VOL <b id="stripVol">0</b> · WORK <b id="stripWork">0</b></span>
+            </div>
+            <div class="pager" id="pager"></div>
+            <div class="pager-nav">
+                <button class="chev" id="chevL">‹</button>
+                <div class="dots" id="dots"></div>
+                <button class="chev" id="chevR">›</button>
+            </div>
+        </div>
+
+        <!-- ============ DONE: rpe slider + time ============ -->
+        <div class="view" id="viewDone">
+            <div class="scroll">
+                <div class="done-time-label">Session time</div>
+                <div class="done-time" id="doneTime">0:00</div>
+                <div class="done-sub" id="doneSub"></div>
+
+                <div class="rpe-block">
+                    <div class="rpe-q">How hard was that session?</div>
+                    <div class="rpe-readout">
+                        <span class="rpe-num" id="rpeNum">5</span>
+                        <span class="rpe-word" id="rpeWord"></span>
+                    </div>
+                    <input type="range" class="rpe-slider" id="rpeSlider" min="1" max="10" step="1" value="5" />
+                    <div class="rpe-ends"><span>1 · easy</span><span>10 · max effort</span></div>
+                </div>
+
+                <div class="done-actions">
+                    <button class="btn-big green" id="saveBtn">Save Session</button>
+                    <button class="back-link" id="backBtn">← back to workout</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ full-screen exercise picker ============ -->
+        <div class="picker" id="picker">
+            <div class="picker-head">
+                <div class="picker-top">
+                    <button class="picker-back" id="pickerBack">←</button>
+                    <span class="picker-title">Pick an exercise</span>
+                </div>
+                <input class="sheet-search" id="searchInput" placeholder="Search exercises…" />
+            </div>
+            <div class="sheet-list" id="pickList"></div>
+        </div>
+
+        <div class="toast" id="toast"></div>
+    </div>
+</div>
+
+<script>
+/* ============ data (top-40 real exercises from exercise-classified.json, by frequency) ============ */
+const EXERCISES = [
+    ['Back Squat', 'quads', 'Barbell', 380], ['Bench Press', 'chest', 'Barbell', 297],
+    ['Overhead Press', 'shoulders', 'Barbell', 284], ['Deadlift', 'back', 'Barbell', 235],
+    ['Chin-Up', 'back', 'Bodyweight', 173], ['Pause Back Squat', 'quads', 'Barbell', 117],
+    ['Power Clean', 'hams', 'Barbell', 98], ['Incline Bench Press', 'chest', 'Barbell', 82],
+    ['Barbell Row', 'back', 'Barbell', 78], ['EZ Bar Lying Tricep Extension', 'triceps', 'EZ Bar', 76],
+    ['Tricep Pushdown', 'triceps', 'Cable', 72], ['Paused Deadlift', 'hams', 'Barbell', 70],
+    ['Lat Pull Downs', 'back', 'Cable', 66], ['Larsen Press', 'chest', 'Barbell', 59],
+    ['Bulgarian Split Squat', 'quads', 'Dumbbell', 54], ['1-Arm DB Row', 'back', 'Dumbbell', 52],
+    ['Dip', 'triceps', 'Bodyweight', 52], ['DB Bicep Curls', 'biceps', 'Dumbbell', 51],
+    ['Safety Bar Good Morning', 'hams', 'Safety Bar', 50], ['Cable Curl', 'biceps', 'Cable', 50],
+    ['HS ISO Lateral Row', 'back', 'Machine', 49], ['T-Bar Row', 'back', 'Machine', 47],
+    ['Incline DB Bench Press', 'chest', 'Dumbbell', 45], ['Pec Deck Fly', 'chest', 'Machine', 44],
+    ['Seated DB Shoulder Press', 'shoulders', 'Dumbbell', 43], ['EZ Bar Curl', 'biceps', 'EZ Bar', 43],
+    ['HS Iso Lateral Bench Press', 'chest', 'Machine', 43], ['Leg Press', 'quads', 'Machine', 42],
+    ['Single Leg Extension', 'quads', 'Machine', 38], ['Calf Raise', 'calves', 'Machine', 38],
+    ['DB Lateral Raise', 'shoulders', 'Dumbbell', 37], ['Smith Machine Incline Bench Press', 'chest', 'Smith', 37],
+    ['HS Iso Lateral Shoulder Press', 'shoulders', 'Machine', 36], ['Overhead Cable Triceps Extension', 'triceps', 'Cable', 36],
+    ['Step Up', 'quads', 'Bodyweight', 31], ['Box Squat', 'quads', 'Barbell', 30],
+    ['Single Leg Press', 'quads', 'Machine', 29], ['Back Squat Narrow', 'quads', 'Barbell', 28],
+    ['Lateral Raise To Overhead', 'shoulders', 'Dumbbell', 28],
+];
+const MG_COLOR = {
+    chest: 'var(--mg-chest)', back: 'var(--mg-back)', quads: 'var(--mg-quads)',
+    shoulders: 'var(--mg-shoulders)', hams: 'var(--mg-hams)', biceps: 'var(--mg-biceps)',
+    triceps: 'var(--mg-triceps)', glutes: 'var(--mg-glutes)', core: 'var(--mg-core)', calves: 'var(--mg-calves)',
+};
+
+/* TrainHeroic readiness survey — 5 questions, 1–5 scale */
+const QUESTIONS = [
+    { key: 'soreness',   label: 'How sore are you?',      lo: 'very sore', hi: 'fresh' },
+    { key: 'sleep',      label: 'How did you sleep?',     lo: 'terrible',  hi: 'great' },
+    { key: 'stress',     label: 'How stressed are you?',  lo: 'maxed out', hi: 'relaxed' },
+    { key: 'energy',     label: 'How is your energy?',    lo: 'drained',   hi: 'charged' },
+    { key: 'motivation', label: 'How motivated are you?', lo: 'meh',       hi: 'fired up' },
+];
+const SCALE_COLORS = ['#ff3b30', '#ff8c42', '#ffd60a', '#a8dd4a', '#19e68c'];
+const RPE_WORDS = {
+    1: 'barely moving', 2: 'very easy', 3: 'easy', 4: 'comfortable', 5: 'somewhat hard',
+    6: 'hard-ish', 7: 'hard — 3 reps left', 8: 'very hard — 2 reps left', 9: '1 rep left', 10: 'max effort',
+};
+/* slider value 1..10 mapped onto the green→red gradient */
+const RPE_COLORS = ['#19e68c', '#4ce07b', '#8ada62', '#c4d94e', '#ffd60a', '#ffbf1f', '#ffa62e', '#ff8c42', '#ff5f38', '#ff3b30'];
+
+/* ============ state (never persisted) ============ */
+const state = {
+    phase: 'pre',            // pre | live | done
+    date: new Date().toISOString().slice(0, 10),
+    readiness: {},           // key -> 1..5
+    startedAt: null,         // ms — captured on START press
+    endedAt: null,           // ms — captured on DONE press
+    rpe: 5,
+    exercises: [],           // { name, mg, sets: [{ weight, reps, work }] }
+};
+
+const $ = (id) => document.getElementById(id);
+const fmt = (n) => Math.round(n).toLocaleString('en-US');
+function fmtClock(ms) {
+    const s = Math.floor(ms / 1000);
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = String(s % 60).padStart(2, '0');
+    return h ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`;
+}
+
+function setPhase(p) {
+    state.phase = p;
+    $('phone').dataset.phase = p;
+}
+
+/* ============ readiness page ============ */
+function renderQuestions() {
+    $('questions').innerHTML = QUESTIONS.map((q) => `
+        <div class="q" data-q="${q.key}">
+            <div class="q-label">${q.label}</div>
+            <div class="q-scale">
+                ${[1, 2, 3, 4, 5].map((v) => {
+                    const on = state.readiness[q.key] === v;
+                    return `<button ${on ? `style="background:${SCALE_COLORS[v - 1]}" class="on"` : ''} data-v="${v}">${v}</button>`;
+                }).join('')}
+            </div>
+            <div class="q-ends"><span>${q.lo}</span><span>${q.hi}</span></div>
+        </div>`).join('');
+    const n = Object.keys(state.readiness).length;
+    $('startHint').textContent = n < 5 ? `${n} / 5 answered — start time is captured on start` : 'all set — start time is captured on start';
+}
+$('questions').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-v]');
+    if (!btn) return;
+    state.readiness[btn.closest('.q').dataset.q] = +btn.dataset.v;
+    renderQuestions();
+});
+$('dateInput').value = state.date;
+$('dateInput').addEventListener('input', (e) => { state.date = e.target.value; });
+
+/* ============ timer ============ */
+let tick = null;
+function startClock() {
+    clearInterval(tick);
+    tick = setInterval(() => { $('clock').textContent = fmtClock(Date.now() - state.startedAt); }, 1000);
+    $('clock').textContent = fmtClock(Date.now() - state.startedAt);
+}
+$('startBtn').addEventListener('click', () => {
+    state.startedAt = Date.now();
+    setPhase('live');
+    startClock();
+    renderPager();
+    openPicker(); // straight into picking the first exercise
+});
+
+/* ============ volumes ============ */
+function exVol(ex, workOnly) {
+    return ex.sets.reduce((a, s) => a + ((workOnly && !s.work) ? 0 : (s.weight || 0) * (s.reps || 0)), 0);
+}
+/* TrainHeroic-style summary line: "3 x 12 @ 135lb" when uniform, else "10,14,14 @ 50,65,65lb" */
+function exSummary(ex) {
+    if (!ex.sets.length) return 'no sets yet';
+    const reps = ex.sets.map((s) => s.reps || 0);
+    const wts = ex.sets.map((s) => s.weight || 0);
+    const uniform = reps.every((r) => r === reps[0]) && wts.every((w) => w === wts[0]);
+    return uniform ? `${ex.sets.length} x ${reps[0]} @ ${wts[0]}lb` : `${reps.join(',')} @ ${wts.join(',')}lb`;
+}
+/* fake per-exercise history (deterministic from name) — the real version reads the lifting log */
+function lastHint(name) {
+    let h = 0;
+    for (const c of name) h = (h * 31 + c.charCodeAt(0)) % 997;
+    const reps = 5 + (h % 8), wt = 45 + (h % 24) * 5;
+    return { sets: 2 + (h % 3), reps, wt, max: Math.round(wt * (1 + reps / 30)) };
+}
+function updateTotals() {
+    const vol = state.exercises.reduce((a, e) => a + exVol(e, false), 0);
+    const work = state.exercises.reduce((a, e) => a + exVol(e, true), 0);
+    $('stripVol').textContent = fmt(vol);
+    $('stripWork').textContent = fmt(work);
+    $('liveCount').textContent = `${state.exercises.length} exercise${state.exercises.length === 1 ? '' : 's'}`;
+    document.querySelectorAll('.page[data-xi]').forEach((pg) => {
+        const ex = state.exercises[+pg.dataset.xi];
+        pg.querySelector('.ex-vol-line').textContent = `${fmt(exVol(ex, true))} lbs work volume · ${ex.sets.length} sets`;
+    });
+    document.querySelectorAll('.ex-list-row').forEach((row) => {
+        const ex = state.exercises[+row.dataset.gotoEx];
+        if (ex) row.querySelector('.ex-list-sub').textContent = exSummary(ex);
+    });
+    return { vol, work };
+}
+
+/* ============ live pager ============ */
+let pageIndex = 0;
+function renderPager(goto = null) {
+    const pager = $('pager');
+    pager.innerHTML = state.exercises.map((ex, xi) => `
+        <div class="page" data-xi="${xi}">
+            <div class="page-tag">Exercise ${xi + 1} of ${state.exercises.length}</div>
+            <div class="ex-title-row">
+                <span class="ex-dot" style="background:${MG_COLOR[ex.mg] || 'var(--muted)'}"></span>
+                <span class="ex-title">${ex.name}</span>
+                <button class="ex-remove" data-collapse>×</button>
+            </div>
+            <div class="ex-vol-line"></div>
+            <div class="last-card">
+                <span><label>Last</label><b>${((h) => `${h.sets} x ${h.reps} @ ${h.wt} lb`)(lastHint(ex.name))}</b></span>
+                <span><label>Working max</label><b>${lastHint(ex.name).max}</b></span>
+            </div>
+            <div class="sets-head">
+                <span class="sets-lbl">Sets</span>
+                <span class="chip">Reps</span>
+                <span class="chip">Lb</span>
+                <button class="chk all ${ex.sets.length && ex.sets.every((s) => s.done) ? 'on' : ''}" data-check-all>✓✓</button>
+            </div>
+            ${ex.sets.map((s, si) => `
+                <div class="set-row" data-si="${si}">
+                    <button class="set-num ${s.work ? '' : 'warmup'}" data-toggle-work>${si + 1}${s.work ? '' : '<small>wu</small>'}</button>
+                    <input class="num-box" inputmode="numeric" data-f="reps" value="${s.reps || ''}" placeholder="0" onfocus="this.select()" />
+                    <input class="num-box" inputmode="decimal" data-f="weight" value="${s.weight || ''}" placeholder="0" onfocus="this.select()" />
+                    <button class="chk ${s.done ? 'on' : ''}" data-toggle-done>✓</button>
+                </div>`).join('')}
+            <div class="set-ctl">
+                <button class="ctl-circle" data-rem-set ${ex.sets.length ? '' : 'disabled'}>−</button>
+                <span class="ctl-lbl">Set</span>
+                <button class="ctl-circle" data-add-set>+</button>
+            </div>
+            <button class="autofill-link" data-autofill ${ex.sets.length ? '' : 'disabled'}>⧉ autofill last set</button>
+            <div class="swipe-hint">${xi === state.exercises.length - 1 ? 'swipe → to add / finish' : 'swipe → for next exercise'}</div>
+        </div>`).join('') + (state.exercises.length ? `
+        <div class="page next-page" style="justify-content:flex-start; text-align:left; gap:0;">
+            <div class="page-tag">Session · ${state.exercises.length} exercise${state.exercises.length === 1 ? '' : 's'}</div>
+            <div class="ex-list">
+                ${state.exercises.map((ex, i) => `
+                    <button class="ex-list-row" data-goto-ex="${i}">
+                        <span class="ex-badge" style="background:${MG_COLOR[ex.mg] || 'var(--muted)'}">${String.fromCharCode(65 + i)}</span>
+                        <span><span class="ex-list-name">${ex.name}</span><div class="ex-list-sub">${exSummary(ex)}</div></span>
+                        <span class="ex-del" data-del-ex="${i}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/>
+                            </svg>
+                        </span>
+                    </button>`).join('')}
+            </div>
+            <div class="list-actions">
+                <button class="add-row" data-open-picker><span class="add-plus">+</span> Add Exercise</button>
+                <button class="btn-big green" data-finish>Done Working Out</button>
+            </div>
+        </div>` : `
+        <div class="page next-page">
+            <div class="big-q">Let’s <b>go</b></div>
+            <button class="btn-big" data-open-picker>+ Add Exercise</button>
+        </div>`);
+    renderDots();
+    updateTotals();
+    const target = goto === null ? Math.min(pageIndex, pageCount() - 1) : goto;
+    requestAnimationFrame(() => snapTo(target, goto === null ? 'instant' : 'smooth'));
+}
+function pageCount() { return state.exercises.length + 1; }
+function snapTo(i, behavior = 'smooth') {
+    const pager = $('pager');
+    pageIndex = Math.max(0, Math.min(i, pageCount() - 1));
+    pager.scrollTo({ left: pageIndex * pager.clientWidth, behavior });
+    renderDots();
+}
+function renderDots() {
+    $('dots').innerHTML = Array.from({ length: pageCount() }, (_, i) => {
+        const plus = i === pageCount() - 1;
+        return `<button class="dot ${plus ? 'plus' : ''} ${i === pageIndex ? 'on' : ''}" data-goto="${i}" aria-label="page ${i + 1}"></button>`;
+    }).join('');
+    $('chevL').disabled = pageIndex === 0;
+    $('chevR').disabled = pageIndex >= pageCount() - 1;
+}
+$('pager').addEventListener('scroll', () => {
+    const p = $('pager');
+    const i = Math.round(p.scrollLeft / p.clientWidth);
+    if (i !== pageIndex) { pageIndex = i; renderDots(); }
+}, { passive: true });
+$('dots').addEventListener('click', (e) => {
+    const d = e.target.closest('[data-goto]');
+    if (d) snapTo(+d.dataset.goto);
+});
+$('chevL').addEventListener('click', () => snapTo(pageIndex - 1));
+$('chevR').addEventListener('click', () => snapTo(pageIndex + 1));
+
+/* set editing (event delegation on the pager) */
+$('pager').addEventListener('click', (e) => {
+    if (e.target.closest('[data-open-picker]')) return openPicker();
+    if (e.target.closest('[data-finish]')) return finish();
+    const delEx = e.target.closest('[data-del-ex]');
+    if (delEx) {
+        state.exercises.splice(+delEx.dataset.delEx, 1);
+        return renderPager();
+    }
+    const gotoEx = e.target.closest('[data-goto-ex]');
+    if (gotoEx) return snapTo(+gotoEx.dataset.gotoEx);
+
+    const pg = e.target.closest('.page[data-xi]');
+    if (!pg) return;
+    const xi = +pg.dataset.xi;
+    const ex = state.exercises[xi];
+    const row = e.target.closest('.set-row');
+
+    if (e.target.closest('[data-collapse]')) return snapTo(pageCount() - 1);
+    if (e.target.closest('[data-add-set]')) {
+        ex.sets.push({ weight: 0, reps: 0, work: ex.sets.length > 0, done: false });
+        return renderPager();
+    }
+    if (e.target.closest('[data-rem-set]')) {
+        ex.sets.pop();
+        return renderPager();
+    }
+    if (e.target.closest('[data-autofill]')) {
+        const last = ex.sets[ex.sets.length - 1];
+        if (last) { ex.sets.push({ ...last, done: false }); renderPager(); }
+        return;
+    }
+    if (e.target.closest('[data-check-all]')) {
+        const all = ex.sets.length && ex.sets.every((s) => s.done);
+        ex.sets.forEach((s) => { s.done = !all; });
+        return renderPager();
+    }
+    if (row && e.target.closest('[data-toggle-done]')) {
+        const s = ex.sets[+row.dataset.si];
+        s.done = !s.done;
+        return renderPager();
+    }
+    if (row && e.target.closest('[data-toggle-work]')) {
+        const s = ex.sets[+row.dataset.si];
+        s.work = !s.work;
+        return renderPager();
+    }
+});
+/* typed edits: update state + totals only (no re-render, keeps input focus) */
+$('pager').addEventListener('input', (e) => {
+    const inp = e.target.closest('input[data-f]');
+    if (!inp) return;
+    const pg = e.target.closest('.page[data-xi]');
+    const row = e.target.closest('.set-row');
+    state.exercises[+pg.dataset.xi].sets[+row.dataset.si][inp.dataset.f] = parseFloat(inp.value) || 0;
+    updateTotals();
+});
+
+/* ============ full-screen picker ============ */
+function renderPicker(filter = '') {
+    const q = filter.trim().toLowerCase();
+    const rows = EXERCISES.map((e, i) => [e, i]).filter(([[name]]) => !q || name.toLowerCase().includes(q));
+    $('pickList').innerHTML = rows.map(([[name, mg, equip, n], i]) => `
+        <button class="pick-row" data-pick="${i}">
+            <span class="ex-dot" style="width:10px;height:10px;background:${MG_COLOR[mg] || 'var(--muted)'}"></span>
+            <span><div class="pick-name">${name}</div><div class="pick-sub">${mg} · ${equip}</div></span>
+            <span class="pick-count">×${n}</span>
+        </button>`).join('') || '<div class="empty-note">no match</div>';
+}
+function openPicker() {
+    renderPicker();
+    $('searchInput').value = '';
+    $('phone').classList.add('picker-open');
+    setTimeout(() => $('searchInput').focus(), 260);
+}
+function closePicker() { $('phone').classList.remove('picker-open'); }
+$('pickerBack').addEventListener('click', closePicker);
+$('searchInput').addEventListener('input', (e) => renderPicker(e.target.value));
+$('pickList').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-pick]');
+    if (!btn) return;
+    const [name, mg] = EXERCISES[+btn.dataset.pick];
+    state.exercises.push({ name, mg, sets: [] });
+    closePicker();
+    renderPager(state.exercises.length - 1); // land on the new exercise page
+});
+
+/* ============ done page ============ */
+function finish() {
+    state.endedAt = Date.now();
+    clearInterval(tick);
+    setPhase('done');
+    $('modeChip').style.display = '';
+    $('doneTime').textContent = fmtClock(state.endedAt - state.startedAt);
+    const { vol, work } = updateTotals();
+    $('doneSub').innerHTML =
+        `${state.exercises.length} exercises · VOL <b>${fmt(vol)}</b> · WORK <b>${fmt(work)}</b> lbs`;
+    renderRpe();
+}
+function renderRpe() {
+    $('rpeNum').textContent = state.rpe;
+    $('rpeNum').style.color = RPE_COLORS[state.rpe - 1];
+    $('rpeWord').textContent = RPE_WORDS[state.rpe];
+}
+$('rpeSlider').addEventListener('input', (e) => {
+    state.rpe = +e.target.value;
+    renderRpe();
+});
+$('backBtn').addEventListener('click', () => {
+    state.endedAt = null;
+    setPhase('live');
+    startClock();
+});
+
+/* ============ save (prototype: logs the WorkoutSchema-shaped payload, persists nothing) ============ */
+$('saveBtn').addEventListener('click', () => {
+    const { vol, work } = updateTotals();
+    const payload = {
+        uuid: '<uuid-v4-at-save>',
+        date: state.date,
+        title: state.date,                                     // title derives from date, like TrainHeroic exports
+        startedAt: new Date(state.startedAt).toISOString(),    // captured at START press
+        duration: Math.max(1, Math.round((state.endedAt - state.startedAt) / 60000)),
+        rpe: state.rpe,
+        readiness: state.readiness,                            // NEW — not in current schema
+        exercises: state.exercises.map((ex, i) => ({
+            exerciseId: `<id of "${ex.name}">`,
+            order: i + 1,
+            sets: ex.sets.map((s, j) => ({ order: j + 1, weight: s.weight, reps: s.reps, isWorkSet: s.work })),
+            volume: exVol(ex, false),
+            workVolume: exVol(ex, true),
+        })),
+        volume: vol,
+        workVolume: work,
+    };
+    console.log('WorkoutSchema-shaped payload (NOT saved):', payload);
+    const t = $('toast');
+    t.textContent = 'Prototype — nothing saved (payload in console)';
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+});
+
+renderQuestions();
+</script>
+</body>
+</html>

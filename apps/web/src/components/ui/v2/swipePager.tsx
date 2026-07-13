@@ -23,21 +23,22 @@ const COMMIT_VELOCITY = 500;
 /** Movement below this is treated as a sloppy tap: no page turn, click not suppressed. */
 const TAP_SLOP = 10;
 
-/* 104% (not 100%) so the pages' edges clear each other while crossing. */
-const slideVariants: Variants = {
+/* 104% (not 100%) so the pages' edges clear each other while crossing.
+   Exported (with the fade fallback + transitions) so the add-workout phase slide reuses the exact same motion. */
+export const slideVariants: Variants = {
     enter: (direction: number) => ({ x: direction > 0 ? '104%' : '-104%' }),
     center: { x: '0%' },
     exit: (direction: number) => ({ x: direction > 0 ? '-104%' : '104%' }),
 };
 
-const fadeVariants: Variants = {
+export const fadeVariants: Variants = {
     enter: { opacity: 0 },
     center: { opacity: 1 },
     exit: { opacity: 0 },
 };
 
-const slideTransition: Transition = { type: 'spring', stiffness: 340, damping: 34 };
-const fadeTransition: Transition = { duration: 0.15 };
+export const slideTransition: Transition = { type: 'spring', stiffness: 480, damping: 42 };
+export const fadeTransition: Transition = { duration: 0.15 };
 
 /**
  * Drag-driven paging: the content follows the finger, commits prev/next on distance or
@@ -100,6 +101,9 @@ export function SwipePager({ pageKey, onPrev, onNext, disabled, className, child
                     exit="exit"
                     transition={reducedMotion ? fadeTransition : slideTransition}
                     drag="x"
+                    // a gesture that starts vertical locks to y and never engages the x-drag,
+                    // so nested scrollers (e.g. the add-workout exercise list) scroll natively on touch
+                    dragDirectionLock
                     dragConstraints={{ left: 0, right: 0 }}
                     dragElastic={{ left: disabled?.next ? 0.08 : 0.85, right: disabled?.prev ? 0.08 : 0.85 }}
                     onDrag={handleDrag}
