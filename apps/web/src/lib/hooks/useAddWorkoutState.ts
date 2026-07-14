@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReadinessAnswers } from '@/lib/addWorkoutConstants';
-import { type DraftExercise, type DraftSet, exerciseSummary, exerciseVolume } from '@/lib/addWorkoutFormat';
+import { type DraftExercise, type DraftSet, exerciseSummary, exerciseVolume, sessionRecords } from '@/lib/addWorkoutFormat';
 import { type AddWorkoutPhase, useAddWorkoutSession } from '@/lib/addWorkoutSession';
 import { useWorkoutData } from '@/lib/contexts';
 import type { ExerciseMap, ExerciseMetadata, Workout } from '@/types';
@@ -14,6 +14,29 @@ export interface ExerciseSummary {
     volume: number;
     workVolume: number;
     summaryText: string;
+}
+
+export interface SessionSummaryRecord {
+    reps: number;
+    weight: number;
+    name: string;
+}
+
+/** Snapshot of the just-saved session for the post-save summary screen — captured in
+ *  saveSession before resetSession clears the draft it's derived from. */
+export interface SessionSummary {
+    date: string;
+    volume: number;
+    exerciseCount: number;
+    setCount: number;
+    repCount: number;
+    /** Exercises whose sets are all checked off (of exerciseCount). */
+    completedExercises: number;
+    /** Average of the answered readiness questions (1-5), or null if none answered. */
+    readinessAvg: number | null;
+    minutes: number;
+    rpe: number;
+    records: SessionSummaryRecord[];
 }
 
 export interface AddWorkoutState {
@@ -55,6 +78,10 @@ export interface AddWorkoutState {
 
     toastMessage: string | null;
 
+    /** Post-save summary snapshot, or null when the summary screen is closed. */
+    summary: SessionSummary | null;
+    dismissSummary: () => void;
+
     startWorkout: () => void;
     addExercise: (exerciseId: number) => void;
     moveExercise: (fromIndex: number, toIndex: number) => void;
@@ -86,6 +113,7 @@ export function useAddWorkoutState(): AddWorkoutState {
     const [confirmRemoveIndex, setConfirmRemoveIndex] = useState<number | null>(null);
     const [pickerOpen, setPickerOpen] = useState(false);
     const [pickerQuery, setPickerQuery] = useState('');
+    const [summary, setSummary] = useState<SessionSummary | null>(null);
     const [toastMessage, setToastMessage] = useState<string | null>(null);
     const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -242,8 +270,29 @@ export function useAddWorkoutState(): AddWorkoutState {
         setToastMessage('Nothing saved — payload logged to console');
         if (toastTimer.current) clearTimeout(toastTimer.current);
         toastTimer.current = setTimeout(() => setToastMessage(null), 2200);
+
+        const doneSets = exercises.flatMap((ex) => ex.sets.filter((s) => s.done));
+        const answered = Object.values(readiness).filter((v): v is number => typeof v === 'number');
+        setSummary({
+            date,
+            volume: totals.volume,
+            exerciseCount: exercises.length,
+            setCount: doneSets.length,
+            repCount: doneSets.reduce((sum, s) => sum + s.reps, 0),
+            completedExercises: exercises.filter((ex) => ex.sets.length > 0 && ex.sets.every((s) => s.done)).length,
+            readinessAvg: answered.length > 0 ? answered.reduce((a, b) => a + b, 0) / answered.length : null,
+            minutes: payload.duration,
+            rpe,
+            records: sessionRecords(exercises, workouts).map((r) => ({
+                reps: r.reps,
+                weight: r.weight,
+                name: exerciseMap.get(String(r.exerciseId))?.name ?? `Exercise ${r.exerciseId}`,
+            })),
+        });
         resetSession(); // the session is over: clear the global draft so the nav timer stops
     };
+
+    const dismissSummary = () => setSummary(null);
 
     // "You've done this N times" — real equivalent of a usage-frequency count, from actual work sets.
     const exerciseSetCounts = useMemo(() => {
@@ -305,6 +354,9 @@ export function useAddWorkoutState(): AddWorkoutState {
         closePicker,
 
         toastMessage,
+
+        summary,
+        dismissSummary,
 
         startWorkout,
         addExercise,

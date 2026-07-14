@@ -9,6 +9,7 @@ import ExerciseModalV2 from '@/components/addWorkout/v2/exerciseModalV2';
 import ExercisePickerV2 from '@/components/addWorkout/v2/exercisePickerV2';
 import LiveViewV2 from '@/components/addWorkout/v2/liveViewV2';
 import ReadinessViewV2 from '@/components/addWorkout/v2/readinessViewV2';
+import SummaryViewV2 from '@/components/addWorkout/v2/summaryViewV2';
 import ToastV2 from '@/components/addWorkout/v2/toastV2';
 import { fadeTransition, fadeVariants, slideTransition, slideVariants } from '@/components/ui/v2/swipePager';
 import { useWorkoutData } from '@/lib/contexts';
@@ -62,6 +63,8 @@ export default function AddWorkoutPageV2() {
                     <ConfirmRemoveV2 state={state} />
                     <ToastV2 message={state.toastMessage} />
                 </div>
+                {/* direct child of .phone (not .phone-body) so it covers the app-bar too */}
+                <SummaryViewV2 state={state} />
             </div>
         </div>
     );

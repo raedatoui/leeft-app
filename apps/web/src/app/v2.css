@@ -4189,6 +4189,196 @@
         transform: translate(-50%, 0);
     }
 
+    /* ---- post-save session summary ----
+       full-phone overlay (covers the app-bar): above the picker/exercise sheets (50/52),
+       below .toast (60) so the "nothing saved" toast still reads over it */
+    .summary {
+        position: absolute;
+        inset: 0;
+        background: var(--bg);
+        z-index: 58;
+        display: flex;
+        flex-direction: column;
+    }
+    .sum-top {
+        flex-shrink: 0;
+        display: grid;
+        grid-template-columns: 40px 1fr 40px;
+        align-items: center;
+        padding: 14px 16px 6px;
+    }
+    .sum-date {
+        text-align: center;
+        font-family: var(--mono);
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+    }
+    /* the share-to-instagram slot from the reference, restyled as a copy action */
+    .sum-copy {
+        width: 38px;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: none;
+        border: 2px solid var(--maint);
+        border-radius: 12px;
+        color: var(--maint);
+        cursor: pointer;
+        transition: all 150ms;
+    }
+    .sum-copy svg {
+        width: 18px;
+        height: 18px;
+    }
+    .sum-copy.copied {
+        border-color: var(--strength);
+        color: var(--strength);
+    }
+    .sum-close {
+        width: 38px;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: none;
+        border: none;
+        color: var(--fg);
+        cursor: pointer;
+    }
+    .sum-scroll {
+        flex: 1;
+        overflow-y: auto;
+        overscroll-behavior-y: contain;
+        padding: 10px 22px 8px;
+    }
+    .sum-hero {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        padding: 22px 0 28px;
+    }
+    .sum-hero-icon {
+        position: relative;
+        display: flex;
+        color: var(--fg);
+    }
+    .sum-hero-icon svg {
+        position: relative;
+        width: 58px;
+        height: 58px;
+    }
+    /* yellow paint splash behind the weight, like the reference card */
+    .sum-hero-icon::before {
+        content: "";
+        position: absolute;
+        width: 48px;
+        height: 34px;
+        left: 56%;
+        top: 56%;
+        transform: translate(-50%, -50%) rotate(-9deg);
+        background: var(--maint);
+        border-radius: 40% 60% 55% 45% / 55% 45% 60% 40%;
+    }
+    .sum-hero-num {
+        font-family: var(--display);
+        font-size: 50px;
+        line-height: 1;
+    }
+    .lb {
+        font-family: var(--mono);
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--muted);
+        margin-left: 4px;
+    }
+    .sum-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        text-align: center;
+        padding-bottom: 28px;
+    }
+    .sum-label {
+        font-family: var(--mono);
+        font-size: 9px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+    }
+    .sum-val {
+        font-family: var(--display);
+        font-size: 30px;
+        line-height: 1.1;
+        margin-top: 4px;
+    }
+    .sum-val .den {
+        font-size: 15px;
+        color: var(--muted);
+    }
+    .sum-badges {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+        text-align: center;
+        padding-bottom: 28px;
+    }
+    .sum-badge svg {
+        width: 34px;
+        height: 34px;
+        margin-bottom: 10px;
+    }
+    .sum-badge .sum-val {
+        font-size: 22px;
+        margin-top: 2px;
+    }
+    .sum-prs-title {
+        text-align: center;
+        font-family: var(--mono);
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        margin-bottom: 16px;
+    }
+    .sum-prs-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px 10px;
+    }
+    .sum-pr {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .sum-pr svg {
+        width: 30px;
+        height: 30px;
+        color: var(--maint);
+        flex-shrink: 0;
+    }
+    .sum-pr-w {
+        font-family: var(--display);
+        font-size: 22px;
+        line-height: 1;
+    }
+    .sum-pr-w .lb {
+        font-size: 11px;
+        margin-left: 3px;
+    }
+    .sum-pr-name {
+        font-size: 12px;
+        font-weight: 600;
+        opacity: 0.85;
+        margin-top: 4px;
+    }
+    .sum-cta {
+        flex-shrink: 0;
+        padding: 12px 20px calc(14px + env(safe-area-inset-bottom));
+    }
+
     /* ============================================================
        mobile (≤768px) — bottom dock nav, scroll-strip toolbars,
        bottom-sheet dropdowns and day panel, re-gridded tables
