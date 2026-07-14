@@ -44,6 +44,35 @@ export default function ExerciseDetailV2({ state, muscleGroupColor, exerciseInde
     const lastSession = sessions[sessions.length - 1];
     const stats = useMemo(() => computeExerciseStats(sessions), [sessions]);
 
+    // Historical best weight per exact rep count (work sets only) — same per-rep-count
+    // semantics as the pipeline's PR pass (computePersonalRecords in apps/data).
+    const repMaxes = useMemo(() => {
+        const map = new Map<number, number>();
+        for (const w of state.workouts) {
+            for (const ex of w.exercises) {
+                if (ex.exerciseId !== exerciseId) continue;
+                for (const s of ex.sets) {
+                    if (!s.isWorkSet || !s.reps) continue;
+                    const prev = map.get(s.reps);
+                    if (prev === undefined || s.weight > prev) map.set(s.reps, s.weight);
+                }
+            }
+        }
+        return map;
+    }, [state.workouts, exerciseId]);
+
+    // A set gets the trophy iff it strictly beats the standing record for its exact rep count —
+    // history first, then earlier draft sets that already raised it (so duplicates don't all flag).
+    // Rep counts with no history never flag: a first-ever attempt isn't a meaningful record.
+    const runningMax = new Map(repMaxes);
+    const setIsPR = (draft?.sets ?? []).map((s) => {
+        if (!s.reps || !s.weight) return false;
+        const prev = runningMax.get(s.reps);
+        const isPR = prev !== undefined && s.weight > prev;
+        if (isPR) runningMax.set(s.reps, s.weight);
+        return isPR;
+    });
+
     if (!draft || !summary) return null;
 
     const lastText = lastSession
@@ -110,18 +139,26 @@ export default function ExerciseDetailV2({ state, muscleGroupColor, exerciseInde
                                 onBlur={() => setFocusedField(null)}
                                 onChange={(e) => state.updateSetField(exerciseIndex, si, 'reps', parseFloat(e.target.value) || 0)}
                             />
-                            <input
-                                className="num-box"
-                                inputMode="decimal"
-                                value={s.weight || ''}
-                                placeholder="0"
-                                onFocus={(e) => {
-                                    e.target.select();
-                                    setFocusedField({ setIndex: si, field: 'weight' });
-                                }}
-                                onBlur={() => setFocusedField(null)}
-                                onChange={(e) => state.updateSetField(exerciseIndex, si, 'weight', parseFloat(e.target.value) || 0)}
-                            />
+                            <div className="num-box-wrap">
+                                <input
+                                    className="num-box"
+                                    inputMode="decimal"
+                                    value={s.weight || ''}
+                                    placeholder="0"
+                                    onFocus={(e) => {
+                                        e.target.select();
+                                        setFocusedField({ setIndex: si, field: 'weight' });
+                                    }}
+                                    onBlur={() => setFocusedField(null)}
+                                    onChange={(e) => state.updateSetField(exerciseIndex, si, 'weight', parseFloat(e.target.value) || 0)}
+                                />
+                                {setIsPR[si] && (
+                                    <span className="set-pr" title={`${s.reps}RM personal record`}>
+                                        <span>{s.reps}RM</span>
+                                        <span>🏆</span>
+                                    </span>
+                                )}
+                            </div>
                             <button
                                 type="button"
                                 className={`chk${s.done ? ' on' : ''}`}

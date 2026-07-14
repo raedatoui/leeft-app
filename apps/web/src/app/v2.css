@@ -3566,6 +3566,27 @@
         outline: none;
         border-color: var(--muted-2);
     }
+    /* wraps the weight box so the rep-PR trophy can anchor inside it */
+    .num-box-wrap {
+        position: relative;
+    }
+    .set-pr {
+        position: absolute;
+        top: 50%;
+        right: 7px;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1px;
+        font-family: var(--mono);
+        font-size: 9px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        line-height: 1;
+        color: var(--maint);
+        pointer-events: none;
+    }
     .chk {
         width: 42px;
         height: 42px;
