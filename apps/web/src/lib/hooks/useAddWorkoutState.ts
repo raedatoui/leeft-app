@@ -57,6 +57,7 @@ export interface AddWorkoutState {
 
     startWorkout: () => void;
     addExercise: (exerciseId: number) => void;
+    moveExercise: (fromIndex: number, toIndex: number) => void;
     /** Index into `exercises` of the exercise pending delete confirmation, or null when no dialog is up. */
     confirmRemoveIndex: number | null;
     requestRemoveExercise: (index: number) => void;
@@ -150,6 +151,16 @@ export function useAddWorkoutState(): AddWorkoutState {
         setExercises((prev) => [...prev, { exerciseId, sets: [] }]);
         setPickerOpen(false);
         setPageIndex(0); // adding from the finish page returns to the exercise list
+    };
+
+    const moveExercise = (fromIndex: number, toIndex: number) => {
+        if (fromIndex === toIndex) return;
+        setExercises((prev) => {
+            const next = [...prev];
+            const [moved] = next.splice(fromIndex, 1);
+            next.splice(toIndex, 0, moved);
+            return next;
+        });
     };
 
     const requestRemoveExercise = (index: number) => setConfirmRemoveIndex(index);
@@ -297,6 +308,7 @@ export function useAddWorkoutState(): AddWorkoutState {
 
         startWorkout,
         addExercise,
+        moveExercise,
         confirmRemoveIndex,
         requestRemoveExercise,
         cancelRemoveExercise,

@@ -3690,7 +3690,7 @@
     }
     .ex-list-row {
         display: grid;
-        grid-template-columns: 44px 1fr auto;
+        grid-template-columns: auto 44px 1fr auto;
         gap: 14px;
         align-items: center;
         padding: 16px 6px;
@@ -3740,6 +3740,30 @@
     .ex-del svg {
         width: 20px;
         height: 20px;
+    }
+    /* touch-action: none is required for dnd-kit: without it the browser claims vertical
+       touch moves on the handle for scrolling and the drag never starts. */
+    .ex-drag {
+        background: none;
+        border: none;
+        color: var(--muted);
+        cursor: grab;
+        padding: 8px 0;
+        display: flex;
+        touch-action: none;
+    }
+    .ex-drag svg {
+        width: 20px;
+        height: 20px;
+    }
+    .ex-list-row.dragging {
+        position: relative;
+        z-index: 2;
+        background: var(--surface-2);
+    }
+    .ex-list-row.dragging,
+    .ex-list-row.dragging .ex-drag {
+        cursor: grabbing;
     }
     /* anchors a CTA button below a .page-scroll region, outside its scrolling: the exercise
        list's "add another" and the readiness screen's "start/resume workout" both use this, so
