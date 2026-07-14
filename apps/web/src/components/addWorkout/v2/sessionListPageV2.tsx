@@ -57,7 +57,7 @@ function SortableExerciseRow({ exerciseId, index, name, summaryText, dotColor, o
             <span className="ex-badge" style={{ background: dotColor }}>
                 {String.fromCharCode(65 + index)}
             </span>
-            <span>
+            <span className="ex-list-main">
                 <span className="ex-list-name">{name}</span>
                 <div className="ex-list-sub">{summaryText}</div>
             </span>
