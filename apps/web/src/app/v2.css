@@ -992,9 +992,19 @@
     /* cardio headline (type + duration above the effort chart) */
     .cardio-headline {
         display: flex;
-        align-items: baseline;
+        align-items: center;
         justify-content: space-between;
         gap: 12px;
+    }
+    /* type icon chip in lift/cardio headlines — mirrors .cardio-cell .top .icon on /cardio */
+    .headline-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--surface);
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
     }
     .cardio-type {
         font-family: var(--display);
@@ -1031,7 +1041,7 @@
     /* lifting headline (LIFTING label + workout title above the volume row) */
     .lift-headline {
         display: flex;
-        align-items: baseline;
+        align-items: center;
         justify-content: space-between;
         gap: 12px;
     }

@@ -1,9 +1,11 @@
 'use client';
 
+import { Dumbbell, Timer } from 'lucide-react';
 import Link from 'next/link';
 import { type FC, useEffect, useRef, useState } from 'react';
 import CardioStatsGrid from '@/components/cardio/v2/cardioStatsGrid';
 import { EffortChart } from '@/components/cardio/v2/effortChart';
+import { cardioColors, cardioIcons } from '@/lib/cardio-theme';
 import { startTime } from '@/lib/contexts';
 import { formatLongDate, formatShortDate, formatTimeOfDay } from '@/lib/dateFormatters';
 import type { CardioWorkout, DayWorkout, Exercise, ExerciseMap, ExerciseMetadata, Workout } from '@/types';
@@ -212,6 +214,9 @@ const LiftingWorkoutBody: FC<LiftingBodyProps> = ({
     return (
         <>
             <div className="lift-headline">
+                <span className="headline-icon" style={{ color: 'var(--maint)' }}>
+                    <Dumbbell size={18} />
+                </span>
                 <span className="lift-type">LIFTING</span>
                 {workout.startedAt && <span className="session-time">{formatTimeOfDay(workout.startedAt)}</span>}
                 <span className="lift-duration">
@@ -267,9 +272,13 @@ const LiftingWorkoutBody: FC<LiftingBodyProps> = ({
 };
 
 const CardioWorkoutBody: FC<{ workout: CardioWorkout; compact: boolean }> = ({ workout, compact }) => {
+    const Icon = cardioIcons[workout.type] ?? Timer;
     return (
         <>
             <div className="cardio-headline">
+                <span className="headline-icon" style={{ color: cardioColors[workout.type] ?? 'var(--cardio)' }}>
+                    <Icon size={18} />
+                </span>
                 <span className="cardio-type">{workout.type}</span>
                 {workout.startedAt && <span className="session-time">{formatTimeOfDay(workout.startedAt)}</span>}
                 <span className="cardio-duration">
