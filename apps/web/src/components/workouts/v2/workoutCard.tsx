@@ -197,7 +197,8 @@ const LiftingWorkoutBody: FC<LiftingBodyProps> = ({
             const sets = includeWarmup ? ex.sets : ex.sets.filter((s) => s.isWorkSet);
             return `${name}: ${formatSetsForClipboard(sets)}`;
         });
-        const text = `${formatLongDate(date)} · ${Math.round(workout.duration)} min\n${lines.join('\n')}`;
+        const time = workout.startedAt ? ` · ${formatTimeOfDay(workout.startedAt)}` : '';
+        const text = `${formatLongDate(date)}${time} · ${Math.round(workout.duration)} min\n${lines.join('\n')}`;
         try {
             await navigator.clipboard.writeText(text);
             setCopied(true);
