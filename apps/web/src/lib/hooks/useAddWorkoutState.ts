@@ -186,6 +186,7 @@ export function useAddWorkoutState(): AddWorkoutState {
         setExercises((prev) => {
             const next = [...prev];
             const [moved] = next.splice(fromIndex, 1);
+            if (!moved) return prev;
             next.splice(toIndex, 0, moved);
             return next;
         });
