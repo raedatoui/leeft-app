@@ -2867,7 +2867,13 @@
         background: var(--border-soft);
         border: 1px solid var(--border-soft);
     }
-    @media (max-width: 1100px) {
+    /* same column steps as .log-grid so the page-size hook fills one row per page */
+    @media (max-width: 1300px) {
+        .cardio-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+    @media (max-width: 980px) {
         .cardio-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }

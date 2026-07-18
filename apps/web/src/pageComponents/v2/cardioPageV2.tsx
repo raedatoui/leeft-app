@@ -2,7 +2,7 @@
 
 import { Clock, Flame, Heart, Timer, Zap } from 'lucide-react';
 import type { FC } from 'react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import CardioSessionCard from '@/components/cardio/v2/cardioSessionCard';
 import EffortTierToggle from '@/components/cardio/v2/effortTierToggle';
 import MonthlyBars from '@/components/cardio/v2/monthlyBars';
@@ -13,8 +13,7 @@ import SwipePager from '@/components/ui/v2/swipePager';
 import TablePager from '@/components/ui/v2/tablePager';
 import { formatTableDate } from '@/lib/dateFormatters';
 import { type CardioLoggedByFilter, type CardioPeriod, useCardioPageState } from '@/lib/hooks/useCardioPageState';
-
-const PAGE_SIZE = 24;
+import { useResponsiveColumns } from '@/lib/hooks/useResponsiveColumns';
 
 const PERIOD_OPTIONS: DropdownV2Option[] = [
     { value: 'ytd', label: 'Year to date' },
@@ -85,11 +84,16 @@ export default function CardioPageV2() {
         return [...byDay.values()].map((group) => group.sort((a, b) => (a.startedAt?.getTime() ?? 0) - (b.startedAt?.getTime() ?? 0)));
     }, [sortedWorkouts]);
 
-    // "All time" can hold thousands of sessions — render them a page at a time.
+    // Slider like the log page's daily view: one grid row of cards per page, page size tracks the responsive column count.
+    const columns = useResponsiveColumns();
     const [tablePage, setTablePage] = useState(0);
-    const totalPages = Math.max(1, Math.ceil(dayCards.length / PAGE_SIZE));
+    // Breakpoint crossings change the page size — snap back to the newest page.
+    useEffect(() => {
+        setTablePage(0);
+    }, [columns]);
+    const totalPages = Math.max(1, Math.ceil(dayCards.length / columns));
     const currentPage = Math.min(tablePage, totalPages - 1);
-    const pageCards = dayCards.slice(currentPage * PAGE_SIZE, currentPage * PAGE_SIZE + PAGE_SIZE);
+    const pageCards = dayCards.slice(currentPage * columns, currentPage * columns + columns);
     const pageRangeStart = pageCards[0]?.[0]?.date;
     const pageRangeEnd = pageCards[pageCards.length - 1]?.[0]?.date;
 

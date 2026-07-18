@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { type EffortTier, matchesTier } from '@/lib/cardio-effort';
 import { useActiveAllWorkouts, useWorkoutData } from '@/lib/contexts';
+import { useResponsiveColumns } from '@/lib/hooks/useResponsiveColumns';
 import type { DayWorkout, ExerciseMap } from '@/types';
 
 export interface WorkoutLogState {
@@ -30,7 +31,7 @@ export function useWorkoutLogState(opts: WorkoutLogStateOptions = {}): WorkoutLo
     const allDayWorkouts = useActiveAllWorkouts();
     const { exerciseMap } = useWorkoutData();
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [responsiveColumns, setResponsiveColumns] = useState(4);
+    const responsiveColumns = useResponsiveColumns();
     const [includeWarmup, setIncludeWarmup] = useState(opts.includeWarmup ?? true);
     // 'medium' default keeps the daily view clean (mirrors the old strict-mode default).
     const [effortTier, setEffortTier] = useState<EffortTier>('medium');
@@ -57,29 +58,10 @@ export function useWorkoutLogState(opts: WorkoutLogStateOptions = {}): WorkoutLo
         return availableYears.length > 0 ? availableYears[0] : undefined;
     }, [selectedYear, availableYears]);
 
+    // Breakpoint crossings change the page size, so the index points at a different window of days — snap back to the newest page.
     useEffect(() => {
-        const updateColumns = () => {
-            const width = window.innerWidth;
-            let newColumns = 4;
-            if (width < 640) {
-                newColumns = 1;
-            } else if (width < 1024) {
-                newColumns = 2;
-            } else if (width < 1280) {
-                newColumns = 3;
-            }
-            setResponsiveColumns((prev) => {
-                if (prev !== newColumns) {
-                    setCurrentIndex(0);
-                    return newColumns;
-                }
-                return prev;
-            });
-        };
-        updateColumns();
-        window.addEventListener('resize', updateColumns);
-        return () => window.removeEventListener('resize', updateColumns);
-    }, []);
+        setCurrentIndex(0);
+    }, [responsiveColumns]);
 
     const effectiveSlidesToShow = responsiveColumns;
     const slideCount = useMemo(() => Math.ceil(allWorkouts.length / effectiveSlidesToShow), [allWorkouts.length, effectiveSlidesToShow]);
