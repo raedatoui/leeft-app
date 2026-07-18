@@ -4320,9 +4320,10 @@
     }
     .sum-badges {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 6px;
-        text-align: center;
+        grid-template-columns: repeat(4, auto);
+        justify-content: center;
+        gap: 6px 24px;
+        text-align: left;
         padding-bottom: 28px;
     }
     .sum-badge svg {
