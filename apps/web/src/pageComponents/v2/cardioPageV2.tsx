@@ -73,13 +73,25 @@ export default function CardioPageV2() {
 
     const typeOrder = useMemo(() => distribution.map((slice) => slice.type), [distribution]);
 
+    // Same-day sessions share one card, in chronological order (sortedWorkouts is newest-day first).
+    const dayCards = useMemo(() => {
+        const byDay = new Map<string, typeof sortedWorkouts>();
+        for (const w of sortedWorkouts) {
+            const key = w.date.toISOString().slice(0, 10);
+            const group = byDay.get(key);
+            if (group) group.push(w);
+            else byDay.set(key, [w]);
+        }
+        return [...byDay.values()].map((group) => group.sort((a, b) => (a.startedAt?.getTime() ?? 0) - (b.startedAt?.getTime() ?? 0)));
+    }, [sortedWorkouts]);
+
     // "All time" can hold thousands of sessions — render them a page at a time.
     const [tablePage, setTablePage] = useState(0);
-    const totalPages = Math.max(1, Math.ceil(sortedWorkouts.length / PAGE_SIZE));
+    const totalPages = Math.max(1, Math.ceil(dayCards.length / PAGE_SIZE));
     const currentPage = Math.min(tablePage, totalPages - 1);
-    const pageWorkouts = sortedWorkouts.slice(currentPage * PAGE_SIZE, currentPage * PAGE_SIZE + PAGE_SIZE);
-    const pageRangeStart = pageWorkouts[0]?.date;
-    const pageRangeEnd = pageWorkouts[pageWorkouts.length - 1]?.date;
+    const pageCards = dayCards.slice(currentPage * PAGE_SIZE, currentPage * PAGE_SIZE + PAGE_SIZE);
+    const pageRangeStart = pageCards[0]?.[0]?.date;
+    const pageRangeEnd = pageCards[pageCards.length - 1]?.[0]?.date;
 
     const goPrevPage = () => setTablePage((p) => Math.max(0, p - 1));
     const goNextPage = () => setTablePage((p) => Math.min(totalPages - 1, p + 1));
@@ -299,8 +311,8 @@ export default function CardioPageV2() {
                         disabled={{ prev: currentPage === 0, next: currentPage >= totalPages - 1 }}
                         className="cardio-grid"
                     >
-                        {pageWorkouts.map((w) => (
-                            <CardioSessionCard key={w.uuid} workout={w} />
+                        {pageCards.map((group) => (
+                            <CardioSessionCard key={group[0].uuid} workouts={group} />
                         ))}
                     </SwipePager>
                 </>
