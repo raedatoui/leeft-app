@@ -149,7 +149,16 @@ export default function CycleDetailPageV2({ id }: CycleDetailPageV2Props) {
 
             <section className={`detail-zones${panelCollapsed ? ' left-collapsed' : ''}`}>
                 {panelCollapsed ? (
-                    <button type="button" className="zone rail" onClick={() => setPanelCollapsed(false)} title="Expand muscle group panel">
+                    <button
+                        type="button"
+                        className="zone rail"
+                        onClick={() => {
+                            setPanelCollapsed(false);
+                            setColumns(2);
+                            setCurrentIndex(0);
+                        }}
+                        title="Expand muscle group panel"
+                    >
                         <span className="rail-icon">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                                 <title>Expand</title>
