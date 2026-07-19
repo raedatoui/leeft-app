@@ -10,17 +10,9 @@ import TypeMix from '@/components/cardio/v2/typeMix';
 import PageTemplateV2 from '@/components/layout/v2/pageTemplateV2';
 import DropdownV2, { type DropdownV2Option } from '@/components/ui/v2/dropdownV2';
 import SwipePager from '@/components/ui/v2/swipePager';
-import TablePager from '@/components/ui/v2/tablePager';
-import { formatTableDate } from '@/lib/dateFormatters';
-import { type CardioLoggedByFilter, type CardioPeriod, useCardioPageState } from '@/lib/hooks/useCardioPageState';
+import { MONTHS_LONG } from '@/lib/dateFormatters';
+import { type CardioLoggedByFilter, useCardioPageState } from '@/lib/hooks/useCardioPageState';
 import { useResponsiveColumns } from '@/lib/hooks/useResponsiveColumns';
-
-const PERIOD_OPTIONS: DropdownV2Option[] = [
-    { value: 'ytd', label: 'Year to date' },
-    { value: '30d', label: 'Last 30 days' },
-    { value: '90d', label: 'Last 90 days' },
-    { value: 'all', label: 'All time' },
-];
 
 const MIN_DURATION_OPTIONS: DropdownV2Option[] = [
     { value: '0', label: 'Any length' },
@@ -50,10 +42,9 @@ export default function CardioPageV2() {
     const state = useCardioPageState();
     const {
         selectedYear,
+        setSelectedYear,
         activeType,
         setActiveType,
-        period,
-        setPeriod,
         effortTier,
         setEffortTier,
         minDuration,
@@ -66,8 +57,6 @@ export default function CardioPageV2() {
         stats,
         distribution,
         monthlyTrend,
-        goToPrevYear,
-        goToNextYear,
     } = state;
 
     const typeOrder = useMemo(() => distribution.map((slice) => slice.type), [distribution]);
@@ -94,17 +83,21 @@ export default function CardioPageV2() {
     const totalPages = Math.max(1, Math.ceil(dayCards.length / columns));
     const currentPage = Math.min(tablePage, totalPages - 1);
     const pageCards = dayCards.slice(currentPage * columns, currentPage * columns + columns);
-    const pageRangeStart = pageCards[0]?.[0]?.date;
-    const pageRangeEnd = pageCards[pageCards.length - 1]?.[0]?.date;
 
     const goPrevPage = () => setTablePage((p) => Math.max(0, p - 1));
     const goNextPage = () => setTablePage((p) => Math.min(totalPages - 1, p + 1));
 
-    const yearLabel =
-        period === 'ytd' ? `${selectedYear} · Year-to-date` : period === '30d' ? 'Last 30 days' : period === '90d' ? 'Last 90 days' : 'All time';
+    // The month dropdown reflects the visible page (dayCards are newest-first within the selected year)
+    // and jumps to the newest card of the picked month; months with no sessions no-op, like the log page.
+    const visibleMonth = pageCards[0]?.[0]?.date.getUTCMonth() ?? new Date().getUTCMonth();
+    const jumpToMonth = (monthStr: string) => {
+        const month = Number(monthStr);
+        const idx = dayCards.findIndex((group) => group[0].date.getUTCMonth() === month);
+        if (idx !== -1) setTablePage(Math.floor(idx / columns));
+    };
 
-    const prevDisabled = years.length === 0 || selectedYear === Math.min(...years);
-    const nextDisabled = years.length === 0 || selectedYear === Math.max(...years);
+    const monthOptions = useMemo<DropdownV2Option[]>(() => MONTHS_LONG.map((name, i) => ({ value: String(i), label: name })), []);
+    const yearOptions = useMemo<DropdownV2Option[]>(() => years.map((y) => ({ value: String(y), label: String(y) })), [years]);
 
     const allCount = scopedWorkouts.length;
 
@@ -116,7 +109,7 @@ export default function CardioPageV2() {
                         Cardio
                     </div>
                     <div className="hero-meta">
-                        <span className="label">Cardio · {yearLabel}</span>
+                        <span className="label">Cardio · {selectedYear}</span>
                         <span className="stats">
                             <span className="cardio">
                                 <b>{stats.workouts}</b>sessions
@@ -138,64 +131,43 @@ export default function CardioPageV2() {
             </section>
 
             <div className="toolbar u-mb-8">
-                {period === 'ytd' && (
-                    <>
-                        <div className="toolbar-grp">
-                            <div className="year-nav">
-                                <button
-                                    type="button"
-                                    className="icon-btn sm"
-                                    onClick={() => {
-                                        goToPrevYear();
-                                        setTablePage(0);
-                                    }}
-                                    disabled={prevDisabled}
-                                    aria-label="Previous year"
-                                >
-                                    <svg
-                                        width="12"
-                                        height="12"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        aria-hidden="true"
-                                    >
-                                        <title>Previous</title>
-                                        <polyline points="15 18 9 12 15 6" />
-                                    </svg>
-                                </button>
-                                <span className="label-mono" style={{ padding: '0 4px' }}>
-                                    {selectedYear}
-                                </span>
-                                <button
-                                    type="button"
-                                    className="icon-btn sm"
-                                    onClick={() => {
-                                        goToNextYear();
-                                        setTablePage(0);
-                                    }}
-                                    disabled={nextDisabled}
-                                    aria-label="Next year"
-                                >
-                                    <svg
-                                        width="12"
-                                        height="12"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        aria-hidden="true"
-                                    >
-                                        <title>Next</title>
-                                        <polyline points="9 18 15 12 9 6" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                        <span className="toolbar-divider" />
-                    </>
-                )}
+                <div className="toolbar-grp">
+                    <button type="button" className="icon-btn sm" onClick={goPrevPage} disabled={currentPage === 0} aria-label="Newer">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                            <title>Previous</title>
+                            <polyline points="15 18 9 12 15 6" />
+                        </svg>
+                    </button>
+                    <span className="toolbar-pos">
+                        <b>{currentPage + 1}</b>
+                        <span className="sep">/</span>
+                        {totalPages}
+                    </span>
+                    <DropdownV2 value={String(visibleMonth)} options={monthOptions} onChange={jumpToMonth} ariaLabel="Month" />
+                    <DropdownV2
+                        value={String(selectedYear)}
+                        options={yearOptions}
+                        onChange={(v) => {
+                            setSelectedYear(Number(v));
+                            setTablePage(0);
+                        }}
+                        ariaLabel="Year"
+                    />
+                    <button
+                        type="button"
+                        className="icon-btn sm"
+                        onClick={goNextPage}
+                        disabled={currentPage >= totalPages - 1}
+                        aria-label="Older"
+                    >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                            <title>Next</title>
+                            <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                    </button>
+                </div>
+
+                <span className="toolbar-divider" />
 
                 <EffortTierToggle
                     value={effortTier}
@@ -226,21 +198,6 @@ export default function CardioPageV2() {
                             setTablePage(0);
                         }}
                         ariaLabel="Logged by"
-                    />
-                </div>
-
-                <div className="toolbar-grp" style={{ marginLeft: 'auto' }}>
-                    <span className="label-mono" style={{ padding: '0 8px' }}>
-                        Period
-                    </span>
-                    <DropdownV2
-                        value={period}
-                        options={PERIOD_OPTIONS}
-                        onChange={(v) => {
-                            setPeriod(v as CardioPeriod);
-                            setTablePage(0);
-                        }}
-                        ariaLabel="Period"
                     />
                 </div>
             </div>
@@ -289,37 +246,24 @@ export default function CardioPageV2() {
                 <div className="chart-zone">
                     <div className="panel-label" style={{ margin: 0 }}>
                         <span>Monthly · Hours by type</span>
-                        <span className="hint">
-                            {period === 'ytd' ? selectedYear : period === 'all' ? 'all years' : period === '30d' ? 'last 30d' : 'last 90d'}
-                        </span>
+                        <span className="hint">{selectedYear}</span>
                     </div>
                     <MonthlyBars monthlyTrend={monthlyTrend} typeOrder={typeOrder} activeType={activeType} />
                 </div>
             </section>
 
             {sortedWorkouts.length > 0 ? (
-                <>
-                    <TablePager
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        onPrev={goPrevPage}
-                        onNext={goNextPage}
-                        rangeLabel={
-                            pageRangeStart && pageRangeEnd ? `${formatTableDate(pageRangeStart)} → ${formatTableDate(pageRangeEnd)}` : undefined
-                        }
-                    />
-                    <SwipePager
-                        pageKey={currentPage}
-                        onPrev={goPrevPage}
-                        onNext={goNextPage}
-                        disabled={{ prev: currentPage === 0, next: currentPage >= totalPages - 1 }}
-                        className="cardio-grid"
-                    >
-                        {pageCards.map((group) => (
-                            <CardioSessionCard key={group[0].uuid} workouts={group} />
-                        ))}
-                    </SwipePager>
-                </>
+                <SwipePager
+                    pageKey={currentPage}
+                    onPrev={goPrevPage}
+                    onNext={goNextPage}
+                    disabled={{ prev: currentPage === 0, next: currentPage >= totalPages - 1 }}
+                    className="cardio-grid"
+                >
+                    {pageCards.map((group) => (
+                        <CardioSessionCard key={group[0].uuid} workouts={group} />
+                    ))}
+                </SwipePager>
             ) : (
                 <div className="empty-state">No cardio sessions match the current filters.</div>
             )}

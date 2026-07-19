@@ -1,13 +1,11 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { type EffortTier, matchesTier } from '@/lib/cardio-effort';
 import { cardioColors } from '@/lib/cardio-theme';
 import { useActiveCardio } from '@/lib/contexts';
-import { filterByDateRange } from '@/lib/utils';
 import type { CardioWorkout } from '@/types';
 
-export type CardioPeriod = 'ytd' | '30d' | '90d' | 'all';
 export type CardioLoggedByFilter = 'all' | 'tracker' | 'manual' | 'auto_detected';
 
 export interface CardioStats {
@@ -39,10 +37,9 @@ export interface CardioMonthlyTrendBucket {
 export interface CardioPageState {
     // UI state
     selectedYear: number;
+    setSelectedYear: (y: number) => void;
     activeType: string | null;
     setActiveType: (t: string | null) => void;
-    period: CardioPeriod;
-    setPeriod: (p: CardioPeriod) => void;
     effortTier: EffortTier;
     setEffortTier: (t: EffortTier) => void;
     minDuration: number;
@@ -59,10 +56,6 @@ export interface CardioPageState {
     stats: CardioStats;
     distribution: CardioDistributionSlice[];
     monthlyTrend: CardioMonthlyTrendBucket[];
-
-    // Methods
-    goToPrevYear: () => void;
-    goToNextYear: () => void;
 }
 
 const EMPTY_STATS: CardioStats = {
@@ -133,20 +126,12 @@ function computeMonthlyTrend(workouts: CardioWorkout[], year: number): CardioMon
     return buckets;
 }
 
-function rollingWindowStart(days: number): Date {
-    const d = new Date();
-    d.setUTCHours(0, 0, 0, 0);
-    d.setUTCDate(d.getUTCDate() - days + 1);
-    return d;
-}
-
 export function useCardioPageState(): CardioPageState {
     const cardioWorkouts = useActiveCardio();
 
     const currentYear = new Date().getFullYear();
     const [selectedYear, setSelectedYear] = useState<number>(currentYear);
     const [activeType, setActiveType] = useState<string | null>(null);
-    const [period, setPeriod] = useState<CardioPeriod>('ytd');
     const [effortTier, setEffortTier] = useState<EffortTier>('medium');
     const [minDuration, setMinDuration] = useState(0);
     const [loggedBy, setLoggedBy] = useState<CardioLoggedByFilter>('all');
@@ -173,26 +158,13 @@ export function useCardioPageState(): CardioPageState {
 
     const yearWorkouts = useMemo(() => workoutsByYear[selectedYear] ?? [], [workoutsByYear, selectedYear]);
 
-    const periodWorkouts = useMemo(() => {
-        switch (period) {
-            case 'ytd':
-                return yearWorkouts;
-            case '30d':
-                return filterByDateRange(cardioWorkouts, rollingWindowStart(30), new Date());
-            case '90d':
-                return filterByDateRange(cardioWorkouts, rollingWindowStart(90), new Date());
-            case 'all':
-                return cardioWorkouts;
-        }
-    }, [period, yearWorkouts, cardioWorkouts]);
-
     // Effort/duration/logged-by narrow everything downstream (like the old strict mode did).
     const scopedWorkouts = useMemo(
         () =>
-            periodWorkouts.filter(
+            yearWorkouts.filter(
                 (w) => matchesTier(w, effortTier) && w.durationMin >= minDuration && (loggedBy === 'all' || w.loggedBy === loggedBy)
             ),
-        [periodWorkouts, effortTier, minDuration, loggedBy]
+        [yearWorkouts, effortTier, minDuration, loggedBy]
     );
 
     const filteredWorkouts = useMemo(() => {
@@ -208,24 +180,11 @@ export function useCardioPageState(): CardioPageState {
     const distribution = useMemo(() => computeDistribution(scopedWorkouts), [scopedWorkouts]);
     const monthlyTrend = useMemo(() => computeMonthlyTrend(scopedWorkouts, selectedYear), [scopedWorkouts, selectedYear]);
 
-    const goToPrevYear = useCallback(() => {
-        const idx = years.indexOf(selectedYear);
-        const prev = years[idx + 1];
-        if (prev !== undefined) setSelectedYear(prev);
-    }, [years, selectedYear]);
-
-    const goToNextYear = useCallback(() => {
-        const idx = years.indexOf(selectedYear);
-        const next = years[idx - 1];
-        if (next !== undefined) setSelectedYear(next);
-    }, [years, selectedYear]);
-
     return {
         selectedYear,
+        setSelectedYear,
         activeType,
         setActiveType,
-        period,
-        setPeriod,
         effortTier,
         setEffortTier,
         minDuration,
@@ -238,7 +197,5 @@ export function useCardioPageState(): CardioPageState {
         stats,
         distribution,
         monthlyTrend,
-        goToPrevYear,
-        goToNextYear,
     };
 }
