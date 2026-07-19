@@ -6,7 +6,8 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "pnpm --filter @leeft/web dev",
+    "dev": "PORT=${PORT:-$(cat .dev-port 2>/dev/null || echo 3000)} pnpm --filter @leeft/web dev",
+    "wt": "./scripts/shell/worktree.sh",
     "build:web": "pnpm --filter @leeft/web build",
     "build:desktop": "pnpm --filter @leeft/web build:desktop",
     "deploy:web": "pnpm build:web && cd apps/web && firebase deploy",

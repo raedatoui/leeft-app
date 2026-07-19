@@ -36,7 +36,15 @@ OPENAI_API_KEY=<key>
 ```bash
 pnpm install            # Install all dependencies
 pnpm dev                # Run web app dev server (Next.js)
+pnpm wt <branch> [base] # New worktree at .claude/worktrees/<branch> + dedicated dev port (--here adopts the current worktree)
 ```
+
+### Parallel worktree sessions
+`pnpm wt <branch>` (scripts/shell/worktree.sh) creates a worktree at `.claude/worktrees/<branch>` (same place Claude Code's built-in worktree isolation puts them; gitignored), assigns it the lowest free dev port >= 3001 (written to a gitignored `.dev-port` file at the worktree root), copies the gitignored env files, and runs `pnpm install`. The main checkout has no `.dev-port` and stays on port 3000. `git worktree remove` frees the port.
+
+**Standing instructions when this session's repo root is a worktree** (path contains `.claude/worktrees/`):
+- No `.dev-port` at the worktree root yet (worktree came from Claude's built-in isolation)? Run `./scripts/shell/worktree.sh --here` once — it assigns the port, copies the env files, and installs deps.
+- Start the dev server in the background right away (`pnpm dev` — the root script reads the port from `.dev-port`) and tell the user the URL (`http://localhost:<port>`), so all active sessions are loadable in the browser simultaneously. Starting the server is serving the app, not verification.
 
 ### Building & Quality
 ```bash
