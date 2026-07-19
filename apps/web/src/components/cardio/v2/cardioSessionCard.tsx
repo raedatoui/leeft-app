@@ -17,12 +17,14 @@ const WEEKDAY = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 const CardioSessionCard: FC<CardioSessionCardProps> = ({ workouts }) => {
-    const date = workouts[0].date;
+    const first = workouts[0];
+    if (!first) return null;
+    const date = first.date;
     const dayLabel = `${MONTH_SHORT[date.getUTCMonth()]} ${date.getUTCDate()}`;
     const weekday = WEEKDAY[date.getUTCDay()];
     // `date` is the UTC-midnight day key; wall-clock time lives on `startedAt`.
     // Single-session cards show the time in the day meta; multi-session cards show it per session.
-    const soloTime = workouts.length === 1 && workouts[0].startedAt ? formatTimeOfDay(workouts[0].startedAt) : '';
+    const soloTime = workouts.length === 1 && first.startedAt ? formatTimeOfDay(first.startedAt) : '';
     const dayMeta = soloTime ? `${weekday} · ${soloTime}` : weekday;
 
     return (

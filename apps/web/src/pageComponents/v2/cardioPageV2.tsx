@@ -92,7 +92,7 @@ export default function CardioPageV2() {
     const visibleMonth = pageCards[0]?.[0]?.date.getUTCMonth() ?? new Date().getUTCMonth();
     const jumpToMonth = (monthStr: string) => {
         const month = Number(monthStr);
-        const idx = dayCards.findIndex((group) => group[0].date.getUTCMonth() === month);
+        const idx = dayCards.findIndex((group) => group[0]?.date.getUTCMonth() === month);
         if (idx !== -1) setTablePage(Math.floor(idx / columns));
     };
 
@@ -261,7 +261,7 @@ export default function CardioPageV2() {
                     className="cardio-grid"
                 >
                     {pageCards.map((group) => (
-                        <CardioSessionCard key={group[0].uuid} workouts={group} />
+                        <CardioSessionCard key={group[0]?.uuid} workouts={group} />
                     ))}
                 </SwipePager>
             ) : (
