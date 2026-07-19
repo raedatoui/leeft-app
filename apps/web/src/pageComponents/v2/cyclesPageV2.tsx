@@ -43,8 +43,8 @@ function CycleCardV2({ cycle, index, exerciseMap }: CycleCardV2Props) {
                 </div>
                 <div className="stat-line">
                     <div className="stat sm">
-                        <span className="v">{workoutCount}</span>
-                        <span className="l">Workouts</span>
+                        <span className="v">{days}</span>
+                        <span className="l">Days</span>
                     </div>
                     {isBreak ? (
                         <div className="stat sm">
@@ -78,8 +78,8 @@ function CycleCardV2({ cycle, index, exerciseMap }: CycleCardV2Props) {
                 )}
             </div>
             <div className="duration">
-                <div className="n">{days}</div>
-                <div className="u">Days</div>
+                <div className="n">{workoutCount}</div>
+                <div className="u">Workouts</div>
             </div>
         </Link>
     );

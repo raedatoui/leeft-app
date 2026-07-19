@@ -27,6 +27,7 @@ export default function CycleDetailPageV2({ id }: CycleDetailPageV2Props) {
     const [isMobile, setIsMobile] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<string | null>(null);
+    const [panelCollapsed, setPanelCollapsed] = useState(false);
 
     useEffect(() => {
         const mql = window.matchMedia('(max-width: 768px)');
@@ -146,62 +147,100 @@ export default function CycleDetailPageV2({ id }: CycleDetailPageV2Props) {
                 </div>
             </section>
 
-            <section className="detail-zones">
-                <div className="zone">
-                    <div className="panel-label" style={{ margin: '0 0 24px' }}>
-                        <span>Muscle Group · Work Sets</span>
-                        <span className="hint">click to filter</span>
+            <section className={`detail-zones${panelCollapsed ? ' left-collapsed' : ''}`}>
+                {panelCollapsed ? (
+                    <button
+                        type="button"
+                        className="zone rail"
+                        onClick={() => {
+                            setPanelCollapsed(false);
+                            setColumns(2);
+                            setCurrentIndex(0);
+                        }}
+                        title="Expand muscle group panel"
+                    >
+                        <span className="rail-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                                <title>Expand</title>
+                                <path d="m9 18 6-6-6-6" />
+                            </svg>
+                        </span>
+                        <span className="rail-label">Muscle Group · Work Sets</span>
+                    </button>
+                ) : (
+                    <div className="zone">
+                        <div className="panel-label" style={{ margin: '0 0 24px' }}>
+                            <span>Muscle Group · Work Sets</span>
+                            <span className="label-actions">
+                                <span className="hint">click to filter</span>
+                                <button
+                                    type="button"
+                                    className="zone-collapse"
+                                    onClick={() => {
+                                        setPanelCollapsed(true);
+                                        setColumns(4);
+                                        setCurrentIndex(0);
+                                    }}
+                                    title="Collapse muscle group panel"
+                                >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                                        <title>Collapse</title>
+                                        <path d="m15 18-6-6 6-6" />
+                                    </svg>
+                                </button>
+                            </span>
+                        </div>
+    
+                        {muscleGroupStats.length === 0 ? (
+                            <div className="empty-state">No work sets recorded.</div>
+                        ) : (
+                            <div className="mg-chart">
+                                {muscleGroupStats.map(({ group, sets }) => {
+                                    const color = muscleGroupColor(group) ?? 'var(--muted)';
+                                    const width = `${(sets / maxSets) * 100}%`;
+                                    const isSelected = selectedMuscleGroup === group;
+                                    const isDimmed = selectedMuscleGroup !== null && !isSelected;
+                                    return (
+                                        <button
+                                            key={group}
+                                            type="button"
+                                            className={`mg-row${isSelected ? ' selected' : ''}${isDimmed ? ' dim' : ''}`}
+                                            onClick={() => {
+                                                setSelectedMuscleGroup(isSelected ? null : group);
+                                                setCurrentIndex(0);
+                                            }}
+                                            style={{ background: 'transparent', border: 0, textAlign: 'left' }}
+                                        >
+                                            <span className="name">
+                                                <span className="dot" style={{ background: color }} />
+                                                {muscleGroupName(group)}
+                                            </span>
+                                            <span className="bar-track">
+                                                <span className="bar-fill" style={{ width, background: color }} />
+                                            </span>
+                                            <span className="v">
+                                                <b>{sets}</b>s
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+    
+                        {muscleGroupStats.length > 0 && (
+                            <div className="mg-foot">
+                                <span>{muscleGroupStats.length} muscle groups</span>
+                                <span>{totalWorkSets} total work sets</span>
+                            </div>
+                        )}
+    
+                        {cycle.note && (
+                            <div className="note-block" style={{ marginTop: 28 }}>
+                                {cycle.note}
+                            </div>
+                        )}
                     </div>
-
-                    {muscleGroupStats.length === 0 ? (
-                        <div className="empty-state">No work sets recorded.</div>
-                    ) : (
-                        <div className="mg-chart">
-                            {muscleGroupStats.map(({ group, sets }) => {
-                                const color = muscleGroupColor(group) ?? 'var(--muted)';
-                                const width = `${(sets / maxSets) * 100}%`;
-                                const isSelected = selectedMuscleGroup === group;
-                                const isDimmed = selectedMuscleGroup !== null && !isSelected;
-                                return (
-                                    <button
-                                        key={group}
-                                        type="button"
-                                        className={`mg-row${isSelected ? ' selected' : ''}${isDimmed ? ' dim' : ''}`}
-                                        onClick={() => {
-                                            setSelectedMuscleGroup(isSelected ? null : group);
-                                            setCurrentIndex(0);
-                                        }}
-                                        style={{ background: 'transparent', border: 0, textAlign: 'left' }}
-                                    >
-                                        <span className="name">
-                                            <span className="dot" style={{ background: color }} />
-                                            {muscleGroupName(group)}
-                                        </span>
-                                        <span className="bar-track">
-                                            <span className="bar-fill" style={{ width, background: color }} />
-                                        </span>
-                                        <span className="v">
-                                            <b>{sets}</b>s
-                                        </span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    )}
-
-                    {muscleGroupStats.length > 0 && (
-                        <div className="mg-foot">
-                            <span>{muscleGroupStats.length} muscle groups</span>
-                            <span>{totalWorkSets} total work sets</span>
-                        </div>
-                    )}
-
-                    {cycle.note && (
-                        <div className="note-block" style={{ marginTop: 28 }}>
-                            {cycle.note}
-                        </div>
-                    )}
-                </div>
+                )}
 
                 <div className="zone">
                     <div className="panel-label" style={{ margin: '0 0 18px' }}>
