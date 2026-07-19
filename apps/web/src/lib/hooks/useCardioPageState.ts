@@ -68,7 +68,7 @@ const EMPTY_STATS: CardioStats = {
     totalZoneMinutes: 0,
 };
 
-function computeStats(workouts: CardioWorkout[]): CardioStats {
+export function computeStats(workouts: CardioWorkout[]): CardioStats {
     if (workouts.length === 0) return EMPTY_STATS;
 
     const totalDurationMin = workouts.reduce((sum, w) => sum + w.durationMin, 0);
@@ -86,7 +86,7 @@ function computeStats(workouts: CardioWorkout[]): CardioStats {
     };
 }
 
-function computeDistribution(workouts: CardioWorkout[]): CardioDistributionSlice[] {
+export function computeDistribution(workouts: CardioWorkout[]): CardioDistributionSlice[] {
     if (workouts.length === 0) return [];
     const counts: Partial<Record<string, number>> = {};
     for (const w of workouts) {
@@ -103,7 +103,7 @@ function computeDistribution(workouts: CardioWorkout[]): CardioDistributionSlice
         .sort((a, b) => b.count - a.count);
 }
 
-function computeMonthlyTrend(workouts: CardioWorkout[], year: number): CardioMonthlyTrendBucket[] {
+export function computeMonthlyTrend(workouts: CardioWorkout[], year: number): CardioMonthlyTrendBucket[] {
     const buckets: CardioMonthlyTrendBucket[] = Array.from({ length: 12 }, (_, i) => ({
         month: i,
         byType: {},

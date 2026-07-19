@@ -16,7 +16,7 @@ interface MonthCellV2Props {
     isCurrent: boolean;
 }
 
-interface TopExerciseRow {
+export interface TopExerciseRow {
     id: number;
     name: string;
     workouts: number;
@@ -24,7 +24,7 @@ interface TopExerciseRow {
     muscleGroup?: string;
 }
 
-function computeTopExercises(workouts: Workout[], exerciseMap: ExerciseMap): TopExerciseRow[] {
+export function computeTopExercises(workouts: Workout[], exerciseMap: ExerciseMap, limit = 5): TopExerciseRow[] {
     const byId = new Map<number, { workouts: number; sets: number }>();
     for (const w of workouts) {
         const seen = new Set<number>();
@@ -50,7 +50,7 @@ function computeTopExercises(workouts: Workout[], exerciseMap: ExerciseMap): Top
             };
         })
         .sort((a, b) => b.sets - a.sets)
-        .slice(0, 5);
+        .slice(0, limit);
 }
 
 function formatVolumeShort(n: number): { value: string; unit?: string } {
