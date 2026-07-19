@@ -57,7 +57,7 @@ export function useExercisesLibraryState(opts: UseExercisesLibraryStateOptions =
                 const matchesMuscle = muscleFilter === 'all' || ex.primaryMuscleGroup === muscleFilter;
                 const matchesCategory = categoryFilter === 'all' || ex.category === categoryFilter;
                 const matchesEquipment = equipmentFilter === 'all' || ex.equipment?.includes(equipmentFilter);
-                const matchesSearch = q === '' || ex.name.toLowerCase().includes(q);
+                const matchesSearch = q === '' || ex.name.toLowerCase().includes(q) || String(ex.id).startsWith(q);
                 return matchesMuscle && matchesCategory && matchesEquipment && matchesSearch;
             })
             .sort((a, b) => a.name.localeCompare(b.name));
