@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Worktrees with dedicated dev ports for parallel Claude Code sessions.
-#   pnpm wt <branch> [base]   create .claude/worktrees/<branch> (base defaults to main; reuses branch if it exists)
+#   pnpm wt <branch> [base]   create .claude/worktrees/<branch> (base defaults to main; reuses branch and worktree if they exist)
 #   pnpm wt --here            adopt the current worktree (e.g. one Claude's built-in isolation created): port + envs + install
 set -euo pipefail
 
@@ -49,7 +49,13 @@ base="${2:-main}"
 wt_path="$main_root/.claude/worktrees/${branch//\//-}"
 
 if [ -e "$wt_path" ]; then
-    echo "error: $wt_path already exists" >&2
+    if git worktree list --porcelain | grep -Fxq "worktree $wt_path"; then
+        setup_worktree "$wt_path"
+        echo ""
+        echo "  cd $wt_path && claude"
+        exit 0
+    fi
+    echo "error: $wt_path exists but is not a registered worktree" >&2
     exit 1
 fi
 
