@@ -4969,6 +4969,10 @@
         .app-bar {
             padding: max(14px, env(safe-area-inset-top)) 18px 10px;
         }
+        /* the summary overlay covers the app-bar, so its top row needs the same clearance */
+        .sum-top {
+            padding: max(14px, env(safe-area-inset-top)) 16px 6px;
+        }
     }
 
     @media (prefers-reduced-motion: reduce) {
