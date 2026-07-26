@@ -11,7 +11,10 @@ export default function PageTemplateV2({ children, footer }: PageTemplateV2Props
         <div className="shell">
             <HeaderV2 />
             <main className="stagger">{children}</main>
-            {footer && <footer>{footer}</footer>}
+            <footer>
+                {footer}
+                {footer ? ' · ' : ''}build {process.env.NEXT_PUBLIC_BUILD_TIME}
+            </footer>
         </div>
     );
 }
