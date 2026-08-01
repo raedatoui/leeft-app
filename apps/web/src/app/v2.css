@@ -3333,6 +3333,41 @@
         box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
     }
 
+    /* signed-out gate for /add — stands in for the phone frame until the owner signs in */
+    .auth-gate {
+        width: 393px;
+        max-width: 100%;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 28px;
+        padding: 48px 28px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        text-align: center;
+    }
+    .auth-gate-title {
+        font-family: var(--display);
+        font-size: 34px;
+        line-height: 1;
+        color: var(--fg);
+    }
+    .auth-gate-sub {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+    }
+    .auth-gate .btn-big {
+        width: 100%;
+        margin-top: 12px;
+    }
+    .auth-gate-error {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--hyper);
+    }
+
     .app-bar {
         display: flex;
         align-items: center;
@@ -3998,6 +4033,46 @@
         color: var(--fg);
         margin: 6px 0 4px;
     }
+    /* editable duration: timer-prefilled minutes, dashed underline signals "you can change this" */
+    .done-duration {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        margin: 6px 0 4px;
+    }
+    input[type='number'].duration-input {
+        font-family: var(--display);
+        font-size: 56px;
+        line-height: 1;
+        color: var(--fg);
+        background: none;
+        border: none;
+        border-bottom: 1px dashed var(--muted-2);
+        border-radius: 0;
+        padding: 0;
+        width: 3ch;
+        outline: none;
+        appearance: textfield;
+        -moz-appearance: textfield;
+    }
+    input[type='number'].duration-input::-webkit-outer-spin-button,
+    input[type='number'].duration-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    .duration-unit {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+    }
+    .duration-timer {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted-2);
+    }
     .done-sub {
         font-family: var(--mono);
         font-size: 11px;
@@ -4365,6 +4440,16 @@
         overflow-y: auto;
         overscroll-behavior-y: contain;
         padding: 10px 22px 8px;
+        display: flex;
+        flex-direction: column;
+    }
+    /* auto-margin centering: content sits mid-frame on tall viewports (mobile is 100dvh),
+       but the margins collapse to 0 and scroll normally once content overflows */
+    .sum-scroll > :first-child {
+        margin-top: auto;
+    }
+    .sum-scroll > :last-child {
+        margin-bottom: auto;
     }
     .sum-hero {
         display: flex;

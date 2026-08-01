@@ -38,7 +38,7 @@ export default function AddWorkoutPageV2() {
 
     return (
         <div className="stage">
-            <div className="stage-caption">live session flow · nothing is saved yet</div>
+            <div className="stage-caption">live session flow · saves to firestore</div>
             <div className={`phone${state.pickerOpen ? ' picker-open' : ''}`} data-phase={state.phase}>
                 <AppBarV2 phase={state.phase} startedAt={state.startedAt} date={state.date} onDateChange={state.setDate} />
                 <div className="phone-body">

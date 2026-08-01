@@ -9,7 +9,7 @@ export type AddWorkoutPhase = 'pre' | 'live' | 'done';
 export const todayUTC = () => new Date().toISOString().slice(0, 10);
 
 // Bump the version suffix if the stored shape ever changes; stale blobs are then ignored.
-const STORAGE_KEY = 'leeft-add-workout-session-v1';
+const STORAGE_KEY = 'leeft-add-workout-session-v2';
 
 interface StoredSession {
     phase: AddWorkoutPhase;
@@ -18,6 +18,7 @@ interface StoredSession {
     startedAt: number | null;
     endedAt: number | null;
     rpe: number;
+    durationMin: number | null;
     exercises: DraftExercise[];
 }
 
@@ -34,12 +35,14 @@ function loadStoredSession(): StoredSession | null {
             (s.startedAt === null || typeof s.startedAt === 'number') &&
             (s.endedAt === null || typeof s.endedAt === 'number') &&
             typeof s.rpe === 'number' &&
+            (s.durationMin === null || typeof s.durationMin === 'number') &&
             Array.isArray(s.exercises);
         return valid ? (s as StoredSession) : null;
     } catch {
         return null;
     }
 }
+
 
 // The durable half of the /add flow's state, mounted once at the root so an in-progress
 // session survives navigating away from /add and back. UI-transient state (pager position,
@@ -57,6 +60,9 @@ interface AddWorkoutSessionContextType {
     setEndedAt: React.Dispatch<React.SetStateAction<number | null>>;
     rpe: number;
     setRpe: React.Dispatch<React.SetStateAction<number>>;
+    /** Manual duration override in minutes from the done page; null = derive from the timer. */
+    durationMin: number | null;
+    setDurationMin: React.Dispatch<React.SetStateAction<number | null>>;
     exercises: DraftExercise[];
     setExercises: React.Dispatch<React.SetStateAction<DraftExercise[]>>;
     /** Back to a blank pre-session; called after saving so the nav timer clears. */
@@ -72,6 +78,7 @@ export function AddWorkoutSessionProvider({ children }: { children: React.ReactN
     const [startedAt, setStartedAt] = useState<number | null>(null);
     const [endedAt, setEndedAt] = useState<number | null>(null);
     const [rpe, setRpe] = useState(5);
+    const [durationMin, setDurationMin] = useState<number | null>(null);
     const [exercises, setExercises] = useState<DraftExercise[]>([]);
 
     const hydrated = useRef(false);
@@ -87,13 +94,13 @@ export function AddWorkoutSessionProvider({ children }: { children: React.ReactN
             if (phase === 'pre' && startedAt === null && exercises.length === 0) {
                 localStorage.removeItem(STORAGE_KEY);
             } else {
-                const session: StoredSession = { phase, date, readiness, startedAt, endedAt, rpe, exercises };
+                const session: StoredSession = { phase, date, readiness, startedAt, endedAt, rpe, durationMin, exercises };
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
             }
         } catch {
             // storage unavailable/full — the session just won't survive a reload
         }
-    }, [phase, date, readiness, startedAt, endedAt, rpe, exercises]);
+    }, [phase, date, readiness, startedAt, endedAt, rpe, durationMin, exercises]);
 
     // Hydrate after mount, not in the useState initializers: the static export prerenders
     // the blank state, and reading storage during the first render would mismatch the
@@ -107,6 +114,7 @@ export function AddWorkoutSessionProvider({ children }: { children: React.ReactN
             setStartedAt(stored.startedAt);
             setEndedAt(stored.endedAt);
             setRpe(stored.rpe);
+            setDurationMin(stored.durationMin);
             setExercises(stored.exercises);
         }
         hydrated.current = true;
@@ -119,6 +127,7 @@ export function AddWorkoutSessionProvider({ children }: { children: React.ReactN
         setStartedAt(null);
         setEndedAt(null);
         setRpe(5);
+        setDurationMin(null);
         setExercises([]);
     }, []);
 
@@ -137,6 +146,8 @@ export function AddWorkoutSessionProvider({ children }: { children: React.ReactN
                 setEndedAt,
                 rpe,
                 setRpe,
+                durationMin,
+                setDurationMin,
                 exercises,
                 setExercises,
                 resetSession,

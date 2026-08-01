@@ -11,12 +11,29 @@ interface DoneViewV2Props {
 
 export default function DoneViewV2({ state }: DoneViewV2Props) {
     const elapsed = state.startedAt !== null && state.endedAt !== null ? state.endedAt - state.startedAt : 0;
+    const timerMinutes = Math.max(1, Math.round(elapsed / 60000));
 
     return (
         <div className="view">
             <div className="scroll done">
-                <div className="done-time-label">Session time</div>
-                <div className="done-time">{fmtClock(elapsed)}</div>
+                <div className="done-time-label">Duration</div>
+                <div className="done-duration">
+                    <input
+                        type="number"
+                        inputMode="numeric"
+                        min={1}
+                        className="duration-input"
+                        aria-label="Session duration in minutes"
+                        value={state.durationMin ?? timerMinutes}
+                        onChange={(e) => {
+                            const v = Number(e.target.value);
+                            // Invalid/cleared input falls back to the timer default (null = auto).
+                            state.setDurationMin(Number.isFinite(v) && v > 0 ? Math.round(v) : null);
+                        }}
+                    />
+                    <span className="duration-unit">min</span>
+                    <span className="duration-timer">timer {fmtClock(elapsed)}</span>
+                </div>
                 <div className="done-sub">
                     {state.exercises.length} exercises · VOL <b>{formatNumber(state.totals.volume)}</b> · WORK{' '}
                     <b>{formatNumber(state.totals.workVolume)}</b> lbs
@@ -46,8 +63,8 @@ export default function DoneViewV2({ state }: DoneViewV2Props) {
                 </div>
 
                 <div className="done-actions">
-                    <button type="button" className="btn-big green" onClick={state.saveSession}>
-                        Save Session
+                    <button type="button" className="btn-big green" disabled={state.saving} onClick={state.saveSession}>
+                        {state.saving ? 'Saving…' : 'Save Session'}
                     </button>
                 </div>
             </div>

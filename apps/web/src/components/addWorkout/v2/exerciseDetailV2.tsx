@@ -28,6 +28,9 @@ export default function ExerciseDetailV2({ state, muscleGroupColor, exerciseInde
 
     // Which reps/weight box has keyboard focus — drives the per-column "fill below" chip.
     const [focusedField, setFocusedField] = useState<{ setIndex: number; field: 'reps' | 'weight' } | null>(null);
+    // Raw text of the focused weight box: the draft stores numbers, and rendering the parsed
+    // number back would eat the trailing "." while typing a decimal like 132.5.
+    const [weightText, setWeightText] = useState('');
 
     const sessions = useMemo(
         () =>
@@ -143,14 +146,18 @@ export default function ExerciseDetailV2({ state, muscleGroupColor, exerciseInde
                                 <input
                                     className="num-box"
                                     inputMode="decimal"
-                                    value={s.weight || ''}
+                                    value={focusedField?.setIndex === si && focusedField.field === 'weight' ? weightText : s.weight || ''}
                                     placeholder="0"
                                     onFocus={(e) => {
                                         e.target.select();
+                                        setWeightText(s.weight ? String(s.weight) : '');
                                         setFocusedField({ setIndex: si, field: 'weight' });
                                     }}
                                     onBlur={() => setFocusedField(null)}
-                                    onChange={(e) => state.updateSetField(exerciseIndex, si, 'weight', parseFloat(e.target.value) || 0)}
+                                    onChange={(e) => {
+                                        setWeightText(e.target.value);
+                                        state.updateSetField(exerciseIndex, si, 'weight', parseFloat(e.target.value) || 0);
+                                    }}
                                 />
                                 {setIsPR[si] && (
                                     <span className="set-pr" title={`${s.reps}RM personal record`}>

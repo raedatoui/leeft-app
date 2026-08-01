@@ -24,6 +24,7 @@
         "@leeft/types": "workspace:*",
         "@leeft/utils": "workspace:*",
         "@tailwindcss/postcss": "^4.1.18",
+        "firebase": "^12.16.0",
         "highcharts": "^12.4.0",
         "highcharts-react-official": "^3.2.3",
         "lucide-react": "^0.562.0",

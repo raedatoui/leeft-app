@@ -5,6 +5,7 @@ import type { ReadinessAnswers } from '@/lib/addWorkoutConstants';
 import { type DraftExercise, type DraftSet, exerciseSummary, exerciseVolume, sessionRecords } from '@/lib/addWorkoutFormat';
 import { type AddWorkoutPhase, useAddWorkoutSession } from '@/lib/addWorkoutSession';
 import { useWorkoutData } from '@/lib/contexts';
+import { saveErrorMessage, saveLiftingWorkout } from '@/lib/firebase';
 import type { ExerciseMap, ExerciseMetadata, Workout } from '@/types';
 
 export type { DraftExercise, DraftSet, AddWorkoutPhase };
@@ -49,6 +50,9 @@ export interface AddWorkoutState {
     endedAt: number | null;
     rpe: number;
     setRpe: (val: number) => void;
+    /** Manual duration override in minutes from the done page; null = derive from the timer. */
+    durationMin: number | null;
+    setDurationMin: (val: number | null) => void;
 
     exercises: DraftExercise[];
     exerciseSummaries: ExerciseSummary[];
@@ -98,7 +102,9 @@ export interface AddWorkoutState {
     toggleAllSetsDone: (exerciseIndex: number) => void;
     finishWorkout: () => void;
     backToWorkout: () => void;
-    saveSession: () => void;
+    saveSession: () => Promise<void>;
+    /** True while the Firestore write is in flight — disables the Save button. */
+    saving: boolean;
 }
 
 export function useAddWorkoutState(): AddWorkoutState {
@@ -106,8 +112,25 @@ export function useAddWorkoutState(): AddWorkoutState {
 
     // Session data lives in AddWorkoutSessionContext (mounted at the root) so it survives
     // navigating away from /add; only UI-transient state below is local to this mount.
-    const { phase, setPhase, date, setDate, readiness, setReadiness, startedAt, setStartedAt, endedAt, setEndedAt, rpe, setRpe, exercises, setExercises, resetSession } =
-        useAddWorkoutSession();
+    const {
+        phase,
+        setPhase,
+        date,
+        setDate,
+        readiness,
+        setReadiness,
+        startedAt,
+        setStartedAt,
+        endedAt,
+        setEndedAt,
+        rpe,
+        setRpe,
+        durationMin,
+        setDurationMin,
+        exercises,
+        setExercises,
+        resetSession,
+    } = useAddWorkoutSession();
     const [pageIndex, setPageIndex] = useState(0);
     const [exerciseModalIndex, setExerciseModalIndex] = useState<number | null>(null);
     const [confirmRemoveIndex, setConfirmRemoveIndex] = useState<number | null>(null);
@@ -115,6 +138,7 @@ export function useAddWorkoutState(): AddWorkoutState {
     const [pickerQuery, setPickerQuery] = useState('');
     const [summary, setSummary] = useState<SessionSummary | null>(null);
     const [toastMessage, setToastMessage] = useState<string | null>(null);
+    const [saving, setSaving] = useState(false);
     const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(
@@ -178,7 +202,8 @@ export function useAddWorkoutState(): AddWorkoutState {
     const addExercise = (exerciseId: number) => {
         setExercises((prev) => [...prev, { exerciseId, sets: [] }]);
         setPickerOpen(false);
-        setPageIndex(0); // adding from the finish page returns to the exercise list
+        setPageIndex(0); // the exercise list is what shows behind the sheet (and after closing it)
+        setExerciseModalIndex(exercises.length); // straight into the new exercise's editor sheet
     };
 
     const moveExercise = (fromIndex: number, toIndex: number) => {
@@ -246,15 +271,23 @@ export function useAddWorkoutState(): AddWorkoutState {
         setPhase('live');
     };
 
-    const saveSession = () => {
-        if (startedAt === null) return;
+    const showToast = (msg: string) => {
+        setToastMessage(msg);
+        if (toastTimer.current) clearTimeout(toastTimer.current);
+        toastTimer.current = setTimeout(() => setToastMessage(null), 2200);
+    };
+
+    const saveSession = async () => {
+        if (startedAt === null || saving) return;
         const finishedAt = endedAt ?? Date.now();
+        // ISO strings, not Dates — the client SDK would store Dates as Firestore Timestamps,
+        // which the pipeline's REST decoder deliberately doesn't handle. uuid is owned by
+        // saveLiftingWorkout (read-before-write keeps it stable across re-saves of a day).
         const payload = {
-            uuid: crypto.randomUUID(),
-            date: new Date(`${date}T00:00:00.000Z`), // UTC midnight, matching the app's date convention
+            date: `${date}T00:00:00.000Z`, // UTC midnight, matching the app's date convention
             title: date,
-            startedAt: new Date(startedAt),
-            duration: Math.max(1, Math.round((finishedAt - startedAt) / 60000)), // minutes
+            startedAt: new Date(startedAt).toISOString(),
+            duration: Math.max(1, durationMin ?? Math.round((finishedAt - startedAt) / 60000)), // minutes
             rpe,
             readiness, // not part of WorkoutSchema — kept as an explicit extra field
             exercises: exercises.map((ex, i) => ({
@@ -267,10 +300,19 @@ export function useAddWorkoutState(): AddWorkoutState {
             volume: totals.volume,
             workVolume: totals.workVolume,
         };
-        console.log('Workout-shaped payload (nothing saved — no persistence layer exists in this app):', payload);
-        setToastMessage('Nothing saved — payload logged to console');
-        if (toastTimer.current) clearTimeout(toastTimer.current);
-        toastTimer.current = setTimeout(() => setToastMessage(null), 2200);
+
+        setSaving(true);
+        try {
+            await saveLiftingWorkout(date, payload);
+        } catch (err) {
+            // Draft survives untouched for a retry — only a successful write resets it.
+            console.error('Saving workout to Firestore failed:', err);
+            showToast(saveErrorMessage(err));
+            setSaving(false);
+            return;
+        }
+        setSaving(false);
+        showToast('Workout saved');
 
         const doneSets = exercises.flatMap((ex) => ex.sets.filter((s) => s.done));
         const answered = Object.values(readiness).filter((v): v is number => typeof v === 'number');
@@ -329,6 +371,8 @@ export function useAddWorkoutState(): AddWorkoutState {
         endedAt,
         rpe,
         setRpe,
+        durationMin,
+        setDurationMin,
 
         exercises,
         exerciseSummaries,
@@ -375,5 +419,6 @@ export function useAddWorkoutState(): AddWorkoutState {
         finishWorkout,
         backToWorkout,
         saveSession,
+        saving,
     };
 }

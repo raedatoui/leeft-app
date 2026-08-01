@@ -1,0 +1,16 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner() {
+      return request.auth != null
+        && request.auth.token.email == 'raed.atoui@gmail.com'
+        && request.auth.token.email_verified;
+    }
+    match /lifting-workouts/{workoutId} {
+      allow read, write: if isOwner();
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
