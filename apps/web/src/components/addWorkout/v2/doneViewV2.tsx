@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { RPE_COLORS, RPE_WORDS } from '@/lib/addWorkoutConstants';
 import { fmtClock } from '@/lib/addWorkoutFormat';
 import type { AddWorkoutState } from '@/lib/hooks/useAddWorkoutState';
@@ -12,6 +13,10 @@ interface DoneViewV2Props {
 export default function DoneViewV2({ state }: DoneViewV2Props) {
     const elapsed = state.startedAt !== null && state.endedAt !== null ? state.endedAt - state.startedAt : 0;
     const timerMinutes = Math.max(1, Math.round(elapsed / 60000));
+    // Raw text while the field is being edited, so it can sit empty mid-retype. Deriving the
+    // value straight from durationMin made an empty field instantly snap back to the timer
+    // number (cleared -> null -> renders timerMinutes), so it could never be typed into.
+    const [draft, setDraft] = useState<string | null>(null);
 
     return (
         <div className="view">
@@ -24,11 +29,17 @@ export default function DoneViewV2({ state }: DoneViewV2Props) {
                         min={1}
                         className="duration-input"
                         aria-label="Session duration in minutes"
-                        value={state.durationMin ?? timerMinutes}
+                        value={draft ?? String(state.durationMin ?? timerMinutes)}
                         onChange={(e) => {
+                            setDraft(e.target.value);
                             const v = Number(e.target.value);
-                            // Invalid/cleared input falls back to the timer default (null = auto).
-                            state.setDurationMin(Number.isFinite(v) && v > 0 ? Math.round(v) : null);
+                            // Only a usable number commits; an empty or half-typed field just sits there.
+                            if (e.target.value !== '' && Number.isFinite(v) && v > 0) state.setDurationMin(Math.round(v));
+                        }}
+                        onBlur={() => {
+                            // Left empty or invalid on exit — fall back to the timer default (null = auto).
+                            if (draft !== null && !(Number(draft) > 0)) state.setDurationMin(null);
+                            setDraft(null);
                         }}
                     />
                     <span className="duration-unit">min</span>

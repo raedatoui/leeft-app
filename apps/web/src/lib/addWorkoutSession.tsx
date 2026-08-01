@@ -8,8 +8,10 @@ export type AddWorkoutPhase = 'pre' | 'live' | 'done';
 
 export const todayUTC = () => new Date().toISOString().slice(0, 10);
 
-// Bump the version suffix if the stored shape ever changes; stale blobs are then ignored.
-const STORAGE_KEY = 'leeft-add-workout-session-v2';
+// Only bump the version suffix for a shape change that genuinely can't be read forward —
+// a bump orphans every in-progress session on every device, so additive fields must widen
+// the check below instead. durationMin was added this way: absent in v1 blobs, read as null.
+const STORAGE_KEY = 'leeft-add-workout-session-v1';
 
 interface StoredSession {
     phase: AddWorkoutPhase;
@@ -18,7 +20,7 @@ interface StoredSession {
     startedAt: number | null;
     endedAt: number | null;
     rpe: number;
-    durationMin: number | null;
+    durationMin?: number | null;
     exercises: DraftExercise[];
 }
 
@@ -35,7 +37,7 @@ function loadStoredSession(): StoredSession | null {
             (s.startedAt === null || typeof s.startedAt === 'number') &&
             (s.endedAt === null || typeof s.endedAt === 'number') &&
             typeof s.rpe === 'number' &&
-            (s.durationMin === null || typeof s.durationMin === 'number') &&
+            (s.durationMin == null || typeof s.durationMin === 'number') &&
             Array.isArray(s.exercises);
         return valid ? (s as StoredSession) : null;
     } catch {
@@ -114,7 +116,7 @@ export function AddWorkoutSessionProvider({ children }: { children: React.ReactN
             setStartedAt(stored.startedAt);
             setEndedAt(stored.endedAt);
             setRpe(stored.rpe);
-            setDurationMin(stored.durationMin);
+            setDurationMin(stored.durationMin ?? null);
             setExercises(stored.exercises);
         }
         hydrated.current = true;
