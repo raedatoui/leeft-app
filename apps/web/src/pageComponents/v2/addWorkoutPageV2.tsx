@@ -39,7 +39,7 @@ export default function AddWorkoutPageV2() {
 
     return (
         <div className="stage">
-            <div className="stage-caption">live session flow · saves to firestore</div>
+            <div className="stage-caption">live session flow</div>
             <div className={`phone${state.pickerOpen ? ' picker-open' : ''}`} data-phase={state.phase}>
                 <AppBarV2
                     phase={state.phase}

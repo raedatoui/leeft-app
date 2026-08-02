@@ -43,10 +43,9 @@ export default function AddAuthGate({ children }: { children: ReactNode }) {
 
     return (
         <div className="stage">
-            <div className="stage-caption">owner sign-in required</div>
             <div className="auth-gate">
                 <div className="auth-gate-title">SIGN IN</div>
-                <div className="auth-gate-sub">Logging a workout writes to Firestore — sign in with the owner account.</div>
+                <div className="auth-gate-sub">Logging a workout requires signing in.</div>
                 <button type="button" className="btn-big green" onClick={signIn}>
                     Sign in with Google
                 </button>
