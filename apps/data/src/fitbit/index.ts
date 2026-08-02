@@ -14,6 +14,7 @@ const commands = {
 
 runCLI({
     commands,
+    name: 'fitbit',
     usage: 'bun src/fitbit/index.ts <command> [args...]',
     examples: [
         'bun src/fitbit/index.ts auth         # Authenticate with Fitbit',

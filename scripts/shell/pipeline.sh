@@ -36,32 +36,15 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 cd "$PROJECT_ROOT"
 
+source "$SCRIPT_DIR/steps.sh"
+
 # Load environment variables
 if [ -f "apps/data/.env" ]; then
     TRAINHEROIC_SESSION_TOKEN=$(grep '^TRAINHEROIC_SESSION_TOKEN=' apps/data/.env | cut -d'=' -f2)
 fi
 
-# Color output for better visibility
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
-log() {
-    echo -e "${BLUE}[$(date '+%Y-%m-%d %H:%M:%S')]${NC} $1"
-}
-
 error() {
     echo -e "${RED}[ERROR]${NC} $1" >&2
-}
-
-success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
-warn() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
 }
 
 # Function to validate date format (YYYY-MM-DD)
@@ -74,14 +57,24 @@ validate_date() {
     return 1
 }
 
-echo -e "${BLUE}Leeft Data Pipeline${NC}"
-echo "===================="
 if [ "$SKIP_DOWNLOAD" = true ]; then
-    echo "Mode: Skip download"
-elif [ "$DEPLOY" = true ]; then
-    echo "Mode: Full pipeline + deploy"
+    MODE="compile only, skipping downloads"
 else
-    echo "Mode: Sync only (no deploy)"
+    MODE="download → compile"
+fi
+if [ "$DEPLOY" = true ]; then
+    MODE="${MODE} → upload → deploy"
+else
+    MODE="${MODE}, no deploy"
+fi
+
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+
+echo ""
+echo -e "${BOLD}LEEFT DATA PIPELINE${NC}"
+echo -e "${DIM}${MODE}${NC}"
+if [ "$DEPLOY" = true ]; then
+    echo -e "${DIM}timestamp ${TIMESTAMP}${NC}"
 fi
 echo ""
 
@@ -128,152 +121,62 @@ if [ "$SKIP_DOWNLOAD" = false ]; then
     done
 
     echo ""
-    log "Starting pipeline for date range: ${START_DATE} to ${END_DATE}"
-    echo ""
-else
-    log "Skipping downloads, processing existing data..."
-    echo ""
+    echo -e "${DIM}date range ${START_DATE} → ${END_DATE}${NC}"
 fi
 
 # Calculate total steps based on mode
-TOTAL_STEPS=7
+TOTAL=7
 if [ "$SKIP_DOWNLOAD" = false ]; then
-    TOTAL_STEPS=$((TOTAL_STEPS + 2))
+    TOTAL=$((TOTAL + 2))
 fi
 if [ "$DEPLOY" = true ]; then
-    TOTAL_STEPS=$((TOTAL_STEPS + 2))
+    TOTAL=$((TOTAL + 2))
 fi
-STEP=0
+step_init $TOTAL
 
 # Change to apps/data for data pipeline commands
 cd apps/data
 
-# Step: Download TrainHeroic data
 if [ "$SKIP_DOWNLOAD" = false ]; then
-    STEP=$((STEP + 1))
-    log "Step ${STEP}/${TOTAL_STEPS}: Downloading TrainHeroic data..."
-    if bun trainheroic:download "startDate=${START_DATE}&endDate=${END_DATE}" "$TRAINHEROIC_SESSION_TOKEN"; then
-        success "TrainHeroic data downloaded"
-    else
-        error "Failed to download TrainHeroic data"
-        exit 1
-    fi
+    run_step "TrainHeroic download" "bun trainheroic:download 'startDate=${START_DATE}&endDate=${END_DATE}' \"\$TRAINHEROIC_SESSION_TOKEN\""
 fi
 
-# Step: Download app-logged workouts from Firestore
 # Unconditional (even with --skip-download): it's a cheap read, and skipping it would silently
 # drop workouts logged in the app.
-STEP=$((STEP + 1))
-log "Step ${STEP}/${TOTAL_STEPS}: Downloading Firestore workouts..."
-if bun firestore:download; then
-    success "Firestore workouts downloaded"
-else
-    error "Failed to download Firestore workouts"
-    exit 1
-fi
+run_step "Firestore download" "bun firestore:download"
 
-# Step: Compile lifting data
-STEP=$((STEP + 1))
-log "Step ${STEP}/${TOTAL_STEPS}: Compiling lifting data..."
-if bun compile:lifting; then
-    success "Lifting data compiled"
-else
-    error "Failed to compile lifting data"
-    exit 1
-fi
+run_step "Compile lifting" "bun compile:lifting"
+run_step "Combine lifting" "bun combine:lifting"
 
-# Step: Combine lifting data
-STEP=$((STEP + 1))
-log "Step ${STEP}/${TOTAL_STEPS}: Combining lifting data..."
-if bun combine:lifting; then
-    success "Lifting data combined"
-else
-    error "Failed to combine lifting data"
-    exit 1
-fi
-
-# Step: Download Fitbit data (auto-refreshes token if expired)
+# Auto-refreshes the Fitbit token if expired
 if [ "$SKIP_DOWNLOAD" = false ]; then
-    STEP=$((STEP + 1))
-    log "Step ${STEP}/${TOTAL_STEPS}: Downloading Fitbit data..."
-    if bun fitbit:download; then
-        success "Fitbit data downloaded"
-    else
-        warn "Failed to download Fitbit data - if token expired, run: bun fitbit:auth"
-    fi
+    run_step_optional "Fitbit download" "bun fitbit:download" "if the token expired, run: bun fitbit:auth"
 fi
 
-# Step: Process Fitbit data
-STEP=$((STEP + 1))
-log "Step ${STEP}/${TOTAL_STEPS}: Processing Fitbit data..."
-if bun fitbit:process; then
-    success "Fitbit data processed"
-else
-    warn "Failed to process Fitbit data - continuing with remaining steps"
-fi
-
-# Step: Compile cardio data
-STEP=$((STEP + 1))
-log "Step ${STEP}/${TOTAL_STEPS}: Compiling cardio data..."
-if bun compile:cardio; then
-    success "Cardio data compiled"
-else
-    error "Failed to compile cardio data"
-    exit 1
-fi
-
-# Step: Compile all data
-STEP=$((STEP + 1))
-log "Step ${STEP}/${TOTAL_STEPS}: Compiling all data..."
-if bun compile:all; then
-    success "All data compiled"
-else
-    error "Failed to compile all data"
-    exit 1
-fi
-
-# Step: Combine all data
-STEP=$((STEP + 1))
-log "Step ${STEP}/${TOTAL_STEPS}: Combining all data..."
-if bun combine:all; then
-    success "All data combined"
-else
-    error "Failed to combine all data"
-    exit 1
-fi
+run_step_optional "Fitbit process" "bun fitbit:process"
+run_step "Compile cardio" "bun compile:cardio"
+run_step "Compile all" "bun compile:all"
+run_step "Combine all" "bun combine:all"
 
 # Return to project root for upload and deploy
 cd "$PROJECT_ROOT"
 
 if [ "$DEPLOY" = true ]; then
-    # Step: Upload to Google Cloud Storage
-    STEP=$((STEP + 1))
-    log "Step ${STEP}/${TOTAL_STEPS}: Uploading to Google Cloud Storage..."
-    if ./scripts/shell/upload.sh; then
-        success "Data uploaded to GCS"
-    else
-        error "Failed to upload to GCS"
-        exit 1
-    fi
-
-    # Step: Build and deploy to Firebase
-    STEP=$((STEP + 1))
-    log "Step ${STEP}/${TOTAL_STEPS}: Building and deploying to Firebase..."
-    if pnpm deploy:web; then
-        success "Deployed to Firebase"
-    else
-        error "Failed to deploy"
-        exit 1
-    fi
+    run_step "Upload to GCS" "./scripts/shell/upload.sh $TIMESTAMP"
+    run_step "Deploy to Firebase" "pnpm deploy:web"
 fi
 
-echo ""
-success "Pipeline completed successfully!"
+NOTE=""
 if [ "$SKIP_DOWNLOAD" = false ]; then
-    log "Data range processed: ${START_DATE} to ${END_DATE}"
+    NOTE="range ${START_DATE} → ${END_DATE}"
 fi
 if [ "$DEPLOY" = true ]; then
-    log "Deployed to Firebase"
-else
-    log "Run with --deploy to upload and deploy"
+    [ -n "$NOTE" ] && NOTE="${NOTE} · "
+    NOTE="${NOTE}timestamp ${TIMESTAMP} · deployed to Firebase"
+fi
+step_summary "Pipeline complete" "$NOTE"
+
+if [ "$DEPLOY" = false ]; then
+    echo -e "${DIM}   run with --deploy to upload and deploy${NC}"
+    echo ""
 fi

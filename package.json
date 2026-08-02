@@ -12,7 +12,7 @@
     "build:desktop": "pnpm --filter @leeft/web build:desktop",
     "deploy:web": "pnpm build:web && cd apps/web && firebase deploy",
     "pipeline": "./scripts/shell/pipeline.sh",
-    "refresh": "pnpm --filter @leeft/data refresh && pnpm push",
+    "refresh": "./scripts/shell/refresh.sh",
     "push": "./scripts/shell/upload.sh",
     "lint": "pnpm -r lint",
     "format": "pnpm -r format",

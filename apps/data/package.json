@@ -40,7 +40,6 @@
         "format": "biome format --write .",
         "lint": "biome lint .",
         "mobility:review": "bun src/mobility/review.ts",
-        "refresh": "bun firestore:download && bun compile:lifting && bun combine:lifting && bun compile:cardio && bun compile:all && bun combine:all",
         "test": "bun test",
         "trainheroic:compare": "bun src/trainheroic/compare.ts",
         "trainheroic:download": "bun src/trainheroic/index.ts download",

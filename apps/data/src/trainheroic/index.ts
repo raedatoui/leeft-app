@@ -34,6 +34,7 @@ const commands = {
 
 runCLI({
     commands,
+    name: 'trainheroic',
     usage: 'bun src/trainheroic/index.ts <command> [args...]',
     examples: [
         'bun src/trainheroic/index.ts download "start=2024-01-01&end=2024-12-31" <session-token>',

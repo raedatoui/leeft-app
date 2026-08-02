@@ -8,6 +8,7 @@ const commands = {
 
 runCLI({
     commands,
+    name: 'firestore',
     usage: 'bun src/firestore/index.ts <command>',
     examples: ['bun src/firestore/index.ts download'],
 }).catch((err) => {
