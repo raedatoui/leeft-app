@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { classifyAllWorkouts } from './classifySets';
 import { annotatePersonalRecords } from './computePersonalRecords';
 import { parseTrainHeroicWorkout } from './extractDay';
-import { readLog, readTrainHeroicFiles } from './readFiles';
+import { readFirestoreLog, readLog, readTrainHeroicFiles } from './readFiles';
 import { type BaseWorkout, type ExerciseMetadata, ExerciseMetadataSchema, RawWorkoutSchema } from './types';
 
 const mapOfRawDate = new Map<string, boolean>();
@@ -23,6 +23,24 @@ function mergeWorkouts(googleWorkouts: BaseWorkout[], trainHeroicWorkouts: BaseW
 
         mapOfWorkoutTitle.set(workout.title, true);
         mapOfRawDate.set(workout.date.toString(), true);
+        mergedWorkouts.push(workout);
+    }
+
+    return mergedWorkouts.sort((a, b) => a.date.getTime() - b.date.getTime());
+}
+
+// App-logged workouts are appended by day-key. A collision means the same day exists in another
+// source, which isn't expected — warn loudly and keep both rather than silently dropping one.
+// (mapOfRawDate/mapOfWorkoutTitle aren't reused here: their key formats are source-specific.)
+function mergeFirestoreWorkouts(existing: BaseWorkout[], firestoreWorkouts: BaseWorkout[]): BaseWorkout[] {
+    const dayKey = (workout: BaseWorkout): string => workout.date.toISOString().slice(0, 10);
+    const existingDays = new Set(existing.map(dayKey));
+    const mergedWorkouts = [...existing];
+
+    for (const workout of firestoreWorkouts) {
+        if (existingDays.has(dayKey(workout))) {
+            logger.warning(`COLLISION: Firestore workout ${dayKey(workout)} also exists in another source, keeping BOTH`);
+        }
         mergedWorkouts.push(workout);
     }
 
@@ -84,7 +102,10 @@ export function main(): void {
     const trainHeroicWorkouts = compileTrainHeroicWorkouts();
     const googleWorkouts = readLog('../../data/download/google/google-log.json');
     const google2020Workouts = readLog('../../data/download/google/lifting-log-2020.json');
-    const allWorkouts = google2020Workouts.concat(mergeWorkouts(googleWorkouts, trainHeroicWorkouts));
+    const allWorkouts = mergeFirestoreWorkouts(
+        google2020Workouts.concat(mergeWorkouts(googleWorkouts, trainHeroicWorkouts)),
+        readFirestoreLog()
+    );
     // filtering the exercises that have time in them
     // return allExercises
     //     .map((w) => ({

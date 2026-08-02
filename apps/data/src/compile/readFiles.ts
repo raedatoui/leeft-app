@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path, { join } from 'node:path';
 import { defaultStartedAt, logger } from '@leeft/utils';
 import { v4 as uuidv4 } from 'uuid';
@@ -59,6 +59,24 @@ export function readLog(workoutLog: string): BaseWorkout[] {
                 // Legacy Google logs carry only a pseudo time; use the noon-ET default.
                 startedAt: defaultStartedAt(w.date),
             })
+        );
+}
+
+export function readFirestoreLog(): BaseWorkout[] {
+    const filePath = join(__dirname, '../', '../', 'data', 'download', 'firestore', 'lifting-workouts.json');
+    if (!existsSync(filePath)) {
+        logger.warning(`No Firestore log at ${filePath} — run \`bun firestore:download\`. Skipping app-logged workouts.`);
+        return [];
+    }
+    const content = JSON.parse(readFileSync(filePath, 'utf8'));
+    return z
+        .object({ workouts: z.array(z.any()) })
+        .parse(content)
+        .workouts.map((w) =>
+            // Unlike readLog, the uuid comes from the doc and is never re-minted — the app keeps it
+            // stable across re-saves so downstream artifacts don't see a re-save as a new workout.
+            // `date` is a strict z.date(); `startedAt` is z.coerce.date() and takes the ISO string.
+            BaseWorkoutSchema.parse({ ...w, date: new Date(w.date) })
         );
 }
 

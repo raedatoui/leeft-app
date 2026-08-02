@@ -136,7 +136,7 @@ else
 fi
 
 # Calculate total steps based on mode
-TOTAL_STEPS=6
+TOTAL_STEPS=7
 if [ "$SKIP_DOWNLOAD" = false ]; then
     TOTAL_STEPS=$((TOTAL_STEPS + 2))
 fi
@@ -158,6 +158,18 @@ if [ "$SKIP_DOWNLOAD" = false ]; then
         error "Failed to download TrainHeroic data"
         exit 1
     fi
+fi
+
+# Step: Download app-logged workouts from Firestore
+# Unconditional (even with --skip-download): it's a cheap read, and skipping it would silently
+# drop workouts logged in the app.
+STEP=$((STEP + 1))
+log "Step ${STEP}/${TOTAL_STEPS}: Downloading Firestore workouts..."
+if bun firestore:download; then
+    success "Firestore workouts downloaded"
+else
+    error "Failed to download Firestore workouts"
+    exit 1
 fi
 
 # Step: Compile lifting data
