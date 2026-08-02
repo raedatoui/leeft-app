@@ -3,6 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useState } from 'react';
 import AppBarV2 from '@/components/addWorkout/v2/appBarV2';
+import ConfirmCancelV2 from '@/components/addWorkout/v2/confirmCancelV2';
 import ConfirmRemoveV2 from '@/components/addWorkout/v2/confirmRemoveV2';
 import DoneViewV2 from '@/components/addWorkout/v2/doneViewV2';
 import ExerciseModalV2 from '@/components/addWorkout/v2/exerciseModalV2';
@@ -40,7 +41,13 @@ export default function AddWorkoutPageV2() {
         <div className="stage">
             <div className="stage-caption">live session flow · saves to firestore</div>
             <div className={`phone${state.pickerOpen ? ' picker-open' : ''}`} data-phase={state.phase}>
-                <AppBarV2 phase={state.phase} startedAt={state.startedAt} date={state.date} onDateChange={state.setDate} />
+                <AppBarV2
+                    phase={state.phase}
+                    startedAt={state.startedAt}
+                    date={state.date}
+                    onDateChange={state.setDate}
+                    onCancelSession={state.requestCancelSession}
+                />
                 <div className="phone-body">
                     <AnimatePresence initial={false} custom={direction} mode="popLayout">
                         <motion.div
@@ -61,6 +68,7 @@ export default function AddWorkoutPageV2() {
                     <ExercisePickerV2 state={state} muscleGroupColor={muscleGroupColor} />
                     <ExerciseModalV2 state={state} muscleGroupColor={muscleGroupColor} />
                     <ConfirmRemoveV2 state={state} />
+                    <ConfirmCancelV2 state={state} />
                     <ToastV2 message={state.toastMessage} />
                 </div>
                 {/* direct child of .phone (not .phone-body) so it covers the app-bar too */}

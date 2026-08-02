@@ -102,6 +102,11 @@ export interface AddWorkoutState {
     toggleAllSetsDone: (exerciseIndex: number) => void;
     finishWorkout: () => void;
     backToWorkout: () => void;
+    /** True while the discard-session dialog is up (opened by the app-bar ✕). */
+    confirmCancelOpen: boolean;
+    requestCancelSession: () => void;
+    dismissCancelSession: () => void;
+    confirmCancelSession: () => void;
     saveSession: () => Promise<void>;
     /** True while the Firestore write is in flight — disables the Save button. */
     saving: boolean;
@@ -134,6 +139,7 @@ export function useAddWorkoutState(): AddWorkoutState {
     const [pageIndex, setPageIndex] = useState(0);
     const [exerciseModalIndex, setExerciseModalIndex] = useState<number | null>(null);
     const [confirmRemoveIndex, setConfirmRemoveIndex] = useState<number | null>(null);
+    const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
     const [pickerOpen, setPickerOpen] = useState(false);
     const [pickerQuery, setPickerQuery] = useState('');
     const [summary, setSummary] = useState<SessionSummary | null>(null);
@@ -277,6 +283,22 @@ export function useAddWorkoutState(): AddWorkoutState {
         toastTimer.current = setTimeout(() => setToastMessage(null), 2200);
     };
 
+    const requestCancelSession = () => setConfirmCancelOpen(true);
+    const dismissCancelSession = () => setConfirmCancelOpen(false);
+
+    // Throws the draft away: resetSession lands the context on a blank 'pre', which the provider
+    // stores as key absence, so nothing survives a reload either. The transient sheet/pager state
+    // is local to this hook and has to be cleared here — the app-bar ✕ sits above .phone-body, so
+    // it stays tappable while an exercise sheet or the picker is open over the live view.
+    const confirmCancelSession = () => {
+        setConfirmCancelOpen(false);
+        setExerciseModalIndex(null);
+        setPickerOpen(false);
+        setPageIndex(0);
+        resetSession();
+        showToast('Workout discarded');
+    };
+
     const saveSession = async () => {
         if (startedAt === null || saving) return;
         const finishedAt = endedAt ?? Date.now();
@@ -418,6 +440,10 @@ export function useAddWorkoutState(): AddWorkoutState {
         toggleAllSetsDone,
         finishWorkout,
         backToWorkout,
+        confirmCancelOpen,
+        requestCancelSession,
+        dismissCancelSession,
+        confirmCancelSession,
         saveSession,
         saving,
     };

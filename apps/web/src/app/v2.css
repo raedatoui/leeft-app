@@ -3412,6 +3412,30 @@
         background: var(--hyper);
         animation: leeft-v2-pulse 1.6s ease-in-out infinite;
     }
+    /* the app-bar's right slot: date pill + the discard ✕, grouped so the bar keeps three
+       space-between children whether or not the ✕ is showing */
+    .app-bar-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    /* discard the session — only mounted in live/done, nothing to throw away before that */
+    .app-bar-cancel {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: none;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        cursor: pointer;
+    }
+    .app-bar-cancel:hover {
+        color: var(--hyper);
+        border-color: var(--hyper);
+    }
     /* session-date pill, always in the app-bar's right slot (next to the clock while live) */
     .app-bar-date {
         background: none;
