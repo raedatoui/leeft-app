@@ -49,7 +49,7 @@ pnpm wt <branch> [base] # New worktree at .claude/worktrees/<branch> + dedicated
 ### Building & Quality
 ```bash
 pnpm build:web          # Build web app (Next.js static export)
-pnpm build:desktop      # Build desktop app (Tauri)
+pnpm build:desktop      # Build desktop app (Tauri) + install it to /Applications
 pnpm lint               # Lint all apps (Biome)
 pnpm check              # Type check and lint all apps
 pnpm format             # Format code (Biome)
