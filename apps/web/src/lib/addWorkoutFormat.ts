@@ -13,6 +13,10 @@ export interface DraftSet {
 export interface DraftExercise {
     exerciseId: number;
     sets: DraftSet[];
+    // Copied off the exercise map when the exercise is picked, so a restored draft can label its
+    // rows before the CDN dataset lands (or at all, offline). Absent in sessions stored before
+    // this field existed — always read through a fallback.
+    name?: string;
 }
 
 export function fmtClock(ms: number): string {

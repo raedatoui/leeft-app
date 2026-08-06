@@ -29,7 +29,15 @@ export default function AddAuthGate({ children }: { children: ReactNode }) {
         []
     );
 
-    if (loading) return null;
+    // Restoring auth is a network round-trip on a cold boot, so this isn't a frame or two —
+    // rendering the empty phone frame holds /add's layout instead of flashing a blank page.
+    if (loading)
+        return (
+            <div className="stage">
+                <div className="stage-caption">live session flow</div>
+                <div className="phone" />
+            </div>
+        );
     if (user) return <>{children}</>;
 
     const signIn = async () => {

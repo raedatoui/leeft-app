@@ -1,5 +1,6 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import Loader from '@/components/common/loader';
@@ -32,10 +33,31 @@ const PALETTE = [
 
 type WorkoutData = Omit<WorkoutDataContextType, 'refresh' | 'refreshing'>;
 
+// What /add renders against until the fetch lands. Module-level so its identity is stable —
+// the exerciseMap here is a useMemo dependency in useAddWorkoutState.
+const EMPTY_DATA: WorkoutData = {
+    workouts: [],
+    cardioWorkouts: [],
+    exerciseMap: new Map(),
+    muscleGroups: [],
+    categories: [],
+    equipmentList: [],
+    cycles: [],
+    mobilityMovements: [],
+};
+
+// /add logs a session out of localStorage and only uses the CDN dataset to enrich it (exercise
+// names, PR markers, the picker list), so it renders immediately and fills in when the fetch
+// resolves — an in-progress workout shouldn't sit behind ~8MB of JSON on every cold start, and
+// should still be usable offline. Every other page keeps blocking: their hooks are written
+// against a populated dataset. trailingSlash: true makes the live path '/add/'.
+const dataOptionalRoute = (pathname: string) => pathname.replace(/\/$/, '') === '/add';
+
 export function WorkoutProvider({ children }: WorkoutProviderProps) {
     const [data, setData] = useState<WorkoutData | null>(null);
     const [error, setError] = useState<Error | null>(null);
     const [refreshing, setRefreshing] = useState(false);
+    const pathname = usePathname();
 
     const loadData = useCallback(async () => {
         const timestamp = await fetchLatestTimestamp();
@@ -106,7 +128,9 @@ export function WorkoutProvider({ children }: WorkoutProviderProps) {
         }
     }, [loadData]);
 
-    if (error)
+    const dataOptional = dataOptionalRoute(pathname);
+
+    if (error && !dataOptional)
         return (
             <div className="flex min-h-screen items-center justify-center px-6">
                 <div className="text-center">
@@ -128,9 +152,9 @@ export function WorkoutProvider({ children }: WorkoutProviderProps) {
                 </div>
             </div>
         );
-    if (!data) return <Loader />;
+    if (!data && !dataOptional) return <Loader />;
 
-    return <WorkoutDataContext.Provider value={{ ...data, refresh, refreshing }}>{children}</WorkoutDataContext.Provider>;
+    return <WorkoutDataContext.Provider value={{ ...(data ?? EMPTY_DATA), refresh, refreshing }}>{children}</WorkoutDataContext.Provider>;
 }
 
 export default function Providers({ children }: ProvidersProps) {

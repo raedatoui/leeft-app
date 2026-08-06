@@ -120,7 +120,7 @@ export default function SessionListPageV2({ state, muscleGroupColor }: SessionLi
                                         key={ex.exerciseId}
                                         exerciseId={ex.exerciseId}
                                         index={i}
-                                        name={metadata?.name ?? `Exercise ${ex.exerciseId}`}
+                                        name={metadata?.name ?? ex.name ?? `Exercise ${ex.exerciseId}`}
                                         summaryText={state.exerciseSummaries[i]?.summaryText}
                                         dotColor={muscleGroupColor(metadata?.primaryMuscleGroup) ?? 'var(--muted)'}
                                         onOpen={() => state.openExerciseModal(i)}

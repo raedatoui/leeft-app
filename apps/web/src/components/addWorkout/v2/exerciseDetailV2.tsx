@@ -23,7 +23,7 @@ export default function ExerciseDetailV2({ state, muscleGroupColor, exerciseInde
     const exerciseId = draft?.exerciseId;
     const metadata = state.exerciseMap.get(String(exerciseId));
     const summary = state.exerciseSummaries[exerciseIndex];
-    const name = metadata?.name ?? `Exercise ${exerciseId}`;
+    const name = metadata?.name ?? draft?.name ?? `Exercise ${exerciseId}`;
     const dotColor = muscleGroupColor(metadata?.primaryMuscleGroup) ?? 'var(--muted)';
 
     // Which reps/weight box has keyboard focus — drives the per-column "fill below" chip.

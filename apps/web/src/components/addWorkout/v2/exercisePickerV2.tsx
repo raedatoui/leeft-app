@@ -38,7 +38,9 @@ export default function ExercisePickerV2({ state, muscleGroupColor }: ExercisePi
             </div>
             <div className="sheet-list">
                 {state.pickerExercises.length === 0 ? (
-                    <div className="empty-note">no match</div>
+                    // /add renders before the exercise dataset arrives (see providers.tsx), so an
+                    // empty list can mean "still loading" rather than "nothing matched".
+                    <div className="empty-note">{state.exerciseMap.size === 0 ? 'loading exercises…' : 'no match'}</div>
                 ) : (
                     state.pickerExercises.map((ex) => {
                         const dotColor = muscleGroupColor(ex.primaryMuscleGroup) ?? 'var(--muted)';

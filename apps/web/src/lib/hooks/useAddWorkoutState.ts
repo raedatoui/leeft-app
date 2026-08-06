@@ -115,8 +115,10 @@ export interface AddWorkoutState {
 export function useAddWorkoutState(): AddWorkoutState {
     const { exerciseMap, workouts } = useWorkoutData();
 
-    // Session data lives in AddWorkoutSessionContext (mounted at the root) so it survives
-    // navigating away from /add; only UI-transient state below is local to this mount.
+    // Session data — plus the pager/sheet coordinates — lives in AddWorkoutSessionContext
+    // (mounted at the root, written through to localStorage) so both the draft and the spot
+    // you were on survive navigating away from /add and the cold boot iOS forces on a
+    // backgrounded PWA. Only the momentary state below is local to this mount.
     const {
         phase,
         setPhase,
@@ -134,10 +136,12 @@ export function useAddWorkoutState(): AddWorkoutState {
         setDurationMin,
         exercises,
         setExercises,
+        pageIndex,
+        setPageIndex,
+        exerciseModalIndex,
+        setExerciseModalIndex,
         resetSession,
     } = useAddWorkoutSession();
-    const [pageIndex, setPageIndex] = useState(0);
-    const [exerciseModalIndex, setExerciseModalIndex] = useState<number | null>(null);
     const [confirmRemoveIndex, setConfirmRemoveIndex] = useState<number | null>(null);
     const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
     const [pickerOpen, setPickerOpen] = useState(false);
@@ -206,7 +210,7 @@ export function useAddWorkoutState(): AddWorkoutState {
     };
 
     const addExercise = (exerciseId: number) => {
-        setExercises((prev) => [...prev, { exerciseId, sets: [] }]);
+        setExercises((prev) => [...prev, { exerciseId, sets: [], name: exerciseMap.get(String(exerciseId))?.name }]);
         setPickerOpen(false);
         setPageIndex(0); // the exercise list is what shows behind the sheet (and after closing it)
         setExerciseModalIndex(exercises.length); // straight into the new exercise's editor sheet
@@ -286,15 +290,14 @@ export function useAddWorkoutState(): AddWorkoutState {
     const requestCancelSession = () => setConfirmCancelOpen(true);
     const dismissCancelSession = () => setConfirmCancelOpen(false);
 
-    // Throws the draft away: resetSession lands the context on a blank 'pre', which the provider
-    // stores as key absence, so nothing survives a reload either. The transient sheet/pager state
-    // is local to this hook and has to be cleared here — the app-bar ✕ sits above .phone-body, so
-    // it stays tappable while an exercise sheet or the picker is open over the live view.
+    // Throws the draft away: resetSession lands the context on a blank 'pre' — pager and sheet
+    // coordinates included — which the provider stores as key absence, so nothing survives a
+    // reload either. The picker is still local to this hook and has to be closed here: the
+    // app-bar ✕ sits above .phone-body, so it stays tappable while the picker is open over
+    // the live view.
     const confirmCancelSession = () => {
         setConfirmCancelOpen(false);
-        setExerciseModalIndex(null);
         setPickerOpen(false);
-        setPageIndex(0);
         resetSession();
         showToast('Workout discarded');
     };
@@ -372,16 +375,23 @@ export function useAddWorkoutState(): AddWorkoutState {
         return map;
     }, [workouts]);
 
+    // Sorted separately from the filter below: `exercises` changes identity on every keystroke in
+    // a rep/weight field, and the sort — localeCompare across the whole exercise map — is the
+    // expensive half. Neither of its inputs moves while you're typing, so it stays memoized.
+    const sortedExercises = useMemo(
+        () =>
+            Array.from(exerciseMap.values()).sort((a, b) => {
+                const diff = (exerciseSetCounts.get(b.id) ?? 0) - (exerciseSetCounts.get(a.id) ?? 0);
+                return diff !== 0 ? diff : a.name.localeCompare(b.name);
+            }),
+        [exerciseMap, exerciseSetCounts]
+    );
+
     const pickerExercises = useMemo(() => {
         const q = pickerQuery.trim().toLowerCase();
         const added = new Set(exercises.map((ex) => ex.exerciseId));
-        return Array.from(exerciseMap.values())
-            .filter((ex) => !added.has(ex.id) && (!q || ex.name.toLowerCase().includes(q)))
-            .sort((a, b) => {
-                const diff = (exerciseSetCounts.get(b.id) ?? 0) - (exerciseSetCounts.get(a.id) ?? 0);
-                return diff !== 0 ? diff : a.name.localeCompare(b.name);
-            });
-    }, [exerciseMap, pickerQuery, exerciseSetCounts, exercises]);
+        return sortedExercises.filter((ex) => !added.has(ex.id) && (!q || ex.name.toLowerCase().includes(q)));
+    }, [sortedExercises, pickerQuery, exercises]);
 
     return {
         phase,
