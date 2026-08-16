@@ -71,6 +71,10 @@ export interface AddWorkoutState {
     exerciseModalIndex: number | null;
     openExerciseModal: (index: number) => void;
     closeExerciseModal: () => void;
+    /** Walk the detail sheet to the previous/next exercise; off either end it closes the sheet
+     *  (backwards onto the exercise list, forwards onto the finish page). */
+    exerciseModalPrev: () => void;
+    exerciseModalNext: () => void;
 
     pickerOpen: boolean;
     pickerQuery: string;
@@ -194,6 +198,23 @@ export function useAddWorkoutState(): AddWorkoutState {
 
     const openExerciseModal = (index: number) => setExerciseModalIndex(index);
     const closeExerciseModal = () => setExerciseModalIndex(null);
+
+    // Swiping inside the detail sheet steps through the exercises in list order; swiping past
+    // either end leaves the sheet the way the equivalent tap would — back off the first is a
+    // close onto the list, forward off the last drops onto the finish page.
+    const exerciseModalPrev = () => {
+        if (exerciseModalIndex === null) return;
+        setExerciseModalIndex(exerciseModalIndex === 0 ? null : exerciseModalIndex - 1);
+    };
+    const exerciseModalNext = () => {
+        if (exerciseModalIndex === null) return;
+        if (exerciseModalIndex >= exercises.length - 1) {
+            setExerciseModalIndex(null);
+            goToPage(pageCount - 1);
+            return;
+        }
+        setExerciseModalIndex(exerciseModalIndex + 1);
+    };
 
     const openPicker = () => {
         setPickerQuery('');
@@ -421,6 +442,8 @@ export function useAddWorkoutState(): AddWorkoutState {
         exerciseModalIndex,
         openExerciseModal,
         closeExerciseModal,
+        exerciseModalPrev,
+        exerciseModalNext,
 
         pickerOpen,
         pickerQuery,

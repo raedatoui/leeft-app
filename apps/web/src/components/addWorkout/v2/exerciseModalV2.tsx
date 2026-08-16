@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion, type PanInfo, type Transition, useDragControls, useReducedMotion } from 'motion/react';
 import ExerciseDetailV2 from '@/components/addWorkout/v2/exerciseDetailV2';
+import SwipePager from '@/components/ui/v2/swipePager';
 import type { AddWorkoutState } from '@/lib/hooks/useAddWorkoutState';
 
 interface ExerciseModalV2Props {
@@ -49,9 +50,17 @@ export default function ExerciseModalV2({ state, muscleGroupColor }: ExerciseMod
                     onDragEnd={handleDragEnd}
                 >
                     <div className="sheet-grabber" onPointerDown={(e) => dragControls.start(e)} aria-hidden="true" />
-                    <div className="exercise-modal-scroll">
+                    {/* horizontal swipes page through the exercises; off either end the pager's
+                        handlers close the sheet (see exerciseModalPrev/Next), and the sheet's own
+                        exit animation carries that out */}
+                    <SwipePager
+                        pageKey={state.exerciseModalIndex}
+                        onPrev={state.exerciseModalPrev}
+                        onNext={state.exerciseModalNext}
+                        className="exercise-modal-scroll"
+                    >
                         <ExerciseDetailV2 state={state} muscleGroupColor={muscleGroupColor} exerciseIndex={state.exerciseModalIndex} />
-                    </div>
+                    </SwipePager>
                 </motion.div>
             )}
         </AnimatePresence>
