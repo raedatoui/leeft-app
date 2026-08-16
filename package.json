@@ -6,7 +6,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "PORT=${PORT:-$(cat .dev-port 2>/dev/null || echo 3000)} pnpm --filter @leeft/web dev",
+    "dev": "pnpm --filter @leeft/web dev",
     "wt": "./scripts/shell/worktree.sh",
     "build:web": "pnpm --filter @leeft/web build",
     "build:desktop": "pnpm --filter @leeft/web build:desktop && ./scripts/shell/install-desktop.sh",

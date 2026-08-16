@@ -44,7 +44,7 @@ pnpm wt <branch> [base] # New worktree at .claude/worktrees/<branch> + dedicated
 
 **Standing instructions when this session's repo root is a worktree** (path contains `.claude/worktrees/`):
 - No `.dev-port` at the worktree root yet (worktree came from Claude's built-in isolation)? Run `./scripts/shell/worktree.sh --here` once — it assigns the port, copies the env files, and installs deps.
-- Start the dev server in the background right away (`pnpm dev` — the root script reads the port from `.dev-port`) and tell the user the URL (`http://localhost:<port>`), so all active sessions are loadable in the browser simultaneously. Starting the server is serving the app, not verification.
+- Start the dev server in the background right away, passing the port explicitly (`PORT=$(cat .dev-port) pnpm dev` — the root `dev` script does not read `.dev-port` itself), and tell the user the URL (`http://localhost:<port>`), so all active sessions are loadable in the browser simultaneously. Starting the server is serving the app, not verification.
 
 ### Building & Quality
 ```bash
