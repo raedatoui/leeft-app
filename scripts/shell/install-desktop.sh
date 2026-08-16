@@ -2,7 +2,7 @@
 
 # Installs the built desktop app into /Applications.
 #
-# `tauri build` only writes the bundle into src-tauri/target — nothing copies it out (the
+# `tauri build` only writes the bundle into the crate's target/ — nothing copies it out (the
 # Finder window that flashes up mid-build is create-dmg styling the disk image, not an
 # installer). Without this step the installed app stays at whatever version was last dragged
 # out of the dmg by hand, which silently ships stale static pages.
@@ -12,7 +12,7 @@ set -e  # Exit on any error
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 
-BUILT="$PROJECT_ROOT/apps/web/src-tauri/target/release/bundle/macos/Leeft.app"
+BUILT="$PROJECT_ROOT/apps/web-desktop/target/release/bundle/macos/Leeft.app"
 DEST="/Applications/Leeft.app"
 
 if [ ! -d "$BUILT" ]; then

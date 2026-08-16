@@ -9,6 +9,7 @@
             "entry": ["src/**/index.ts"],
             "project": ["src/**/*.ts"]
         },
+        "apps/web-desktop": {},
         "packages/types": {},
         "packages/utils": {}
     }

@@ -151,9 +151,6 @@ importers:
       '@biomejs/biome':
         specifier: 'catalog:'
         version: 2.3.10
-      '@tauri-apps/cli':
-        specifier: ^2.11.3
-        version: 2.11.4
       '@types/node':
         specifier: ^22
         version: 22.19.3
@@ -172,6 +169,12 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
+
+  apps/web-desktop:
+    devDependencies:
+      '@tauri-apps/cli':
+        specifier: ^2.11.3
+        version: 2.11.4
 
   packages/types:
     dependencies:

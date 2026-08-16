@@ -11,10 +11,7 @@
         "lint": "biome lint",
         "format": "biome format --write",
         "check": "biome check . && tsc --noEmit",
-        "check:fix": "biome check --write .",
-        "tauri": "tauri",
-        "dev:desktop": "tauri dev",
-        "build:desktop": "tauri build"
+        "check:fix": "biome check --write ."
     },
     "dependencies": {
         "@dnd-kit/core": "^6.3.1",
@@ -37,7 +34,6 @@
     },
     "devDependencies": {
         "@biomejs/biome": "catalog:",
-        "@tauri-apps/cli": "^2.11.3",
         "@types/node": "^22",
         "@types/react": "^19",
         "@types/react-dom": "^19",

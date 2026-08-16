@@ -4,10 +4,10 @@
     "version": "0.1.0",
     "identifier": "com.leeft.app",
     "build": {
-        "frontendDist": "../out",
+        "frontendDist": "../web/out",
         "devUrl": "http://localhost:3000",
-        "beforeDevCommand": "pnpm dev",
-        "beforeBuildCommand": "pnpm build"
+        "beforeDevCommand": "pnpm --filter @leeft/web dev",
+        "beforeBuildCommand": "pnpm --filter @leeft/web build"
     },
     "app": {
         "windows": [

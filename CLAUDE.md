@@ -4,8 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Leeft is a workout tracking application structured as a pnpm monorepo with four packages:
+Leeft is a workout tracking application structured as a pnpm monorepo with five packages:
 - **`apps/web`**: Next.js 16 (App Router) frontend for visualizing workout data (static export, no SSR)
+- **`apps/web-desktop`**: Tauri 2 shell (Rust crate at the package root, no `src-tauri/` folder) that packages `apps/web`'s static export as a macOS app
 - **`apps/data`**: Bun-based data processing pipeline for fetching, parsing, and classifying workout data
 - **`packages/types`**: Shared Zod schemas used by both apps
 - **`packages/utils`**: Shared utilities (calc, date, logger)
