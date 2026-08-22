@@ -11,7 +11,6 @@ struct LiveView: View {
     @Environment(ExerciseCatalog.self) private var catalog
 
     @State private var showPicker = false
-    @State private var detailIndex: Int?
     @State private var pendingRemoval: Int?
 
     var body: some View {
@@ -30,11 +29,8 @@ struct LiveView: View {
                 session.addExercise(metadata)
                 showPicker = false
                 // Straight into the new exercise's editor, as on the web.
-                detailIndex = session.draft.exercises.count - 1
+                session.detailIndex = session.draft.exercises.count - 1
             }
-        }
-        .sheet(item: Binding(get: { detailIndex.map(Index.init) }, set: { detailIndex = $0?.value })) { wrapped in
-            ExerciseDetailSheet(exerciseIndex: wrapped.value)
         }
         .confirmationDialog(
             "Remove this exercise?",
@@ -98,7 +94,7 @@ struct LiveView: View {
                     .listRowInsets(.init(top: 16, leading: 18, bottom: 16, trailing: 18))
                     .listRowSeparatorTint(Theme.borderSoft)
                     .contentShape(.rect)
-                    .onTapGesture { detailIndex = index }
+                    .onTapGesture { session.detailIndex = index }
                     .swipeActions(edge: .trailing) {
                         Button(role: .destructive) {
                             // Straight delete when nothing would be lost.
@@ -142,15 +138,10 @@ struct LiveView: View {
         }
     }
 
-    /// Finish is the primary action once anything is logged; adding more is the quiet one.
     private var actionBar: some View {
         VStack(spacing: 12) {
+            BigButton(title: "+ Add Exercise") { showPicker = true }
             BigButton(title: "Done Working Out", tone: .green) { session.finishWorkout() }
-
-            Button("+ Add Exercise") { showPicker = true }
-                .font(Typeface.body(15, .bold))
-                .foregroundStyle(Theme.maint)
-                .buttonStyle(.plain)
         }
         .padding(.horizontal, 16)
         .padding(.top, 14)
@@ -158,10 +149,4 @@ struct LiveView: View {
         .background(Theme.surface)
         .overlay(alignment: .top) { Rectangle().fill(Theme.borderSoft).frame(height: 1) }
     }
-}
-
-/// `.sheet(item:)` needs an Identifiable payload; the detail sheet is keyed by list index.
-private struct Index: Identifiable {
-    let value: Int
-    var id: Int { value }
 }

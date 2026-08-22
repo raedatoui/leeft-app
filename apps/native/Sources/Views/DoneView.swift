@@ -52,6 +52,12 @@ struct DoneView: View {
             .padding(.bottom, 8)
         }
         .onAppear { durationText = String(session.draft.durationMin ?? timerMinutes) }
+        // As a pager page this view exists (and onAppear fires) while live is still on
+        // screen; re-prime the prefill at the moment the swipe/tap actually lands here,
+        // once finishWorkout has frozen the clock.
+        .onChange(of: session.draft.phase) { _, phase in
+            if phase == .done { durationText = String(session.draft.durationMin ?? timerMinutes) }
+        }
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()

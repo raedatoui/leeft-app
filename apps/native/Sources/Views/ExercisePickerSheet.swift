@@ -58,7 +58,7 @@ struct ExercisePickerSheet: View {
 
                 Spacer()
 
-                ControlCircle(glyph: "⌄", size: 32) { dismiss() }
+                ControlCircle(symbol: "chevron.down", size: 32) { dismiss() }
             }
 
             TextField("Search exercises…", text: $query)

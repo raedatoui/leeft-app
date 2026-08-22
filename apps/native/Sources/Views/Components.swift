@@ -49,15 +49,17 @@ struct CheckCircle: View {
 
 /// `.ctl-circle` — outlined yellow circle used for add/remove set and sheet close.
 struct ControlCircle: View {
-    let glyph: String
+    /// SF Symbol name — a text glyph like "⌄" carries baseline metrics that sit it off
+    /// visual center in the circle; symbols are optically centered by design.
+    let symbol: String
     var size: CGFloat = 46
     var enabled: Bool = true
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            Text(glyph)
-                .font(.system(size: size > 40 ? 22 : 17, weight: .regular))
+            Image(systemName: symbol)
+                .font(.system(size: size > 40 ? 18 : 13, weight: .semibold))
                 .foregroundStyle(Theme.maint)
                 .frame(width: size, height: size)
                 .overlay(Circle().strokeBorder(Theme.maint, lineWidth: 2))
@@ -75,7 +77,6 @@ struct ControlCircle: View {
 /// decimal like 132.5, the same reason the web carries a separate `weightText`.
 struct NumBox<Field: Hashable>: View {
     @Binding var value: Double
-    let isDecimal: Bool
     let field: Field
     var focus: FocusState<Field?>.Binding
 
@@ -86,7 +87,11 @@ struct NumBox<Field: Hashable>: View {
             .font(Typeface.mono(20, .semibold))
             .foregroundStyle(Theme.fg)
             .multilineTextAlignment(.center)
-            .keyboardType(isDecimal ? .decimalPad : .numberPad)
+            // One pad for both boxes. Reps only ever need digits, but swapping the input
+            // view between a numberPad and a decimalPad as focus walks a row is what leaves
+            // you on a pad with no "." when you reach the weight — so the decimal pad serves
+            // both, and a decimal typed into reps is truncated by its binding.
+            .keyboardType(.decimalPad)
             .focused(focus, equals: field)
             .frame(height: 54)
             .frame(maxWidth: .infinity)
@@ -104,10 +109,6 @@ struct NumBox<Field: Hashable>: View {
                 text = display(new)
             }
             .onAppear { text = display(value) }
-            // Matches the web's select-on-focus, so a tap lets you type straight over.
-            .onReceive(NotificationCenter.default.publisher(for: UITextField.textDidBeginEditingNotification)) { note in
-                (note.object as? UITextField)?.selectAll(nil)
-            }
     }
 
     private func display(_ v: Double) -> String {
@@ -173,5 +174,21 @@ extension View {
     /// The page background used by every screen in the flow.
     func sessionBackground() -> some View {
         background(Theme.bg.ignoresSafeArea())
+    }
+
+    /// Parks the caret at the end of every text field as it takes focus, app-wide.
+    ///
+    /// The number boxes are far wider than their digits and centre them, so UIKit's own
+    /// placement — wherever the tap landed — drops the caret to the left of the number as
+    /// often as not, ahead of the digits you meant to backspace over. The async hop is
+    /// what makes this stick: UIKit sets its own selection right after posting the
+    /// notification. Attached once at the root, since the notification is app-wide.
+    func caretAtEndOnFocus() -> some View {
+        onReceive(NotificationCenter.default.publisher(for: UITextField.textDidBeginEditingNotification)) { note in
+            guard let field = note.object as? UITextField else { return }
+            DispatchQueue.main.async {
+                field.selectedTextRange = field.textRange(from: field.endOfDocument, to: field.endOfDocument)
+            }
+        }
     }
 }

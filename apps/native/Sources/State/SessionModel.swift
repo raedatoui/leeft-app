@@ -35,6 +35,13 @@ final class SessionModel {
         didSet { if draft != oldValue { DraftStore.save(draft) } }
     }
 
+    /// Which exercise's editor is expanded, nil = the live list. While set, the pager
+    /// swaps its list page for one page per exercise, so you can swipe clear from the
+    /// check-in through every editor to the done screen; collapsing restores the list.
+    /// A UI coordinate, not draft data — unlike the web's StoredSession the app isn't
+    /// evicted mid-set, so it doesn't persist.
+    var detailIndex: Int?
+
     /// Post-save recap, or nil when the summary screen is closed.
     var summary: Summary?
     var toast: String?
@@ -48,11 +55,23 @@ final class SessionModel {
 
     // MARK: - session lifecycle
 
+    /// Gate on leaving the check-in screen: every question answered, or a session already
+    /// running — having swiped back into it, you shouldn't have to re-answer to get out.
+    var canStartWorkout: Bool {
+        draft.startedAt != nil || ReadinessQuestion.Key.allCases.allSatisfy { draft.readiness[$0] != nil }
+    }
+
     /// Also doubles as "resume": re-entering `live` on an already-started session leaves
     /// the clock alone.
     func startWorkout() {
         draft.phase = .live
         if draft.startedAt == nil { draft.startedAt = Date() }
+    }
+
+    /// The mirror of `startWorkout`, reached by swiping back off the live screen. The clock
+    /// keeps running, so coming forward again resumes instead of restarting.
+    func backToReadiness() {
+        draft.phase = .pre
     }
 
     func finishWorkout() {
@@ -66,6 +85,7 @@ final class SessionModel {
     }
 
     func discardSession() {
+        detailIndex = nil
         draft = Draft()
         DraftStore.clear()
         showToast("Workout discarded")
@@ -209,6 +229,7 @@ final class SessionModel {
         showToast("Workout saved")
 
         // The session is over — clear the draft out from under the summary overlay.
+        detailIndex = nil
         draft = Draft()
         DraftStore.clear()
     }

@@ -5,10 +5,6 @@ struct ReadinessView: View {
     @Environment(SessionModel.self) private var session
 
     private var alreadyStarted: Bool { session.draft.startedAt != nil }
-    private var surveyComplete: Bool {
-        ReadinessQuestion.Key.allCases.allSatisfy { session.draft.readiness[$0] != nil }
-    }
-    private var canStart: Bool { alreadyStarted || surveyComplete }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -30,7 +26,7 @@ struct ReadinessView: View {
 
             BigButton(
                 title: alreadyStarted ? "Resume Workout" : "Start Workout",
-                enabled: canStart
+                enabled: session.canStartWorkout
             ) {
                 session.startWorkout()
             }

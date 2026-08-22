@@ -1,13 +1,14 @@
 import SwiftUI
 
-/// The set editor for one exercise, presented as a native sheet over the live list.
+/// The set editor for one exercise — a page of the phase pager while expanded, so the
+/// swipe run goes check-in → each exercise → done. The collapse chevron hands the pager
+/// back its list page.
 ///
 /// Scoped down from the web's version: no PR trophies and no Last/Working-max card, both
 /// of which need the full lifting history rather than just the session draft.
-struct ExerciseDetailSheet: View {
+struct ExerciseDetailPage: View {
     @Environment(SessionModel.self) private var session
     @Environment(ExerciseCatalog.self) private var catalog
-    @Environment(\.dismiss) private var dismiss
 
     let exerciseIndex: Int
 
@@ -28,17 +29,12 @@ struct ExerciseDetailSheet: View {
     }
 
     var body: some View {
-        Group {
-            if let exercise {
-                content(exercise)
-            } else {
-                // The exercise was removed out from under an open sheet.
-                Color.clear.onAppear { dismiss() }
-            }
+        if let exercise {
+            content(exercise)
+        } else {
+            // The exercise was removed out from under an open editor.
+            Color.clear.onAppear { session.detailIndex = nil }
         }
-        .presentationDetents([.large])
-        .presentationDragIndicator(.visible)
-        .presentationBackground(Theme.bg)
     }
 
     private func content(_ exercise: DraftExercise) -> some View {
@@ -92,7 +88,7 @@ struct ExerciseDetailSheet: View {
 
             Spacer(minLength: 0)
 
-            ControlCircle(glyph: "⌄", size: 32) { dismiss() }
+            ControlCircle(symbol: "chevron.down", size: 32) { session.detailIndex = nil }
         }
     }
 
@@ -136,14 +132,12 @@ struct ExerciseDetailSheet: View {
 
             NumBox(
                 value: repsBinding(setIndex),
-                isDecimal: false,
                 field: Field.reps(setIndex),
                 focus: $focused
             )
 
             NumBox(
                 value: weightBinding(setIndex),
-                isDecimal: true,
                 field: Field.weight(setIndex),
                 focus: $focused
             )
@@ -214,13 +208,13 @@ struct ExerciseDetailSheet: View {
 
     private func setControls(_ exercise: DraftExercise) -> some View {
         HStack(spacing: 18) {
-            ControlCircle(glyph: "−", enabled: !exercise.sets.isEmpty) {
+            ControlCircle(symbol: "minus", enabled: !exercise.sets.isEmpty) {
                 session.removeLastSet(exercise: exerciseIndex)
             }
             Text("Set")
                 .font(Typeface.body(15, .bold))
                 .foregroundStyle(Theme.fg)
-            ControlCircle(glyph: "+") {
+            ControlCircle(symbol: "plus") {
                 session.addSet(exercise: exerciseIndex)
             }
         }
@@ -230,17 +224,38 @@ struct ExerciseDetailSheet: View {
 
     // MARK: - bindings
 
+    // Both bindings guard their indices: as a pager page this view stays alive next to
+    // the visible one, so a NumBox can re-evaluate after its set was removed (the "−"
+    // button) or the whole draft was cleared (save/discard) — a raw subscript then traps.
+
     private func repsBinding(_ setIndex: Int) -> Binding<Double> {
         Binding(
-            get: { Double(session.draft.exercises[exerciseIndex].sets[setIndex].reps) },
-            set: { session.draft.exercises[exerciseIndex].sets[setIndex].reps = Int($0) }
+            get: {
+                guard let set = set(at: setIndex) else { return 0 }
+                return Double(set.reps)
+            },
+            set: { newValue in
+                guard set(at: setIndex) != nil else { return }
+                // Reps are whole, and they share the weight box's decimal pad — so drop any
+                // fraction, and let a value Int can't hold fall to 0 rather than trap.
+                session.draft.exercises[exerciseIndex].sets[setIndex].reps = Int(exactly: newValue.rounded(.towardZero)) ?? 0
+            }
         )
     }
 
     private func weightBinding(_ setIndex: Int) -> Binding<Double> {
         Binding(
-            get: { session.draft.exercises[exerciseIndex].sets[setIndex].weight },
-            set: { session.draft.exercises[exerciseIndex].sets[setIndex].weight = $0 }
+            get: { set(at: setIndex)?.weight ?? 0 },
+            set: { newValue in
+                guard set(at: setIndex) != nil else { return }
+                session.draft.exercises[exerciseIndex].sets[setIndex].weight = newValue
+            }
         )
+    }
+
+    private func set(at setIndex: Int) -> DraftSet? {
+        guard session.draft.exercises.indices.contains(exerciseIndex),
+              session.draft.exercises[exerciseIndex].sets.indices.contains(setIndex) else { return nil }
+        return session.draft.exercises[exerciseIndex].sets[setIndex]
     }
 }
