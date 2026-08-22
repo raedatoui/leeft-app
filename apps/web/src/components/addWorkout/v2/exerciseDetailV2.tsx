@@ -2,9 +2,11 @@
 
 import { ChevronDown } from 'lucide-react';
 import { Fragment, useMemo, useState } from 'react';
+import DropdownV2 from '@/components/ui/v2/dropdownV2';
 import { defaultMaxCalculator } from '@/lib/calc';
 import { computeExerciseSessions, computeExerciseStats } from '@/lib/exerciseSessions';
 import type { AddWorkoutState } from '@/lib/hooks/useAddWorkoutState';
+import { REPS_UNIT_OPTIONS, type SetUnit, unitDropdownOptions, WEIGHT_UNIT_OPTIONS } from '@/lib/setUnits';
 import { formatNumber } from '@/lib/statsUtils';
 import { resolveTimeRange } from '@/lib/timeRange';
 
@@ -15,6 +17,8 @@ interface ExerciseDetailV2Props {
 }
 
 const ALL_TIME = resolveTimeRange({ preset: 'all' });
+const REPS_UNIT_ITEMS = unitDropdownOptions(REPS_UNIT_OPTIONS);
+const WEIGHT_UNIT_ITEMS = unitDropdownOptions(WEIGHT_UNIT_OPTIONS);
 
 // Content of the exercise-detail bottom sheet (see exerciseModalV2.tsx for the sheet chrome).
 // Only mounted while its sheet is open, so its session/stats lookups don't run otherwise.
@@ -78,6 +82,8 @@ export default function ExerciseDetailV2({ state, muscleGroupColor, exerciseInde
 
     if (!draft || !summary) return null;
 
+    const units = state.exerciseUnits(draft.exerciseId);
+
     const lastText = lastSession
         ? `${lastSession.workSetCount} x ${lastSession.topSet?.reps ?? 0} @ ${Math.round(lastSession.topSet?.weight ?? 0)} lb`
         : '—';
@@ -111,8 +117,23 @@ export default function ExerciseDetailV2({ state, muscleGroupColor, exerciseInde
             </div>
             <div className="sets-head">
                 <span className="sets-lbl">Sets</span>
-                <span className="sets-chip">Reps</span>
-                <span className="sets-chip">Lb</span>
+                <div className="unit-dd">
+                    <DropdownV2
+                        value={units.reps}
+                        options={REPS_UNIT_ITEMS}
+                        onChange={(v) => state.setExerciseUnit(draft.exerciseId, 'reps', v as SetUnit)}
+                        ariaLabel="Unit for the first set column"
+                    />
+                </div>
+                <div className="unit-dd">
+                    <DropdownV2
+                        value={units.weight}
+                        options={WEIGHT_UNIT_ITEMS}
+                        onChange={(v) => state.setExerciseUnit(draft.exerciseId, 'weight', v as SetUnit)}
+                        ariaLabel="Unit for the second set column"
+                        align="right"
+                    />
+                </div>
                 <button
                     type="button"
                     className={`chk all${allDone ? ' on' : ''}`}

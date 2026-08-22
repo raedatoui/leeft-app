@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReadinessAnswers } from '@/lib/addWorkoutConstants';
 import { type DraftExercise, type DraftSet, exerciseSummary, exerciseVolume, sessionRecords } from '@/lib/addWorkoutFormat';
 import { type AddWorkoutPhase, useAddWorkoutSession } from '@/lib/addWorkoutSession';
+import { type ColumnUnits, DEFAULT_COLUMN_UNITS, type SetUnit } from '@/lib/setUnits';
 import { useWorkoutData } from '@/lib/contexts';
 import { saveErrorMessage, saveLiftingWorkout } from '@/lib/firebase';
 import type { ExerciseMap, ExerciseMetadata, Workout } from '@/types';
@@ -102,6 +103,10 @@ export interface AddWorkoutState {
     removeSet: (exerciseIndex: number) => void;
     updateSetField: (exerciseIndex: number, setIndex: number, field: 'reps' | 'weight', value: number) => void;
     fillDownSetField: (exerciseIndex: number, setIndex: number, field: 'reps' | 'weight') => void;
+    /** The units the two set columns are keeping for an exercise. Prototype-only: transient,
+     *  outside the stored session, and not part of the Firestore payload. */
+    exerciseUnits: (exerciseId: number) => ColumnUnits;
+    setExerciseUnit: (exerciseId: number, column: keyof ColumnUnits, unit: SetUnit) => void;
     toggleSetDone: (exerciseIndex: number, setIndex: number) => void;
     toggleAllSetsDone: (exerciseIndex: number) => void;
     finishWorkout: () => void;
@@ -283,6 +288,15 @@ export function useAddWorkoutState(): AddWorkoutState {
             const source = ex.sets[setIndex];
             return source ? { ...ex, sets: ex.sets.map((s, i) => (i > setIndex ? { ...s, [field]: source[field] } : s)) } : ex;
         });
+
+    // Keyed by exerciseId rather than by index so the choice survives reordering — and so the
+    // exercise-detail sheet, which remounts on every page of its swipe pager, reads it back.
+    const [columnUnits, setColumnUnits] = useState<Record<number, ColumnUnits>>({});
+
+    const exerciseUnits = (exerciseId: number): ColumnUnits => columnUnits[exerciseId] ?? DEFAULT_COLUMN_UNITS;
+
+    const setExerciseUnit = (exerciseId: number, column: keyof ColumnUnits, unit: SetUnit) =>
+        setColumnUnits((prev) => ({ ...prev, [exerciseId]: { ...(prev[exerciseId] ?? DEFAULT_COLUMN_UNITS), [column]: unit } }));
 
     const toggleSetDone = (exerciseIndex: number, setIndex: number) => updateSetAt(exerciseIndex, setIndex, (s) => ({ ...s, done: !s.done }));
 
@@ -469,6 +483,8 @@ export function useAddWorkoutState(): AddWorkoutState {
         removeSet,
         updateSetField,
         fillDownSetField,
+        exerciseUnits,
+        setExerciseUnit,
         toggleSetDone,
         toggleAllSetsDone,
         finishWorkout,

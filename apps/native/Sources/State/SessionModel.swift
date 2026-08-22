@@ -42,6 +42,11 @@ final class SessionModel {
     /// evicted mid-set, so it doesn't persist.
     var detailIndex: Int?
 
+    /// The units each exercise's two set columns are keeping, keyed by exerciseId so the
+    /// choice survives reordering. Prototype-only, and deliberately outside `draft`: nothing
+    /// here reaches the disk blob or the Firestore payload.
+    var columnUnits: [Int: ColumnUnits] = [:]
+
     /// Post-save recap, or nil when the summary screen is closed.
     var summary: Summary?
     var toast: String?
@@ -160,6 +165,19 @@ final class SessionModel {
     }
 
     enum SetField { case reps, weight }
+
+    // MARK: - column units
+
+    func units(for exerciseId: Int) -> ColumnUnits { columnUnits[exerciseId] ?? ColumnUnits() }
+
+    func setUnit(_ unit: SetUnit, column: SetField, for exerciseId: Int) {
+        var updated = units(for: exerciseId)
+        switch column {
+        case .reps: updated.reps = unit
+        case .weight: updated.weight = unit
+        }
+        columnUnits[exerciseId] = updated
+    }
 
     // MARK: - saving
 

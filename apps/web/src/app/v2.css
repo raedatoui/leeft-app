@@ -3697,16 +3697,32 @@
         font-size: 15px;
         font-weight: 700;
     }
-    /* not .chip: the sitewide tag-pill .chip forces inline-flex/gap, which would
-       misalign this table-header cell */
-    .sets-head .sets-chip {
-        background: var(--surface-2);
+    /* The two column headers are unit pickers. The dropdown keeps its own panel, but its
+       trigger drops the pill look for the flat header-cell one, so it still sits square over
+       the number box beneath it. .dd-v2 is inline-block by default — it has to fill the
+       grid column instead. */
+    .sets-head .unit-dd,
+    .sets-head .unit-dd .dd-v2 {
+        display: block;
+        min-width: 0;
+    }
+    .sets-head .unit-dd .dd-v2-trigger.sm {
+        width: 100%;
+        justify-content: center;
+        background-color: var(--surface-2);
+        border-color: transparent;
         border-radius: 10px;
-        padding: 9px 0;
-        text-align: center;
+        padding: 9px 20px;
+        font-family: var(--body);
         font-size: 13px;
         font-weight: 700;
+        letter-spacing: 0;
+        text-transform: none;
         color: var(--break);
+        background-position: right 7px center;
+    }
+    .sets-head .unit-dd .dd-v2-trigger.sm:hover {
+        border-color: var(--border);
     }
     .set-row {
         margin-bottom: 10px;

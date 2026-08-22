@@ -18,6 +18,15 @@ struct ExerciseDetailPage: View {
 
     @FocusState private var focused: Field?
 
+    /// Which column header opened the unit wheel, or nil when it's closed.
+    private struct UnitTarget: Identifiable {
+        let exerciseId: Int
+        let column: SessionModel.SetField
+        var id: String { "\(exerciseId)-\(column == .reps ? "reps" : "weight")" }
+    }
+
+    @State private var unitTarget: UnitTarget?
+
     /// Column geometry shared by the header, set rows, and the fill-down chip so all
     /// three line up — the web gets this from one grid-template-columns declaration.
     private let numColumn: CGFloat = 34
@@ -65,6 +74,16 @@ struct ExerciseDetailPage: View {
             .padding(.bottom, 40)
         }
         .scrollDismissesKeyboard(.interactively)
+        .sheet(item: $unitTarget) { target in
+            UnitPickerSheet(
+                options: target.column == .reps ? SetUnit.repsOptions : SetUnit.weightOptions,
+                initial: target.column == .reps
+                    ? session.units(for: target.exerciseId).reps
+                    : session.units(for: target.exerciseId).weight
+            ) { unit in
+                session.setUnit(unit, column: target.column, for: target.exerciseId)
+            }
+        }
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
@@ -93,16 +112,17 @@ struct ExerciseDetailPage: View {
     }
 
     private func setsHeader(_ exercise: DraftExercise) -> some View {
-        HStack(spacing: gutter) {
+        let units = session.units(for: exercise.exerciseId)
+        return HStack(spacing: gutter) {
             Text("Sets")
                 .font(Typeface.body(15, .bold))
                 .foregroundStyle(Theme.fg)
-                // Same width as the set-number column below, so the Reps/Lb chips sit
+                // Same width as the set-number column below, so the unit chips sit
                 // directly over their boxes.
                 .frame(width: numColumn, alignment: .leading)
 
-            chip("Reps")
-            chip("Lb")
+            unitChip(units.reps, column: .reps, of: exercise)
+            unitChip(units.weight, column: .weight, of: exercise)
 
             let allDone = !exercise.sets.isEmpty && exercise.sets.allSatisfy(\.done)
             CheckCircle(isOn: allDone, glyph: "✓✓", size: checkColumn - 2) {
@@ -113,13 +133,25 @@ struct ExerciseDetailPage: View {
         .padding(.bottom, 10)
     }
 
-    private func chip(_ label: String) -> some View {
-        Text(label)
+    /// A column header that opens the unit wheel — the web renders the same thing as a
+    /// dropdown whose trigger takes this chip's shape.
+    private func unitChip(_ unit: SetUnit, column: SessionModel.SetField, of exercise: DraftExercise) -> some View {
+        Button {
+            focused = nil
+            unitTarget = UnitTarget(exerciseId: exercise.exerciseId, column: column)
+        } label: {
+            HStack(spacing: 4) {
+                Text(unit.chip)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 9, weight: .bold))
+            }
             .font(Typeface.body(13, .bold))
             .foregroundStyle(Theme.breakBlue)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 9)
             .background(Theme.surface2, in: .rect(cornerRadius: 10, style: .continuous))
+        }
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder
