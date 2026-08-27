@@ -5,7 +5,7 @@ import SwiftUI
 struct SetupNeededView: View {
     private let steps = [
         "Firebase console → project leeft-app → Add app → iOS",
-        "Bundle ID: com.leeft.app",
+        "Bundle ID: app.web.leeft",
         "Download GoogleService-Info.plist into apps/native/Resources/",
         "Copy REVERSED_CLIENT_ID from it into the URL scheme in Resources/Info.plist",
         "Re-run xcodegen, then build again",

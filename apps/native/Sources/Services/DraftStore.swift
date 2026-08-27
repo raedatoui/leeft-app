@@ -15,7 +15,7 @@ enum DraftStore {
         return dir.appendingPathComponent(filename)
     }
 
-    private static let queue = DispatchQueue(label: "com.leeft.app.draftstore", qos: .utility)
+    private static let queue = DispatchQueue(label: "app.web.leeft.draftstore", qos: .utility)
 
     static func load() -> Draft? {
         guard let url = Self.url, let data = try? Data(contentsOf: url) else { return nil }

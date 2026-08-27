@@ -22,7 +22,7 @@ The web app's Firebase config doesn't carry over — iOS needs its own app regis
 the OAuth client that Google sign-in uses.
 
 1. Firebase console → project **leeft-app** → Add app → iOS
-2. Bundle ID: `com.leeft.app`
+2. Bundle ID: `app.web.leeft`
 3. Download `GoogleService-Info.plist` into `apps/native/Resources/`
 4. Open it, copy the `REVERSED_CLIENT_ID` value, and paste it over
    `REPLACE_WITH_REVERSED_CLIENT_ID` in `Resources/Info.plist`
@@ -65,9 +65,11 @@ cd apps/native && xcodegen && open Leeft.xcodeproj
 `Leeft.xcodeproj` is generated from `project.yml` and gitignored — **never hand-edit it**.
 Re-run `xcodegen` after adding, moving, or renaming source files.
 
-To run on a physical device, set your team in Xcode's Signing & Capabilities tab (or fill in
-`DEVELOPMENT_TEAM` in `project.yml`). A free Apple ID re-signs every 7 days; the $99/yr
-Developer Program gives you a year and TestFlight.
+Signing is already wired: `DEVELOPMENT_TEAM` in `project.yml` holds the paid Developer
+Program team id, so profiles last a year and `xcodegen` regens don't blank the team.
+
+The bundle id is `app.web.leeft` — reverse-DNS on the Firebase Hosting domain. `com.leeft.app`
+was registered to another team and can't be reclaimed; don't try to switch back.
 
 ## Layout
 
