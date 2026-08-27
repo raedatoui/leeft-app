@@ -17,7 +17,7 @@ struct RootView: View {
             } else if auth.user == nil {
                 AuthGateView()
             } else {
-                SessionFlowView()
+                MainTabView()
                     .task { await catalog.refresh() }
             }
         }
@@ -29,6 +29,39 @@ struct RootView: View {
             }
         }
         .animation(.snappy(duration: 0.22), value: session.toast)
+    }
+}
+
+/// The two tabs: logging a session, and reading back everything already logged.
+///
+/// A plain system tab bar rather than a transcription of the web's custom `.dock` — the
+/// dock exists because a PWA has no tab bar to use, and this app does.
+struct MainTabView: View {
+    @Environment(WorkoutHistoryStore.self) private var history
+
+    private enum Tab { case session, history }
+
+    @State private var tab = Tab.session
+
+    var body: some View {
+        TabView(selection: $tab) {
+            SessionFlowView()
+                .tabItem { Label("Session", systemImage: "figure.strengthtraining.traditional") }
+                .tag(Tab.session)
+                .toolbarBackground(Theme.surface, for: .tabBar)
+                .toolbarBackground(.visible, for: .tabBar)
+
+            HistoryView()
+                .tabItem { Label("History", systemImage: "list.bullet.rectangle") }
+                .tag(Tab.history)
+                .toolbarBackground(Theme.surface, for: .tabBar)
+                .toolbarBackground(.visible, for: .tabBar)
+        }
+        // Coming back to a list that predates the session just saved. The cold first load
+        // is HistoryView's own `.task`; this only refreshes an already-fetched list.
+        .onChange(of: tab) { _, new in
+            if new == .history, history.hasLoaded { Task { await history.load() } }
+        }
     }
 }
 
@@ -45,6 +78,7 @@ struct SessionFlowView: View {
 
             PhasePager()
         }
+        .sessionBackground()
         .animation(.snappy(duration: 0.28), value: session.draft.phase)
         .fullScreenCover(item: $session.summary) { summary in
             SummaryView(summary: summary)

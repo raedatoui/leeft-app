@@ -154,4 +154,44 @@ enum Fmt {
     }()
 
     static func todayUTC() -> String { dateKey.string(from: Date()) }
+
+    /// "Sunday, January 1" — `formatLongDate` in apps/web/src/lib/dateFormatters.ts.
+    /// UTC components, because the day key it labels is a UTC date.
+    static let longDate: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "EEEE, MMMM d"
+        f.timeZone = TimeZone(identifier: "UTC")
+        f.locale = Locale(identifier: "en_US_POSIX")
+        return f
+    }()
+
+    /// "2024" — kept beside the day-and-month title, which carries no year of its own.
+    static let year: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy"
+        f.timeZone = TimeZone(identifier: "UTC")
+        f.locale = Locale(identifier: "en_US_POSIX")
+        return f
+    }()
+
+    /// "2:42 PM" — the web's `formatTimeOfDay`, except that it pins the zone to
+    /// America/New_York (a static build has no user timezone to read). On a phone the
+    /// device zone *is* the user's, so wall-clock time renders local here.
+    static let timeOfDay: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "h:mm a"
+        f.locale = Locale(identifier: "en_US_POSIX")
+        return f
+    }()
+
+    /// Parses the ISO instants written into Firestore. Both writers go through
+    /// `toISOString()`/`isoFormatter` and so carry fractional seconds, but a doc hand-edited
+    /// in the console won't — hence the second pass.
+    static func parseISO(_ value: String) -> Date? {
+        guard !value.isEmpty else { return nil }
+        let withFraction = ISO8601DateFormatter()
+        withFraction.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = withFraction.date(from: value) { return date }
+        return ISO8601DateFormatter().date(from: value)
+    }
 }

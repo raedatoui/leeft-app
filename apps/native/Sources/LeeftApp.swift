@@ -7,6 +7,7 @@ struct LeeftApp: App {
     @State private var auth: AuthService
     @State private var session = SessionModel()
     @State private var catalog = ExerciseCatalog()
+    @State private var history = WorkoutHistoryStore()
 
     init() {
         // Configures Firebase when GoogleService-Info.plist is present; RootView shows
@@ -21,6 +22,7 @@ struct LeeftApp: App {
                 .environment(auth)
                 .environment(session)
                 .environment(catalog)
+                .environment(history)
                 .preferredColorScheme(.dark)
                 .tint(Theme.maint)
                 // Completes the Google sign-in redirect back into the app.

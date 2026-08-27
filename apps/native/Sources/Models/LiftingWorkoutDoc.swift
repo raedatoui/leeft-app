@@ -6,7 +6,10 @@ import Foundation
 /// over the REST API, and its decoder deliberately handles no Timestamp values — so every
 /// temporal field here is an ISO 8601 string, never a `Date`. Keep this in step with
 /// `LiftingWorkoutDoc` in `apps/web/src/lib/firebase.ts`.
-struct LiftingWorkoutDoc {
+struct LiftingWorkoutDoc: Identifiable {
+    /// One doc per day keyed `YYYY-MM-DD`, so the date is the identity.
+    var id: String { date }
+
     let uuid: String
     let date: String
     let title: String
@@ -19,18 +22,23 @@ struct LiftingWorkoutDoc {
     let volume: Double
     let workVolume: Double
 
-    struct Exercise {
+    struct Exercise: Identifiable {
         let exerciseId: Int
         let order: Int
         let sets: [Set]
         let volume: Double
         let workVolume: Double
 
-        struct Set {
+        /// `order` is unique within the doc; `exerciseId` isn't guaranteed to be.
+        var id: Int { order }
+
+        struct Set: Identifiable {
             let order: Int
             let weight: Double
             let reps: Int
             let isWorkSet: Bool
+
+            var id: Int { order }
         }
     }
 
@@ -72,4 +80,75 @@ struct LiftingWorkoutDoc {
         f.timeZone = TimeZone(identifier: "UTC")
         return f
     }()
+}
+
+// MARK: - reading
+//
+// The read side lives in extensions on purpose: an `init` written in a struct's own body
+// suppresses the synthesized memberwise initializer, and the write path (`SessionModel.save`)
+// builds these values memberwise.
+
+extension LiftingWorkoutDoc {
+    /// Decodes a doc coming back off Firestore — the mirror of `firestoreData`.
+    ///
+    /// Numbers arrive as `NSNumber` whichever way they went in, so every numeric field goes
+    /// through it rather than guessing `Int` vs `Double`. Missing fields fall back instead of
+    /// failing the whole doc: only one with no `date` is unusable.
+    init?(id: String, data: [String: Any]) {
+        guard let date = data["date"] as? String else { return nil }
+        self.date = date
+        uuid = data["uuid"] as? String ?? id
+        title = data["title"] as? String ?? id
+        startedAt = data["startedAt"] as? String ?? ""
+        duration = (data["duration"] as? NSNumber)?.intValue ?? 0
+        rpe = (data["rpe"] as? NSNumber)?.intValue ?? 0
+        readiness = ((data["readiness"] as? [String: Any]) ?? [:]).compactMapValues { ($0 as? NSNumber)?.intValue }
+        volume = (data["volume"] as? NSNumber)?.doubleValue ?? 0
+        workVolume = (data["workVolume"] as? NSNumber)?.doubleValue ?? 0
+        exercises = ((data["exercises"] as? [[String: Any]]) ?? [])
+            .map(Exercise.init(data:))
+            .sorted { $0.order < $1.order }
+    }
+
+    /// The `YYYY-MM-DD` part of the ISO date field — the day key this doc is stored under.
+    var dateKey: String { String(date.prefix(10)) }
+
+    /// UTC midnight of the logged day, for the card's date header. Parsed off the day key
+    /// rather than the full ISO string so a timezone suffix can't shift it.
+    var day: Date? { Fmt.dateKey.date(from: dateKey) }
+
+    /// The instant the session started, or nil when the field is absent or unparseable.
+    var startedAtDate: Date? { Fmt.parseISO(startedAt) }
+
+    var setCount: Int { exercises.reduce(0) { $0 + $1.sets.count } }
+}
+
+extension LiftingWorkoutDoc.Exercise {
+    init(data: [String: Any]) {
+        exerciseId = (data["exerciseId"] as? NSNumber)?.intValue ?? 0
+        order = (data["order"] as? NSNumber)?.intValue ?? 0
+        volume = (data["volume"] as? NSNumber)?.doubleValue ?? 0
+        workVolume = (data["workVolume"] as? NSNumber)?.doubleValue ?? 0
+        sets = ((data["sets"] as? [[String: Any]]) ?? [])
+            .map(Set.init(data:))
+            .sorted { $0.order < $1.order }
+    }
+
+    /// "5,5,5 @ 135,225,225" — the compact one-liner, matching `formatSetsSummary` in
+    /// apps/web/src/components/workouts/v2/workoutCard.tsx.
+    var setsSummary: String {
+        guard !sets.isEmpty else { return "—" }
+        let reps = sets.map { String($0.reps) }.joined(separator: ",")
+        let weights = sets.map { String(Int($0.weight.rounded())) }.joined(separator: ",")
+        return "\(reps) @ \(weights)"
+    }
+}
+
+extension LiftingWorkoutDoc.Exercise.Set {
+    init(data: [String: Any]) {
+        order = (data["order"] as? NSNumber)?.intValue ?? 0
+        weight = (data["weight"] as? NSNumber)?.doubleValue ?? 0
+        reps = (data["reps"] as? NSNumber)?.intValue ?? 0
+        isWorkSet = (data["isWorkSet"] as? NSNumber)?.boolValue ?? true
+    }
 }
