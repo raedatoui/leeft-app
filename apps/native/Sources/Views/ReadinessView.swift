@@ -51,8 +51,8 @@ struct ReadinessView: View {
                         session.draft.readiness[question.key] = value
                     } label: {
                         Text("\(value)")
-                            .font(Typeface.mono(13, isOn ? .bold : .regular))
-                            .foregroundStyle(isOn ? Theme.bg : Theme.muted)
+                            .font(Typeface.mono(15, isOn ? .bold : .regular))
+                            .foregroundStyle(isOn ? Theme.bg : Theme.scale[value - 1])
                             .frame(maxWidth: .infinity)
                             .frame(height: 44)
                             .background(
