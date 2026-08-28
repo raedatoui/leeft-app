@@ -13,7 +13,7 @@
  *      exercises the name rules missed.
  */
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { logger } from '@leeft/utils';
 import { readExerciseMap, readLog } from '../compile/readFiles';
@@ -113,21 +113,43 @@ export function main() {
     const catalog = JSON.parse(readFileSync(catalogPath, 'utf8')) as { exercises: { id: number; name: string }[] };
     const nameById = new Map(catalog.exercises.map((e) => [e.id, e.name]));
 
+    // Every occurrence of an exercise, so findings can point back at the workouts they came from.
+    interface Instance {
+        uuid: string;
+        date: string;
+        title: string;
+        position: number;
+        exerciseCount: number;
+    }
+
     const setsByExercise = new Map<number, SetLike[]>();
+    const instancesByExercise = new Map<number, Instance[]>();
     for (const w of workouts) {
-        for (const ex of w.exercises) {
+        for (const [i, ex] of w.exercises.entries()) {
             const bucket = setsByExercise.get(ex.exerciseId) ?? [];
             bucket.push(...ex.sets);
             setsByExercise.set(ex.exerciseId, bucket);
+
+            const instances = instancesByExercise.get(ex.exerciseId) ?? [];
+            instances.push({
+                uuid: w.uuid,
+                date: w.date.toISOString().slice(0, 10),
+                title: w.title,
+                position: i + 1,
+                exerciseCount: w.exercises.length,
+            });
+            instancesByExercise.set(ex.exerciseId, instances);
         }
     }
 
     interface Finding {
+        exerciseId: number;
         name: string;
         category: string;
         measurement?: string;
         signals: string[];
         evidence: ExerciseEvidence;
+        instances: Instance[];
     }
 
     const confirmed: Finding[] = [];
@@ -141,7 +163,8 @@ export function main() {
         const evidence = collectEvidence(sets);
         const signals = dataSignals(evidence);
         const rule = IDENTITY_RULES.find((r) => r.pattern.test(name));
-        const finding: Finding = { name, category, measurement: rule?.measurement, signals, evidence };
+        const instances = instancesByExercise.get(exerciseId) ?? [];
+        const finding: Finding = { exerciseId, name, category, measurement: rule?.measurement, signals, evidence, instances };
 
         if (rule) {
             (signals.length > 0 ? confirmed : likelyByName).push(finding);
@@ -164,6 +187,8 @@ export function main() {
         console.log(`    weights: ${fmtValues(f.evidence.weightValues)}`);
         if (f.evidence.repValues.length > 0) console.log(`    reps: ${fmtValues(f.evidence.repValues)}`);
         for (const s of f.signals) console.log(`    ⚠ ${s}`);
+        console.log(`    instances (${f.instances.length}):`);
+        for (const i of f.instances) console.log(`      ${i.date} · ${i.title} · #${i.position}/${i.exerciseCount} · ${i.uuid}`);
     };
 
     console.log(`\nAnalyzed ${setsByExercise.size} exercises across ${workouts.length} workouts.`);
@@ -179,6 +204,31 @@ export function main() {
 
     console.log('\n=== Bodyweight, reps-only (every set weight 0 — volume is always 0) ===');
     bodyweight.forEach(printFinding);
+
+    // The same findings flattened to one row per instance, for spreadsheet triage.
+    const csvEscape = (v: string | number) => {
+        const str = String(v);
+        return /[",\n]/.test(str) ? `"${str.replaceAll('"', '""')}"` : str;
+    };
+    const rows: (string | number)[][] = [
+        ['bucket', 'exercise_id', 'exercise', 'category', 'measurement', 'date', 'workout', 'position', 'exercise_count', 'workout_uuid'],
+    ];
+    const buckets: [string, Finding[]][] = [
+        ['confirmed', confirmed],
+        ['name-only', likelyByName],
+        ['data-flagged', dataFlagged],
+        ['bodyweight', bodyweight],
+    ];
+    for (const [bucket, findings] of buckets) {
+        for (const f of findings) {
+            for (const i of f.instances) {
+                rows.push([bucket, f.exerciseId, f.name, f.category, f.measurement ?? '', i.date, i.title, i.position, i.exerciseCount, i.uuid]);
+            }
+        }
+    }
+    const csvPath = join(__dirname, '../', '../', 'data', 'out', 'exercise-units.csv');
+    writeFileSync(csvPath, rows.map((r) => r.map(csvEscape).join(',')).join('\n'));
+    console.log(`\nCSV: ${csvPath} (${rows.length - 1} rows)`);
 
     logger.info(
         `\n${confirmed.length} confirmed, ${likelyByName.length} name-only, ${dataFlagged.length} data-flagged, ${bodyweight.length} bodyweight-only`
