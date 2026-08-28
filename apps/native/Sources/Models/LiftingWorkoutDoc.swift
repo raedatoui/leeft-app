@@ -142,6 +142,17 @@ extension LiftingWorkoutDoc.Exercise {
         let weights = sets.map { String(Int($0.weight.rounded())) }.joined(separator: ",")
         return "\(reps) @ \(weights)"
     }
+
+    /// "5,5,5@225" — the compact clipboard form, matching `formatSetsForClipboard` in the same
+    /// web file: work sets only (what the web copies with warmup off), and a single weight when
+    /// every set shares it, else the positional list.
+    var setsClipboard: String {
+        let work = sets.filter(\.isWorkSet)
+        guard !work.isEmpty else { return "—" }
+        let reps = work.map { String($0.reps) }.joined(separator: ",")
+        let weights = work.map { String(Int($0.weight.rounded())) }
+        return "\(reps)@\(Swift.Set(weights).count == 1 ? weights[0] : weights.joined(separator: ","))"
+    }
 }
 
 extension LiftingWorkoutDoc.Exercise.Set {

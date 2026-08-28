@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// One logged day, transcribed from `WorkoutCard` in
 /// apps/web/src/components/workouts/v2/workoutCard.tsx — the lifting half of it.
@@ -16,6 +17,10 @@ struct WorkoutCardView: View {
     /// with the sets tables a tap away. (The web card defaults the other way, but it isn't
     /// paging a card at a time through a phone.)
     @State private var compact = true
+
+    /// Flashes the copy button to a checkmark for a beat after a copy, as the web button does.
+    @State private var copied = false
+    @State private var copiedReset: Task<Void, Never>?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -102,9 +107,47 @@ struct WorkoutCardView: View {
             stat("\(workout.setCount)", "sets")
             stat("\(workout.exercises.count)", "ex")
             Spacer(minLength: 0)
+            copyButton
         }
         .font(Typeface.mono(11))
         .tracking(0.9)
+    }
+
+    /// `.lift-copy` — copies the session in the web card's clipboard form. The checkmark is
+    /// the only feedback a phone gives (no hover, no tooltip), so it takes the accent color.
+    private var copyButton: some View {
+        Button {
+            UIPasteboard.general.string = clipboardText
+            copied = true
+            copiedReset?.cancel()
+            copiedReset = Task {
+                try? await Task.sleep(for: .seconds(1.5))
+                if !Task.isCancelled { copied = false }
+            }
+        } label: {
+            Image(systemName: copied ? "checkmark" : "doc.on.doc")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(copied ? Theme.maint : Theme.muted)
+                .frame(width: 26, height: 26)
+                .overlay(Circle().strokeBorder(Theme.border, lineWidth: 1))
+                .contentTransition(.symbolEffect(.replace))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Copy exercises")
+    }
+
+    /// The web `handleCopy` text: "Wednesday, August 27 · 2:42 PM · 62 min", then one
+    /// lowercased "name: reps@weight" line per exercise.
+    private var clipboardText: String {
+        var header = workout.day.map(Fmt.longDate.string(from:)) ?? workout.dateKey
+        if let started = workout.startedAtDate {
+            header += " · \(Fmt.timeOfDay.string(from: started))"
+        }
+        header += " · \(workout.duration) min"
+        let lines = workout.exercises.map { ex in
+            "\((catalog.metadata(for: ex.exerciseId)?.name ?? "Exercise \(ex.exerciseId)").lowercased()): \(ex.setsClipboard)"
+        }
+        return ([header] + lines).joined(separator: "\n")
     }
 
     private func stat(_ value: String, _ unit: String, color: Color = Theme.fg) -> some View {
