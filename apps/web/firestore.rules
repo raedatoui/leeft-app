@@ -9,6 +9,10 @@ service cloud.firestore {
     match /lifting-workouts/{workoutId} {
       allow read, write: if isOwner();
     }
+    // Published by the data pipeline over IAM, which bypasses these rules — the app only reads.
+    match /lifting-history/{workoutId} {
+      allow read: if isOwner();
+    }
     match /{document=**} {
       allow read, write: if false;
     }

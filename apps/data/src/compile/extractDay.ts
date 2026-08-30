@@ -152,6 +152,7 @@ export function parseTrainHeroicWorkout(rawWorkout: RawWorkout): BaseWorkout {
         title: rawWorkout.saved_workout.title,
         duration: durationMinutes,
         rpe: saved_workout.rpe,
+        readiness: saved_workout.readiness,
         exercises,
         volume: exercises.reduce((total, ex) => total + ex.volume, 0),
     });

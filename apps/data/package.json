@@ -33,6 +33,8 @@
         "compile:test-abr": "bun src/compile/index.ts test-abr",
         "compile:test-day": "bun src/compile/index.ts test-day",
         "exercise:compare": "jq -s '[.[0].exercises[].id] as $raw | [.[1][].id] as $classified | ($raw | sort) as $raw_sorted | ($classified | sort) as $classified_sorted | \"Raw: \\($raw | length), Classified: \\($classified | length), Missing IDs: \\($raw_sorted - $classified_sorted), Extra IDs: \\($classified_sorted - $raw_sorted)\"' data/out/exercise-metadata.json data/exercise-classified.json",
+        "firestore:backfill": "bun src/firestore/index.ts backfill",
+        "firestore:migrate-mood": "bun src/firestore/index.ts migrate-mood",
         "firestore:download": "bun src/firestore/index.ts download",
         "fitbit:auth": "bun src/fitbit/index.ts auth",
         "fitbit:download": "bun src/fitbit/index.ts download",
@@ -44,6 +46,8 @@
         "test": "bun test",
         "trainheroic:compare": "bun src/trainheroic/compare.ts",
         "trainheroic:download": "bun src/trainheroic/index.ts download",
+        "trainheroic:hydrate": "bun src/trainheroic/index.ts hydrate",
+        "trainheroic:missing": "bun src/trainheroic/index.ts missing",
         "trainheroic:supersets": " jq '.saved_workout.workoutSets[] | select(.exercise_count > 1) | {date: .date_completed, exercises: [.workoutSetExercises[].exercise_title]}' data/download/trainheroic/workouts/*.json",
         "typecheck": "tsc --noEmit"
     },

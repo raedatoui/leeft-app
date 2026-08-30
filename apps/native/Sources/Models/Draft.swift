@@ -53,7 +53,7 @@ struct DraftExercise: Codable, Identifiable, Equatable {
 struct ReadinessAnswers: Codable, Equatable {
     var sleep: Int?
     var energy: Int?
-    var motivation: Int?
+    var mood: Int?
     var stress: Int?
     var soreness: Int?
 
@@ -62,7 +62,7 @@ struct ReadinessAnswers: Codable, Equatable {
             switch key {
             case .sleep: sleep
             case .energy: energy
-            case .motivation: motivation
+            case .mood: mood
             case .stress: stress
             case .soreness: soreness
             }
@@ -71,7 +71,7 @@ struct ReadinessAnswers: Codable, Equatable {
             switch key {
             case .sleep: sleep = newValue
             case .energy: energy = newValue
-            case .motivation: motivation = newValue
+            case .mood: mood = newValue
             case .stress: stress = newValue
             case .soreness: soreness = newValue
             }
@@ -79,13 +79,13 @@ struct ReadinessAnswers: Codable, Equatable {
     }
 
     /// Answered values only — the average shown on the summary card.
-    var answered: [Int] { [sleep, energy, motivation, stress, soreness].compactMap { $0 } }
+    var answered: [Int] { [sleep, energy, mood, stress, soreness].compactMap { $0 } }
 
     var asDictionary: [String: Int] {
         var out: [String: Int] = [:]
         if let sleep { out["sleep"] = sleep }
         if let energy { out["energy"] = energy }
-        if let motivation { out["motivation"] = motivation }
+        if let mood { out["mood"] = mood }
         if let stress { out["stress"] = stress }
         if let soreness { out["soreness"] = soreness }
         return out
@@ -93,7 +93,7 @@ struct ReadinessAnswers: Codable, Equatable {
 }
 
 struct ReadinessQuestion: Identifiable {
-    enum Key: String, CaseIterable { case sleep, energy, motivation, stress, soreness }
+    enum Key: String, CaseIterable { case sleep, energy, mood, stress, soreness }
 
     let key: Key
     let label: String
@@ -106,7 +106,7 @@ struct ReadinessQuestion: Identifiable {
     static let all: [ReadinessQuestion] = [
         .init(key: .sleep, label: "How did you sleep?", lo: "terrible", hi: "great"),
         .init(key: .energy, label: "How is your energy?", lo: "drained", hi: "charged"),
-        .init(key: .motivation, label: "How motivated are you?", lo: "meh", hi: "fired up"),
+        .init(key: .mood, label: "How is your mood?", lo: "very poor", hi: "great"),
         .init(key: .stress, label: "How stressed are you?", lo: "maxed out", hi: "relaxed"),
         .init(key: .soreness, label: "How sore are you?", lo: "very sore", hi: "fresh"),
     ]

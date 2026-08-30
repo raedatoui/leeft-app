@@ -6,6 +6,9 @@ export const RawWorkoutSchema = z.object({
 		timestamp_started: z.number(),
 		timestamp_completed: z.number(),
 		rpe: z.number().nullable(),
+		// Not from TrainHeroic's API — written into the archive by `trainheroic:hydrate` from the
+		// account export, which is the only place the readiness survey exists.
+		readiness: z.record(z.string(), z.number()).optional(),
 		workoutSets: z.array(
 			z.object({
 				order: z.number(),
@@ -76,6 +79,10 @@ export const BaseWorkoutSchema = z.object({
 	title: z.string(),
 	duration: z.number(),
 	rpe: z.number().nullable(),
+	// The 1–5 pre-session survey, when the source has one. TrainHeroic days carry
+	// sleep/mood/energy/stress/soreness, hydrated into the raw archive from the account export;
+	// app-logged days carry the keys the /add flow asks for.
+	readiness: z.record(z.string(), z.number()).optional(),
 	exercises: z.array(BaseExerciseSchema),
 	volume: z.number(),
 });

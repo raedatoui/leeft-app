@@ -1,10 +1,11 @@
 'use client';
 
-import { Dumbbell, Timer } from 'lucide-react';
+import { Bandage, Brain, Dumbbell, type LucideIcon, Moon, Smile, Timer, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { type FC, useEffect, useRef, useState } from 'react';
 import CardioStatsGrid from '@/components/cardio/v2/cardioStatsGrid';
 import { EffortChart } from '@/components/cardio/v2/effortChart';
+import { READINESS_QUESTIONS, type ReadinessAnswers, SCALE_COLORS } from '@/lib/addWorkoutConstants';
 import { cardioColors, cardioIcons } from '@/lib/cardio-theme';
 import { startTime } from '@/lib/contexts';
 import { formatLongDate, formatShortDate, formatTimeOfDay } from '@/lib/dateFormatters';
@@ -56,6 +57,58 @@ interface ExerciseBlockProps {
 }
 
 const TIER_RANK = { allTime: 3, active: 2, beaten: 1 } as const;
+
+// Card-rendering detail, not part of the survey contract — the /add questionnaire shows no icons.
+// Keyed by the question union rather than `string`, so it stays total under
+// noUncheckedIndexedAccess and a new question can't be added without an icon.
+const READINESS_ICONS: Record<keyof ReadinessAnswers, LucideIcon> = {
+    sleep: Moon,
+    energy: Zap,
+    mood: Smile,
+    stress: Brain,
+    soreness: Bandage,
+};
+
+/**
+ * The pre-session survey: the answered average, then one icon-over-square per question in
+ * `READINESS_QUESTIONS` order, filled with the 1–5 scale colour.
+ *
+ * Present on a little over half the log — the years hydrated out of the TrainHeroic export plus
+ * everything logged in-app since. A day without it renders nothing at all rather than an empty row.
+ */
+const ReadinessStrip: FC<{ readiness: Record<string, number> }> = ({ readiness }) => {
+    const answered = READINESS_QUESTIONS.map((q) => readiness[q.key]).filter((v): v is number => v !== undefined);
+    // 18 days in the log answered only some of the five; an unanswered question still takes its
+    // column, and the average is over what was actually answered (as on the /add summary).
+    if (answered.length === 0) return null;
+    const average = answered.reduce((sum, value) => sum + value, 0) / answered.length;
+
+    return (
+        <div className="readiness-strip">
+            <div className="readiness-avg">
+                readiness <b style={{ color: SCALE_COLORS[Math.round(average) - 1] }}>{average.toFixed(1)}</b>/5
+            </div>
+            <div className="readiness-cells">
+                {READINESS_QUESTIONS.map((q) => {
+                    const value = readiness[q.key];
+                    const Icon = READINESS_ICONS[q.key];
+                    const color = value === undefined ? undefined : SCALE_COLORS[value - 1];
+                    return (
+                        <div className="readiness-cell" key={q.key} title={value === undefined ? `${q.label} — unanswered` : `${q.label} ${value}/5`}>
+                            <Icon size={11} style={color ? { color } : undefined} />
+                            <span
+                                className={`readiness-square${value === undefined ? ' empty' : ''}`}
+                                style={color ? { background: color } : undefined}
+                            >
+                                {value ?? '–'}
+                            </span>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+};
 
 export const ExerciseBlock: FC<ExerciseBlockProps> = ({ exercise, metadata, includeWarmup, compact, cycleId, onExerciseClick, muscleGroupColor }) => {
     const sets = includeWarmup ? exercise.sets : exercise.sets.filter((s) => s.isWorkSet);
@@ -253,6 +306,7 @@ const LiftingWorkoutBody: FC<LiftingBodyProps> = ({
                     </svg>
                 </button>
             </div>
+            {workout.readiness && <ReadinessStrip readiness={workout.readiness} />}
             <div className="exercises">
                 {exercises.map((exercise) => (
                     <ExerciseBlock

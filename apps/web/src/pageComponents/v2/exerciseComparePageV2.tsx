@@ -287,7 +287,9 @@ export default function ExerciseComparePageV2() {
                                                     <div className="date">{formatTableDate(s.workout.date)}</div>
                                                     <div className="weight">{formatWeight(s.metric)}</div>
                                                     <div className="sets-detail">
-                                                        {s.topSet ? `${formatWeight(s.topSet.weight)} × ${s.topSet.reps ?? 0}` : `${s.sets.length} sets`}
+                                                        {s.topSet
+                                                            ? `${formatWeight(s.topSet.weight)} × ${s.topSet.reps ?? 0}`
+                                                            : `${s.sets.length} sets`}
                                                     </div>
                                                     <div className="pr-flag">
                                                         {s.prTier && (

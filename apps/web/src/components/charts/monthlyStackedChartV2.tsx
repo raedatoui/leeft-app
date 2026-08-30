@@ -84,9 +84,7 @@ export default function MonthlyStackedChartV2({
                 },
             },
         },
-        legend: showLegend
-            ? { itemStyle: { color: pal.muted, fontFamily: fonts.body }, itemHoverStyle: { color: pal.fg } }
-            : { enabled: false },
+        legend: showLegend ? { itemStyle: { color: pal.muted, fontFamily: fonts.body }, itemHoverStyle: { color: pal.fg } } : { enabled: false },
         tooltip: {
             formatter: function () {
                 // biome-ignore lint/suspicious/noExplicitAny: Highcharts tooltip context typing

@@ -53,7 +53,6 @@ function loadStoredSession(): StoredSession | null {
     }
 }
 
-
 // The durable half of the /add flow's state, mounted once at the root so an in-progress
 // session survives navigating away from /add and back. It also carries the two coordinates
 // that say *where you were* — which pager page, which exercise sheet — because iOS kills a
@@ -122,7 +121,18 @@ export function AddWorkoutSessionProvider({ children }: { children: React.ReactN
                 if (phase === 'pre' && startedAt === null && exercises.length === 0) {
                     localStorage.removeItem(STORAGE_KEY);
                 } else {
-                    const session: StoredSession = { phase, date, readiness, startedAt, endedAt, rpe, durationMin, exercises, pageIndex, exerciseModalIndex };
+                    const session: StoredSession = {
+                        phase,
+                        date,
+                        readiness,
+                        startedAt,
+                        endedAt,
+                        rpe,
+                        durationMin,
+                        exercises,
+                        pageIndex,
+                        exerciseModalIndex,
+                    };
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
                 }
             } catch {

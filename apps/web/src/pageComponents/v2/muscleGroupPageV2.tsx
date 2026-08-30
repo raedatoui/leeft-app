@@ -53,10 +53,7 @@ export default function MuscleGroupPageV2() {
     const displayedYear = rangeEnd.getUTCFullYear();
     const goToYear = (y: number) => setTimeRange({ preset: 'custom', start: new Date(Date.UTC(y, 0, 1)), end: new Date(Date.UTC(y, 11, 31)) });
 
-    const exercisesInGroup = useMemo(
-        () => Array.from(exerciseMap.values()).filter((ex) => ex.primaryMuscleGroup === slug),
-        [exerciseMap, slug]
-    );
+    const exercisesInGroup = useMemo(() => Array.from(exerciseMap.values()).filter((ex) => ex.primaryMuscleGroup === slug), [exerciseMap, slug]);
 
     const { statsByExerciseId, totals } = useMemo(() => {
         const ids = new Set(exercisesInGroup.map((ex) => ex.id));
@@ -254,10 +251,7 @@ export default function MuscleGroupPageV2() {
                             <Link key={ex.id} href={`/exercises/${ex.id}`} className="mg-row">
                                 <span className="name">{ex.name}</span>
                                 <span className="bar-track">
-                                    <span
-                                        className="bar-fill"
-                                        style={{ width: `${(s.setCount / maxSets) * 100}%`, background: muscleGroup.color }}
-                                    />
+                                    <span className="bar-fill" style={{ width: `${(s.setCount / maxSets) * 100}%`, background: muscleGroup.color }} />
                                 </span>
                                 <span className="v">
                                     <b>{s.setCount}</b>s

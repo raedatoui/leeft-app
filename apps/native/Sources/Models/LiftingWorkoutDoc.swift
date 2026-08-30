@@ -1,6 +1,7 @@
 import Foundation
 
-/// The Firestore doc shape at `lifting-workouts/{YYYY-MM-DD}`.
+/// The Firestore doc shape at `lifting-workouts/{YYYY-MM-DD}` — and, read-only, at
+/// `lifting-history/{YYYY-MM-DD}`, which the pipeline publishes with `prTier` on PR sets.
 ///
 /// This is a **cross-language contract**: `apps/data/src/firestore/download.ts` decodes it
 /// over the REST API, and its decoder deliberately handles no Timestamp values — so every
@@ -37,8 +38,28 @@ struct LiftingWorkoutDoc: Identifiable {
             let weight: Double
             let reps: Int
             let isWorkSet: Bool
+            /// PR-at-the-time, per exact rep count — computed by the pipeline
+            /// (`computePersonalRecords.ts`), present only on `lifting-history` documents. `var`
+            /// with defaults on purpose: the decoder below is an extension, which cannot assign a
+            /// `let` that already has one, and `SessionModel.save` builds these memberwise.
+            var prTier: PrTier?
 
             var id: Int { order }
+
+            /// Mirrors `prTier` in `SetSchema` (packages/types) and `TIER_RANK` in workoutCard.tsx.
+            enum PrTier: String, Comparable {
+                case beaten, active, allTime
+
+                private var rank: Int {
+                    switch self {
+                    case .beaten: 1
+                    case .active: 2
+                    case .allTime: 3
+                    }
+                }
+
+                static func < (lhs: Self, rhs: Self) -> Bool { lhs.rank < rhs.rank }
+            }
         }
     }
 
@@ -161,5 +182,8 @@ extension LiftingWorkoutDoc.Exercise.Set {
         weight = (data["weight"] as? NSNumber)?.doubleValue ?? 0
         reps = (data["reps"] as? NSNumber)?.intValue ?? 0
         isWorkSet = (data["isWorkSet"] as? NSNumber)?.boolValue ?? true
+        // `isPR` rides along on the same sets but carries nothing `prTier` doesn't; the pipeline
+        // writes them together, so the tier alone is the whole flag.
+        prTier = (data["prTier"] as? String).flatMap(PrTier.init(rawValue:))
     }
 }

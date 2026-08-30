@@ -161,9 +161,7 @@ export function useCardioPageState(): CardioPageState {
     // Effort/duration/logged-by narrow everything downstream (like the old strict mode did).
     const scopedWorkouts = useMemo(
         () =>
-            yearWorkouts.filter(
-                (w) => matchesTier(w, effortTier) && w.durationMin >= minDuration && (loggedBy === 'all' || w.loggedBy === loggedBy)
-            ),
+            yearWorkouts.filter((w) => matchesTier(w, effortTier) && w.durationMin >= minDuration && (loggedBy === 'all' || w.loggedBy === loggedBy)),
         [yearWorkouts, effortTier, minDuration, loggedBy]
     );
 

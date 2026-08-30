@@ -1,18 +1,9 @@
-import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { logger } from '@leeft/utils';
+import { accessToken, COLLECTION, PROJECT_ID } from './shared';
 
-const PROJECT_ID = 'leeft-app';
-const COLLECTION = 'lifting-workouts';
 const BASE_URL = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION}`;
-
-// The database is fully private (owner-only rules), but a Google access token goes through IAM,
-// which bypasses security rules — the project owner reads everything, the public reads nothing.
-function accessToken(): string {
-    if (process.env.TOKEN) return process.env.TOKEN;
-    return execFileSync('gcloud', ['auth', 'print-access-token'], { encoding: 'utf8' }).trim();
-}
 
 function decodeValue(value: Record<string, any>): unknown {
     if ('stringValue' in value) return value.stringValue;

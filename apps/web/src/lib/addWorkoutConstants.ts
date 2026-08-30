@@ -5,7 +5,7 @@ export interface ReadinessAnswers {
     sleep?: number;
     stress?: number;
     energy?: number;
-    motivation?: number;
+    mood?: number;
 }
 
 export interface ReadinessQuestion {
@@ -19,7 +19,7 @@ export interface ReadinessQuestion {
 export const READINESS_QUESTIONS: ReadinessQuestion[] = [
     { key: 'sleep', label: 'How did you sleep?', lo: 'terrible', hi: 'great' },
     { key: 'energy', label: 'How is your energy?', lo: 'drained', hi: 'charged' },
-    { key: 'motivation', label: 'How motivated are you?', lo: 'meh', hi: 'fired up' },
+    { key: 'mood', label: 'How is your mood?', lo: 'very poor', hi: 'great' },
     { key: 'stress', label: 'How stressed are you?', lo: 'maxed out', hi: 'relaxed' },
     { key: 'soreness', label: 'How sore are you?', lo: 'very sore', hi: 'fresh' },
 ];

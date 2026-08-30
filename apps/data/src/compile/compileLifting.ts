@@ -102,10 +102,7 @@ export function main(): void {
     const trainHeroicWorkouts = compileTrainHeroicWorkouts();
     const googleWorkouts = readLog('../../data/download/google/google-log.json');
     const google2020Workouts = readLog('../../data/download/google/lifting-log-2020.json');
-    const allWorkouts = mergeFirestoreWorkouts(
-        google2020Workouts.concat(mergeWorkouts(googleWorkouts, trainHeroicWorkouts)),
-        readFirestoreLog()
-    );
+    const allWorkouts = mergeFirestoreWorkouts(google2020Workouts.concat(mergeWorkouts(googleWorkouts, trainHeroicWorkouts)), readFirestoreLog());
     // filtering the exercises that have time in them
     // return allExercises
     //     .map((w) => ({

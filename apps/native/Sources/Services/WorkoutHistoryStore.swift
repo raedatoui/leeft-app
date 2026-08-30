@@ -2,13 +2,14 @@ import FirebaseFirestore
 import Foundation
 import Observation
 
-/// Reads back everything the two writers have put in `lifting-workouts` — the web `/add`
-/// flow and this app — for the History tab. Write-side counterpart: `WorkoutStore`.
+/// Reads the History tab's data out of `lifting-history` — the full lifting log, every day
+/// since 2020, published by the data pipeline (`bun firestore:backfill`). Deliberately NOT
+/// `lifting-workouts`, which is the write store this app and the web `/add` flow post to;
+/// write-side counterpart is `WorkoutStore`.
 ///
-/// The whole collection comes down in one `getDocuments()`. It only ever holds days logged
-/// in-app (the years of TrainHeroic history live in the CDN artifacts, not Firestore), so
-/// it's a small read, and having it all in memory is what lets the list scroll without
-/// paging seams.
+/// The whole collection comes down in one `getDocuments()` — around 830 documents — and stays
+/// in memory, which is what lets the list scroll without paging seams. The cost is that a
+/// session logged today does not appear here until the pipeline next republishes.
 @Observable
 final class WorkoutHistoryStore {
     private(set) var workouts: [LiftingWorkoutDoc] = []
@@ -25,7 +26,7 @@ final class WorkoutHistoryStore {
         defer { isLoading = false }
 
         do {
-            let snapshot = try await db.collection("lifting-workouts").getDocuments()
+            let snapshot = try await db.collection("lifting-history").getDocuments()
             // Newest first. Sorted here rather than by the query: the day key sorts
             // lexicographically the same as chronologically, and this keeps the read a
             // plain collection fetch with no index to maintain.

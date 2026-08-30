@@ -284,9 +284,7 @@ export default function HomePageV2() {
                         type="button"
                         className="icon-btn sm"
                         onClick={viewMode === 'month' ? goPrevMonth : goPrevPage}
-                        disabled={
-                            viewMode === 'month' ? viewMonth === 0 && !years.includes(selectedYear - 1) : currentPage === 0
-                        }
+                        disabled={viewMode === 'month' ? viewMonth === 0 && !years.includes(selectedYear - 1) : currentPage === 0}
                         aria-label={viewMode === 'month' ? 'Previous month' : 'Newer'}
                     >
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -327,11 +325,7 @@ export default function HomePageV2() {
                         type="button"
                         className="icon-btn sm"
                         onClick={viewMode === 'month' ? goNextMonth : goNextPage}
-                        disabled={
-                            viewMode === 'month'
-                                ? viewMonth === 11 && !years.includes(selectedYear + 1)
-                                : currentPage >= totalPages - 1
-                        }
+                        disabled={viewMode === 'month' ? viewMonth === 11 && !years.includes(selectedYear + 1) : currentPage >= totalPages - 1}
                         aria-label={viewMode === 'month' ? 'Next month' : 'Older'}
                     >
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -446,8 +440,18 @@ export default function HomePageV2() {
             <section className="stat-strip-icons u-mb-8">
                 {modality === 'both' && (
                     <>
-                        <StatIcon tone="maint" label="Sessions" value={(liftStats.workouts + cardioStats.workouts).toLocaleString()} icon={<WorkoutsIcon />} />
-                        <StatIcon tone="strength" label="Volume" value={`${formatVolumeTile(liftStats.totalVolume)} lbs`} icon={<Dumbbell size={16} />} />
+                        <StatIcon
+                            tone="maint"
+                            label="Sessions"
+                            value={(liftStats.workouts + cardioStats.workouts).toLocaleString()}
+                            icon={<WorkoutsIcon />}
+                        />
+                        <StatIcon
+                            tone="strength"
+                            label="Volume"
+                            value={`${formatVolumeTile(liftStats.totalVolume)} lbs`}
+                            icon={<Dumbbell size={16} />}
+                        />
                         <StatIcon tone="strength" label="Sets" value={liftStats.totalSets.toLocaleString()} icon={<Hash size={16} />} />
                         <StatIcon tone="maint" label="PRs" value={liftStats.prCount.toLocaleString()} icon={<Trophy size={16} />} />
                         <StatIcon tone="cardio" label="Cardio Hours" value={String(cardioStats.totalDurationHours)} icon={<Clock size={16} />} />
@@ -457,11 +461,21 @@ export default function HomePageV2() {
                 {modality === 'lifting' && (
                     <>
                         <StatIcon tone="maint" label="Workouts" value={liftStats.workouts.toLocaleString()} icon={<WorkoutsIcon />} />
-                        <StatIcon tone="strength" label="Volume" value={`${formatVolumeTile(liftStats.totalVolume)} lbs`} icon={<Dumbbell size={16} />} />
+                        <StatIcon
+                            tone="strength"
+                            label="Volume"
+                            value={`${formatVolumeTile(liftStats.totalVolume)} lbs`}
+                            icon={<Dumbbell size={16} />}
+                        />
                         <StatIcon tone="strength" label="Sets" value={liftStats.totalSets.toLocaleString()} icon={<Hash size={16} />} />
                         <StatIcon tone="maint" label="PRs" value={liftStats.prCount.toLocaleString()} icon={<Trophy size={16} />} />
                         <StatIcon tone="maint" label="Avg Duration" value={`${liftStats.avgDurationMin}m`} icon={<Timer size={16} />} />
-                        <StatIcon tone="hyper" label="Avg RPE" value={liftStats.avgRpe > 0 ? String(liftStats.avgRpe) : '—'} icon={<Gauge size={16} />} />
+                        <StatIcon
+                            tone="hyper"
+                            label="Avg RPE"
+                            value={liftStats.avgRpe > 0 ? String(liftStats.avgRpe) : '—'}
+                            icon={<Gauge size={16} />}
+                        />
                     </>
                 )}
                 {modality === 'cardio' && (

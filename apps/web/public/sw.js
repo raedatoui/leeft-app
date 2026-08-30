@@ -13,7 +13,7 @@ self.addEventListener('activate', (event) => {
         caches
             .keys()
             .then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))))
-            .then(() => self.clients.claim()),
+            .then(() => self.clients.claim())
     );
 });
 
@@ -40,7 +40,7 @@ self.addEventListener('fetch', (event) => {
                     const cached = await cache.match(request);
                     return cached || Response.error();
                 }
-            }),
+            })
         );
         return;
     }
@@ -56,6 +56,6 @@ self.addEventListener('fetch', (event) => {
                 })
                 .catch(() => cached);
             return cached || network;
-        }),
+        })
     );
 });

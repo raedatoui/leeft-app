@@ -59,7 +59,12 @@ export default function SummaryViewV2({ state }: SummaryViewV2Props) {
                     transition={reducedMotion ? fadeTransition : riseTransition}
                 >
                     <div className="sum-top">
-                        <button type="button" className={`sum-copy${copied ? ' copied' : ''}`} onClick={copySummary} aria-label="Copy session summary">
+                        <button
+                            type="button"
+                            className={`sum-copy${copied ? ' copied' : ''}`}
+                            onClick={copySummary}
+                            aria-label="Copy session summary"
+                        >
                             {copied ? <Check /> : <Copy />}
                         </button>
                         <div className="sum-date">{s.date}</div>
@@ -101,7 +106,9 @@ export default function SummaryViewV2({ state }: SummaryViewV2Props) {
                                 </div>
                             </div>
                             <div className="sum-badge">
-                                <Droplets style={{ color: s.readinessAvg !== null ? SCALE_COLORS[Math.round(s.readinessAvg) - 1] : 'var(--muted)' }} />
+                                <Droplets
+                                    style={{ color: s.readinessAvg !== null ? SCALE_COLORS[Math.round(s.readinessAvg) - 1] : 'var(--muted)' }}
+                                />
                                 <div className="sum-label">Readiness</div>
                                 <div className="sum-val">
                                     {s.readinessAvg !== null ? (

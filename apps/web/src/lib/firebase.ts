@@ -57,7 +57,7 @@ export interface LiftingWorkoutDoc {
 }
 
 /** Firestore rejects `undefined` values (unanswered readiness questions) — strip them. */
-const sanitize = <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
+const sanitize = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
 /** Overwrites the day's doc, but keeps its uuid stable across re-saves so downstream
  *  pipeline artifacts (PRs, cycles) don't see the same workout as a new one. */

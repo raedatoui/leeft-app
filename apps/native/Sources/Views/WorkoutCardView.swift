@@ -4,10 +4,13 @@ import UIKit
 /// One logged day, transcribed from `WorkoutCard` in
 /// apps/web/src/components/workouts/v2/workoutCard.tsx — the lifting half of it.
 ///
-/// The web card also renders cardio bodies and PR badges; neither has any representation in
-/// `lifting-workouts`, so this is `.session-title-row` → `.lift-headline` → `.session-vol`
-/// → `.ex-block`s and nothing else. The per-card collapse toggle is the web's `.card-toggle`:
-/// expanded shows each exercise's `.sets-table`, compact swaps it for the `.ex-summary` line.
+/// The web card also renders cardio bodies, which have no representation in Firestore, so this
+/// is `.session-title-row` → `.lift-headline` → `.session-vol` → `.ex-block`s and nothing else.
+/// PR badges are here: `lifting-history` carries the pipeline's `prTier` on each PR set.
+///
+/// The per-card collapse toggle is the web's `.card-toggle`: expanded shows each exercise's
+/// `.sets-table`, compact swaps it for the `.ex-summary` line. The rep-max chips sit in the name
+/// row either way, so a collapsed card still shows what was hit.
 struct WorkoutCardView: View {
     @Environment(ExerciseCatalog.self) private var catalog
 
@@ -27,6 +30,7 @@ struct WorkoutCardView: View {
             titleRow
             headline
             volRow
+            readinessRow
             exercises
         }
         .padding(.horizontal, 22)
@@ -157,6 +161,70 @@ struct WorkoutCardView: View {
         }
     }
 
+    /// `.readiness-strip` — the pre-session survey: the answered average, then one icon-over-
+    /// square per question in `ReadinessQuestion.all` order, filled with the 1–5 scale colour.
+    ///
+    /// Present on a little over half the log (the years hydrated out of the TrainHeroic export,
+    /// plus everything logged in-app since), so a day without it draws nothing at all.
+    @ViewBuilder
+    private var readinessRow: some View {
+        let answered = ReadinessQuestion.all.compactMap { workout.readiness[$0.key.rawValue] }
+        if !answered.isEmpty {
+            let average = Double(answered.reduce(0, +)) / Double(answered.count)
+            VStack(alignment: .leading, spacing: 5) {
+                HStack(spacing: 4) {
+                    Text("READINESS").foregroundStyle(Theme.muted2)
+                    Text(String(format: "%.1f", average))
+                        .foregroundStyle(Theme.scale[Int(average.rounded()) - 1])
+                    Text("/5").foregroundStyle(Theme.muted2)
+                }
+                .font(Typeface.mono(11))
+                .tracking(0.9)
+
+                HStack(spacing: 4) {
+                    ForEach(ReadinessQuestion.all) { question in
+                        readinessCell(question, value: workout.readiness[question.key.rawValue])
+                    }
+                }
+                .frame(maxWidth: 190, alignment: .leading)
+            }
+        }
+    }
+
+    private func readinessCell(_ question: ReadinessQuestion, value: Int?) -> some View {
+        // An unanswered question keeps its column, so the gap reads as a gap rather than a
+        // shorter row — 18 days in the log answered only some of the five.
+        let color = value.map { Theme.scale[$0 - 1] }
+        return VStack(spacing: 3) {
+            Image(systemName: Self.readinessSymbols[question.key] ?? "circle")
+                .font(.system(size: 11))
+                .foregroundStyle(color ?? Theme.muted2)
+
+            Text(value.map { "\($0)" } ?? "–")
+                .font(Typeface.mono(11, .semibold))
+                .foregroundStyle(color == nil ? Theme.muted2 : Theme.bg)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 2)
+                .background(color ?? Theme.surface, in: .rect(cornerRadius: 3))
+                .overlay {
+                    if color == nil {
+                        RoundedRectangle(cornerRadius: 3).strokeBorder(Theme.border, lineWidth: 1)
+                    }
+                }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(value.map { "\(question.label) \($0) out of 5" } ?? "\(question.label) unanswered")
+    }
+
+    /// Mirrors `READINESS_ICONS` in workoutCard.tsx, which uses the lucide equivalents.
+    private static let readinessSymbols: [ReadinessQuestion.Key: String] = [
+        .sleep: "moon.fill",
+        .energy: "bolt.fill",
+        .mood: "face.smiling",
+        .stress: "brain.head.profile",
+        .soreness: "bandage.fill",
+    ]
+
     /// `.exercises` — one `.ex-block` per exercise, hairline-separated.
     private var exercises: some View {
         VStack(spacing: 0) {
@@ -192,6 +260,17 @@ private struct ExerciseBlockView: View {
                         .font(Typeface.body(14, .medium))
                         .foregroundStyle(Theme.fg)
                         .fixedSize(horizontal: false, vertical: true)
+
+                    ForEach(prChips) { chip in
+                        Text("\(chip.reps)RM")
+                            .font(Typeface.mono(10, .semibold))
+                            .tracking(1.2)
+                            .foregroundStyle(Theme.bg)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 1)
+                            .background(Self.tierColor(chip.tier), in: .rect(cornerRadius: 3))
+                            .accessibilityLabel("\(chip.reps) rep max personal record")
+                    }
                 }
 
                 Spacer(minLength: 0)
@@ -232,12 +311,23 @@ private struct ExerciseBlockView: View {
             ForEach(Array(exercise.sets.enumerated()), id: \.element.id) { index, set in
                 HStack(spacing: 0) {
                     cell("\(index + 1)", width: Self.indexColumn)
-                        .foregroundStyle(set.isWorkSet ? Theme.maint : Theme.muted)
+                        // The index keeps its own colour except on a PR row, where the web tints
+                        // every cell — otherwise a green `active` row would keep a yellow index.
+                        .foregroundStyle(set.prTier.map(Self.tierColor) ?? (set.isWorkSet ? Theme.maint : Theme.muted))
                     cell("\(set.reps)")
-                    cell(Fmt.weight(set.weight))
+                    HStack(spacing: 6) {
+                        Text(Fmt.weight(set.weight))
+                        if let tier = set.prTier {
+                            Text("★ \(set.reps)RM")
+                                .font(Typeface.mono(10))
+                                .foregroundStyle(Self.tierColor(tier))
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
                 }
                 .font(Typeface.mono(12, set.isWorkSet ? .semibold : .regular))
-                .foregroundStyle(set.isWorkSet ? Theme.fg : Theme.muted)
+                // A PR row takes its tier colour whole, as `.sets-table tbody tr.pr td` does.
+                .foregroundStyle(set.prTier.map(Self.tierColor) ?? (set.isWorkSet ? Theme.fg : Theme.muted))
                 .padding(.vertical, 3)
                 .overlay(alignment: .bottom) {
                     if index < exercise.sets.count - 1 {
@@ -245,6 +335,33 @@ private struct ExerciseBlockView: View {
                     }
                 }
             }
+        }
+    }
+
+    /// One chip per distinct rep count, keeping the strongest tier hit at that rep count —
+    /// the `prByReps` map in workoutCard.tsx.
+    private var prChips: [PRChip] {
+        var strongest: [Int: LiftingWorkoutDoc.Exercise.Set.PrTier] = [:]
+        for set in exercise.sets {
+            guard let tier = set.prTier else { continue }
+            if let current = strongest[set.reps], current >= tier { continue }
+            strongest[set.reps] = tier
+        }
+        return strongest.sorted { $0.key < $1.key }.map { PRChip(reps: $0.key, tier: $0.value) }
+    }
+
+    private struct PRChip: Identifiable {
+        let reps: Int
+        let tier: LiftingWorkoutDoc.Exercise.Set.PrTier
+        var id: Int { reps }
+    }
+
+    /// `.pr-badge` / `.pr-star` colours: all-time yellow, standing record green, surpassed grey.
+    private static func tierColor(_ tier: LiftingWorkoutDoc.Exercise.Set.PrTier) -> Color {
+        switch tier {
+        case .allTime: Theme.maint
+        case .active: Theme.strength
+        case .beaten: Theme.muted
         }
     }
 

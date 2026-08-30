@@ -7,7 +7,15 @@
 #   ./pipeline.sh                  - Full pipeline + deploy (default)
 #   ./pipeline.sh --sync-only      - Data sync only (no deploy)
 #   ./pipeline.sh --deploy         - Full pipeline + deploy (explicit)
-#   ./pipeline.sh --skip-download  - Skip TrainHeroic & Fitbit downloads
+#   ./pipeline.sh --skip-download  - Skip the Fitbit download
+#
+# TrainHeroic is no longer downloaded here. That account stopped receiving data, and its archive
+# under data/download/trainheroic/workouts is now enriched in place by `bun trainheroic:hydrate`
+# (the readiness survey from the account export, four corrected workout titles, one reconstructed
+# session). A download would overwrite those files with the API's version and silently drop all of
+# it, so the step was removed rather than left as a trap. To fetch from TrainHeroic again, run
+# `bun trainheroic:download '<range>' "$TRAINHEROIC_SESSION_TOKEN"` by hand and follow it with
+# `bun trainheroic:hydrate`.
 
 set -e  # Exit on any error
 
@@ -38,27 +46,12 @@ cd "$PROJECT_ROOT"
 
 source "$SCRIPT_DIR/steps.sh"
 
-# Load environment variables
-if [ -f "apps/data/.env" ]; then
-    TRAINHEROIC_SESSION_TOKEN=$(grep '^TRAINHEROIC_SESSION_TOKEN=' apps/data/.env | cut -d'=' -f2)
-fi
-
 error() {
     echo -e "${RED}[ERROR]${NC} $1" >&2
 }
 
-# Function to validate date format (YYYY-MM-DD)
-validate_date() {
-    if [[ $1 =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
-        if date -d "$1" >/dev/null 2>&1 || date -j -f "%Y-%m-%d" "$1" >/dev/null 2>&1; then
-            return 0
-        fi
-    fi
-    return 1
-}
-
 if [ "$SKIP_DOWNLOAD" = true ]; then
-    MODE="compile only, skipping downloads"
+    MODE="compile only, skipping the Fitbit download"
 else
     MODE="download → compile"
 fi
@@ -78,56 +71,10 @@ if [ "$DEPLOY" = true ]; then
 fi
 echo ""
 
-if [ "$SKIP_DOWNLOAD" = false ]; then
-    # Validate TrainHeroic session token
-    if [ -z "$TRAINHEROIC_SESSION_TOKEN" ]; then
-        error "TRAINHEROIC_SESSION_TOKEN not set in apps/data/.env"
-        exit 1
-    fi
-
-    echo "Enter the date range for TrainHeroic data download:"
-    echo ""
-
-    # Default values
-    DEFAULT_START=$(date -d '-30 days' '+%Y-%m-%d' 2>/dev/null || date -v-30d '+%Y-%m-%d' 2>/dev/null)
-    DEFAULT_END=$(date '+%Y-%m-%d')
-
-    # Prompt for start date
-    while true; do
-        read -p "Start date (YYYY-MM-DD) [default: $DEFAULT_START]: " START_DATE
-        START_DATE=${START_DATE:-$DEFAULT_START}
-
-        if validate_date "$START_DATE"; then
-            break
-        else
-            error "Invalid date format. Please use YYYY-MM-DD format."
-        fi
-    done
-
-    # Prompt for end date
-    while true; do
-        read -p "End date (YYYY-MM-DD) [default: $DEFAULT_END]: " END_DATE
-        END_DATE=${END_DATE:-$DEFAULT_END}
-
-        if validate_date "$END_DATE"; then
-            if [[ "$END_DATE" > "$START_DATE" ]] || [[ "$END_DATE" == "$START_DATE" ]]; then
-                break
-            else
-                error "End date must be on or after start date."
-            fi
-        else
-            error "Invalid date format. Please use YYYY-MM-DD format."
-        fi
-    done
-
-    echo ""
-    echo -e "${DIM}date range ${START_DATE} → ${END_DATE}${NC}"
-fi
-
 # Calculate total steps based on mode
 TOTAL=7
 if [ "$SKIP_DOWNLOAD" = false ]; then
-    TOTAL=$((TOTAL + 2))
+    TOTAL=$((TOTAL + 1))
 fi
 if [ "$DEPLOY" = true ]; then
     TOTAL=$((TOTAL + 2))
@@ -136,10 +83,6 @@ step_init $TOTAL
 
 # Change to apps/data for data pipeline commands
 cd apps/data
-
-if [ "$SKIP_DOWNLOAD" = false ]; then
-    run_step "TrainHeroic download" "bun trainheroic:download 'startDate=${START_DATE}&endDate=${END_DATE}' \"\$TRAINHEROIC_SESSION_TOKEN\""
-fi
 
 # Unconditional (even with --skip-download): it's a cheap read, and skipping it would silently
 # drop workouts logged in the app.
@@ -167,12 +110,8 @@ if [ "$DEPLOY" = true ]; then
 fi
 
 NOTE=""
-if [ "$SKIP_DOWNLOAD" = false ]; then
-    NOTE="range ${START_DATE} → ${END_DATE}"
-fi
 if [ "$DEPLOY" = true ]; then
-    [ -n "$NOTE" ] && NOTE="${NOTE} · "
-    NOTE="${NOTE}timestamp ${TIMESTAMP} · deployed to Firebase"
+    NOTE="timestamp ${TIMESTAMP} · deployed to Firebase"
 fi
 step_summary "Pipeline complete" "$NOTE"
 

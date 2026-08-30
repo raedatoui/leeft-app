@@ -1,6 +1,8 @@
 import { logger } from '@leeft/utils';
 import { runCLI } from '../utils/cli';
 import { downloadWorkouts } from './download';
+import { hydrateTrainHeroic } from './hydrate';
+import { reportMissingWorkouts } from './missing';
 import { runParseScreenshots } from './parseScreenshot';
 
 async function download() {
@@ -29,6 +31,8 @@ async function parseScreenshots() {
 
 const commands = {
     download,
+    hydrate: hydrateTrainHeroic,
+    missing: reportMissingWorkouts,
     'parse-screenshots': parseScreenshots,
 };
 
@@ -38,6 +42,8 @@ runCLI({
     usage: 'bun src/trainheroic/index.ts <command> [args...]',
     examples: [
         'bun src/trainheroic/index.ts download "start=2024-01-01&end=2024-12-31" <session-token>',
+        'bun src/trainheroic/index.ts missing',
+        'bun src/trainheroic/index.ts hydrate',
         'bun src/trainheroic/index.ts parse-screenshots 2026-05-02 ~/Desktop/workout-1.png ~/Desktop/workout-2.png',
     ],
 }).catch((err) => {

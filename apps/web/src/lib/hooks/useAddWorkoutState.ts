@@ -181,7 +181,11 @@ export function useAddWorkoutState(): AddWorkoutState {
     );
 
     const totals = useMemo(
-        () => exerciseSummaries.reduce((acc, s) => ({ volume: acc.volume + s.volume, workVolume: acc.workVolume + s.workVolume }), { volume: 0, workVolume: 0 }),
+        () =>
+            exerciseSummaries.reduce((acc, s) => ({ volume: acc.volume + s.volume, workVolume: acc.workVolume + s.workVolume }), {
+                volume: 0,
+                workVolume: 0,
+            }),
         [exerciseSummaries]
     );
 

@@ -319,7 +319,9 @@ export default function ExercisePageV2() {
                     <div className="zone-2">
                         <div className="panel-label" style={{ margin: '0 0 12px' }}>
                             <span>{selectedMethod.name} Over Time</span>
-                            <span className="hint">★ = PR (gold all-time · green active · gray beaten) · hover to inspect · drag to filter range</span>
+                            <span className="hint">
+                                ★ = PR (gold all-time · green active · gray beaten) · hover to inspect · drag to filter range
+                            </span>
                         </div>
 
                         <ExercisePRChart

@@ -34,11 +34,7 @@ export default function LiveViewV2({ state, muscleGroupColor }: LiveViewV2Props)
                     disabled={{ next: state.pageIndex >= state.pageCount - 1 }}
                     className={isListPage ? `page next-page${state.exercises.length > 0 ? ' has-exercises' : ''}` : 'page next-page'}
                 >
-                    {isListPage ? (
-                        <SessionListPageV2 state={state} muscleGroupColor={muscleGroupColor} />
-                    ) : (
-                        <FinishPageV2 state={state} />
-                    )}
+                    {isListPage ? <SessionListPageV2 state={state} muscleGroupColor={muscleGroupColor} /> : <FinishPageV2 state={state} />}
                 </SwipePager>
             </div>
             <div className="pager-nav">

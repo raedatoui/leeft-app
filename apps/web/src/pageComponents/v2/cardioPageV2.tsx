@@ -153,13 +153,7 @@ export default function CardioPageV2() {
                         }}
                         ariaLabel="Year"
                     />
-                    <button
-                        type="button"
-                        className="icon-btn sm"
-                        onClick={goNextPage}
-                        disabled={currentPage >= totalPages - 1}
-                        aria-label="Older"
-                    >
+                    <button type="button" className="icon-btn sm" onClick={goNextPage} disabled={currentPage >= totalPages - 1} aria-label="Older">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                             <title>Next</title>
                             <polyline points="9 18 15 12 9 6" />
