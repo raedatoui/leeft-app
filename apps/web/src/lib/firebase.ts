@@ -1,6 +1,6 @@
 import { type FirebaseApp, getApps, initializeApp } from 'firebase/app';
 import { type Auth, GoogleAuthProvider, getAuth } from 'firebase/auth';
-import { type Firestore, doc, getDoc, getFirestore, setDoc } from 'firebase/firestore/lite';
+import { doc, type Firestore, getDoc, getFirestore, setDoc } from 'firebase/firestore/lite';
 import type { ReadinessAnswers } from '@/lib/addWorkoutConstants';
 
 const firebaseConfig = {

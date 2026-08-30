@@ -3718,7 +3718,7 @@
         padding: 12px 14px;
         margin-bottom: 16px;
     }
-    .last-card label {
+    .last-card .lc-lbl {
         display: block;
         font-family: var(--mono);
         font-size: 9px;
@@ -4871,7 +4871,8 @@
             left: 12px;
             right: 12px;
             bottom: calc(66px + env(safe-area-inset-bottom));
-            width: auto !important; /* beats the inline panelWidth style */
+            /* biome-ignore lint/complexity/noImportantStyles: must beat the inline panelWidth style */
+            width: auto !important;
             min-width: 0;
             max-width: none;
             max-height: 46vh;

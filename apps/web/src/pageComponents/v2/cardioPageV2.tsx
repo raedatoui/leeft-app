@@ -77,6 +77,7 @@ export default function CardioPageV2() {
     const columns = useResponsiveColumns();
     const [tablePage, setTablePage] = useState(0);
     // Breakpoint crossings change the page size — snap back to the newest page.
+    // biome-ignore lint/correctness/useExhaustiveDependencies: columns is the trigger, not a read — the effect exists to re-run when it changes
     useEffect(() => {
         setTablePage(0);
     }, [columns]);

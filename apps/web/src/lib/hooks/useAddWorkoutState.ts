@@ -4,9 +4,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReadinessAnswers } from '@/lib/addWorkoutConstants';
 import { type DraftExercise, type DraftSet, exerciseSummary, exerciseVolume, sessionRecords } from '@/lib/addWorkoutFormat';
 import { type AddWorkoutPhase, useAddWorkoutSession } from '@/lib/addWorkoutSession';
-import { type ColumnUnits, DEFAULT_COLUMN_UNITS, type SetUnit } from '@/lib/setUnits';
 import { useWorkoutData } from '@/lib/contexts';
 import { saveErrorMessage, saveLiftingWorkout } from '@/lib/firebase';
+import { type ColumnUnits, DEFAULT_COLUMN_UNITS, type SetUnit } from '@/lib/setUnits';
 import type { ExerciseMap, ExerciseMetadata, Workout } from '@/types';
 
 export type { DraftExercise, DraftSet, AddWorkoutPhase };

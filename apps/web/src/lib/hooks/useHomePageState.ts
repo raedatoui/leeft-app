@@ -200,6 +200,7 @@ export function useHomePageState(): HomePageState {
     // Slider: one grid row per page, page size tracks the responsive column count.
     const columns = useResponsiveColumns();
     // Breakpoint crossings change the page size — snap back to the newest page.
+    // biome-ignore lint/correctness/useExhaustiveDependencies: columns is the trigger, not a read — the effect exists to re-run when it changes
     useEffect(() => {
         setPageIndex(0);
     }, [columns]);

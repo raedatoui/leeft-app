@@ -26,6 +26,7 @@ function SortableExerciseRow({ exerciseId, index, name, summaryText, dotColor, o
     const { listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: exerciseId });
 
     return (
+        // biome-ignore lint/a11y/useSemanticElements: cannot be a <button> — the row wraps the drag and delete buttons, and buttons cannot nest
         <div
             className={`ex-list-row${isDragging ? ' dragging' : ''}`}
             ref={setNodeRef}

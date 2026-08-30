@@ -59,6 +59,7 @@ export function useWorkoutLogState(opts: WorkoutLogStateOptions = {}): WorkoutLo
     }, [selectedYear, availableYears]);
 
     // Breakpoint crossings change the page size, so the index points at a different window of days — snap back to the newest page.
+    // biome-ignore lint/correctness/useExhaustiveDependencies: responsiveColumns is the trigger, not a read — the effect exists to re-run when it changes
     useEffect(() => {
         setCurrentIndex(0);
     }, [responsiveColumns]);

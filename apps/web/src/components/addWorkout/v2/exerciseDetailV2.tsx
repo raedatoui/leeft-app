@@ -107,11 +107,11 @@ export default function ExerciseDetailV2({ state, muscleGroupColor, exerciseInde
             </div>
             <div className="last-card">
                 <span>
-                    <label>Last</label>
+                    <span className="lc-lbl">Last</span>
                     <b>{lastText}</b>
                 </span>
                 <span>
-                    <label>Working max</label>
+                    <span className="lc-lbl">Working max</span>
                     <b>{workingMaxText}</b>
                 </span>
             </div>
@@ -161,7 +161,7 @@ export default function ExerciseDetailV2({ state, muscleGroupColor, exerciseInde
                                     setFocusedField({ setIndex: si, field: 'reps' });
                                 }}
                                 onBlur={() => setFocusedField(null)}
-                                onChange={(e) => state.updateSetField(exerciseIndex, si, 'reps', parseFloat(e.target.value) || 0)}
+                                onChange={(e) => state.updateSetField(exerciseIndex, si, 'reps', Number.parseFloat(e.target.value) || 0)}
                             />
                             <div className="num-box-wrap">
                                 <input
@@ -177,7 +177,7 @@ export default function ExerciseDetailV2({ state, muscleGroupColor, exerciseInde
                                     onBlur={() => setFocusedField(null)}
                                     onChange={(e) => {
                                         setWeightText(e.target.value);
-                                        state.updateSetField(exerciseIndex, si, 'weight', parseFloat(e.target.value) || 0);
+                                        state.updateSetField(exerciseIndex, si, 'weight', Number.parseFloat(e.target.value) || 0);
                                     }}
                                 />
                                 {setIsPR[si] && (
