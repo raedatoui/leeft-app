@@ -68,6 +68,10 @@ open Leeft.xcodeproj    # Build and run from Xcode (▶︎ with a simulator or d
 `xcodegen` after adding a file surfaces as `cannot find 'X' in scope` for a file that plainly exists.
 
 ### Data Pipeline (run from root)
+
+**`apps/data/README.md` is the full write-up** — what a run actually does and why nothing is
+incremental, how lifting compilation merges its four sources, the two Firestore collections, and
+why TrainHeroic must not be downloaded. The entries below are the short form.
 ```bash
 pnpm pipeline                 # Full pipeline + deploy (interactive; scripts/shell/pipeline.sh)
 pnpm pipeline --sync-only     # Data sync only (no deploy); --skip-download also supported
