@@ -24,10 +24,9 @@ final class ExerciseAnalyticsModel {
     private(set) var sessions: [ExerciseSession] = []
     /// The active basis only — what the chart plots.
     private(set) var chartSessions: [ExerciseSession] = []
-    /// Ascending day keys of `chartSessions`, for the scrub's binary search.
-    private(set) var chartDays: [Date] = []
-    /// Pre-filtered star marks, so the chart's ForEach doesn't filter on every redraw.
-    private(set) var prSessions: [ExerciseSession] = []
+    /// Pre-filtered star marks, carrying the position each sits at — the chart plots by index, so
+    /// a bare session isn't enough to place one. Built here so a scrub tick doesn't re-filter.
+    private(set) var prMarks: [PRMark] = []
     private(set) var stats = ExerciseSessionStats()
     private(set) var bases: [BasisOption] = []
     private(set) var activeBasis: String?
@@ -38,6 +37,13 @@ final class ExerciseAnalyticsModel {
     /// True when the active basis is reps × lb|assisted, so the metric controls apply at all.
     private(set) var plotsLoad = false
     private(set) var yDomain: ClosedRange<Double> = 0...1
+
+    struct PRMark: Identifiable {
+        let index: Int
+        let session: ExerciseSession
+        let tier: LiftingWorkoutDoc.Exercise.Set.PrTier
+        var id: String { session.id }
+    }
 
     struct BasisOption: Identifiable {
         let key: String
@@ -83,8 +89,9 @@ final class ExerciseAnalyticsModel {
         // most recent rather than emptying the chart.
         activeBasis = bases.contains(where: { $0.key == filters.basis }) ? filters.basis : bases.first?.key
         chartSessions = sessions.filter { $0.basis == activeBasis }
-        chartDays = chartSessions.map(\.day)
-        prSessions = chartSessions.filter { $0.prTier != nil }
+        prMarks = chartSessions.enumerated().compactMap { index, session in
+            session.prTier.map { PRMark(index: index, session: session, tier: $0) }
+        }
 
         let units = chartSessions.last?.units
         chartUnit = units?.reps ?? .reps
@@ -101,25 +108,5 @@ final class ExerciseAnalyticsModel {
         let high = values.max() ?? 1
         let pad = Swift.max(1, (high - low) * 0.12)
         yDomain = Swift.max(0, low - pad)...(high + pad)
-    }
-
-    /// The session nearest a scrub position. The chart's x scale is continuous, so the selection
-    /// binding reports the date under the finger, never a data point.
-    func session(nearest date: Date) -> ExerciseSession? {
-        guard !chartDays.isEmpty else { return nil }
-        var low = 0
-        var high = chartDays.count - 1
-        while low < high {
-            let mid = (low + high) / 2
-            if chartDays[mid] < date { low = mid + 1 } else { high = mid }
-        }
-        // `low` is the first day at or after `date`; the one before it may still be closer.
-        if low > 0 {
-            let before = chartDays[low - 1]
-            if abs(before.timeIntervalSince(date)) <= abs(chartDays[low].timeIntervalSince(date)) {
-                return chartSessions[low - 1]
-            }
-        }
-        return chartSessions[low]
     }
 }

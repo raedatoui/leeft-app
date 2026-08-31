@@ -44,12 +44,11 @@ struct ExerciseAnalyticsSheet: View {
                         sectionLabel
                         ExercisePRChart(
                             sessions: model.chartSessions,
-                            prSessions: model.prSessions,
+                            prMarks: model.prMarks,
                             metricName: model.metricName,
                             unit: model.chartUnit,
                             showsLbs: model.plotsLoad && filters.method == .maxWeight,
                             yDomain: model.yDomain,
-                            nearest: model.session(nearest:),
                             onOpen: { daySheet = $0.workout }
                         )
                         .padding(.top, 8)
@@ -229,7 +228,7 @@ struct ExerciseAnalyticsSheet: View {
 
             // Only promise a star when one is actually on the canvas — see the star rule in
             // ExerciseSessions.rows.
-            if !model.prSessions.isEmpty {
+            if !model.prMarks.isEmpty {
                 Text("★ pr — gold all-time · green active · grey beaten")
                     .tagLabel(size: 9, tracking: 1.1)
             }

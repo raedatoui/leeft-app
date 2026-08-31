@@ -4,36 +4,41 @@ import SwiftUI
 /// Metric-over-time for one exercise on one basis — the Swift Charts twin of
 /// apps/web/src/components/charts/exercisePRChart.tsx.
 ///
-/// Two deliberate departures from the web. The line and fill are neutral, so the only colour on
-/// the canvas is a PR star and a gold point means something. And a drag scrubs rather than
-/// selecting a range to filter by: on a phone, reading the run is worth more than a second way to
-/// zoom, which the range presets already do.
+/// The x axis plots the session's *index*, not its date, matching the web's Highcharts category
+/// axis: every session gets one tick and a layoff takes up no width. A real date axis is the more
+/// literal chart, but over a six-year log it spends most of its width on the months you weren't
+/// training and draws a flat line across each one.
+///
+/// The line and fill are neutral, so the only colour on the canvas is a PR star. And a drag
+/// scrubs rather than selecting a range to filter by: on a phone, reading the run is worth more
+/// than a second way to zoom, which the range presets already do.
 struct ExercisePRChart: View {
     let sessions: [ExerciseSession]
-    let prSessions: [ExerciseSession]
+    let prMarks: [ExerciseAnalyticsModel.PRMark]
     let metricName: String
     let unit: SetUnit
     let showsLbs: Bool
     let yDomain: ClosedRange<Double>
-    let nearest: (Date) -> ExerciseSession?
     let onOpen: (ExerciseSession) -> Void
 
     /// Live only while a finger is down — chartXSelection clears it on release.
-    @State private var rawSelection: Date?
+    @State private var rawSelection: Int?
     /// Where the last scrub landed, so letting go inspects that session instead of snapping back
-    /// to the most recent one. Stored as a day rather than a session so it re-resolves through
-    /// `nearest` after a filter change, instead of pinning a row that no longer exists.
-    @State private var pinnedDay: Date?
-
-    /// The scrubbed session, the last one scrubbed to, else the most recent — the web's
-    /// `hoveredSession ?? chartSessions.at(-1)`, with the middle term added because a touch has
-    /// no equivalent of the cursor simply resting where you left it.
-    private var focused: ExerciseSession? {
-        (rawSelection ?? pinnedDay).flatMap(nearest) ?? sessions.last
-    }
+    /// to the most recent one.
+    @State private var pinnedIndex: Int?
 
     /// The sheet's horizontal gutter, which the scrub card cancels out to run edge to edge.
     static let bleed: CGFloat = 18
+
+    /// Clamped on read: a selection can land outside the data, and a pinned index outlives the
+    /// filter change that shortened the series.
+    private var focusedIndex: Int? {
+        guard !sessions.isEmpty else { return nil }
+        let raw = rawSelection ?? pinnedIndex ?? sessions.count - 1
+        return Swift.min(Swift.max(raw, 0), sessions.count - 1)
+    }
+
+    private var focused: ExerciseSession? { focusedIndex.map { sessions[$0] } }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -47,13 +52,13 @@ struct ExercisePRChart: View {
 
     private var chart: some View {
         Chart {
-            ForEach(sessions) { session in
+            ForEach(Array(sessions.enumerated()), id: \.element.id) { index, session in
                 // yStart pins the fill to the domain floor. A plain `y:` AreaMark fills down to
                 // zero, and this domain starts near the data — so the fill ran off the bottom of
                 // the plot and painted over everything beneath the chart. Highcharts avoids the
                 // same thing with `threshold: null`.
                 AreaMark(
-                    x: .value("Date", session.day),
+                    x: .value("Session", index),
                     yStart: .value(metricName, yDomain.lowerBound),
                     yEnd: .value(metricName, session.metric)
                 )
@@ -66,7 +71,7 @@ struct ExercisePRChart: View {
                     )
                 )
 
-                LineMark(x: .value("Date", session.day), y: .value(metricName, session.metric))
+                LineMark(x: .value("Session", index), y: .value(metricName, session.metric))
                     .interpolationMethod(.monotone)
                     .lineStyle(StrokeStyle(lineWidth: 1.5, lineJoin: .round))
                     .foregroundStyle(Theme.fg)
@@ -76,46 +81,48 @@ struct ExercisePRChart: View {
             // the line, and the reason a one-session chart still renders as something: a lone
             // Line/AreaMark draws nothing at all.
             if sessions.count <= 60 {
-                ForEach(sessions) { session in
-                    PointMark(x: .value("Date", session.day), y: .value(metricName, session.metric))
+                ForEach(Array(sessions.enumerated()), id: \.element.id) { index, session in
+                    PointMark(x: .value("Session", index), y: .value(metricName, session.metric))
                         .symbolSize(sessions.count == 1 ? 44 : 16)
                         .foregroundStyle(Theme.muted)
                 }
             }
 
             // Stars last so they sit above the line they mark.
-            ForEach(prSessions) { session in
-                if let tier = session.prTier {
-                    PointMark(x: .value("Date", session.day), y: .value(metricName, session.metric))
-                        .foregroundStyle(tier.color)
-                        .symbol {
-                            Image(systemName: "star.fill")
-                                .font(.system(size: 9))
-                                .foregroundStyle(tier.color)
-                                // Reads against the line it usually sits on top of.
-                                .shadow(color: Theme.bg, radius: 1.5)
-                        }
-                }
+            ForEach(prMarks) { mark in
+                PointMark(x: .value("Session", mark.index), y: .value(metricName, mark.session.metric))
+                    .foregroundStyle(mark.tier.color)
+                    .symbol {
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 9))
+                            .foregroundStyle(mark.tier.color)
+                            // Reads against the line it usually sits on top of.
+                            .shadow(color: Theme.bg, radius: 1.5)
+                    }
             }
 
-            if let focused {
-                RuleMark(x: .value("Date", focused.day))
+            if let focusedIndex, let focused {
+                RuleMark(x: .value("Session", focusedIndex))
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
                     .foregroundStyle(Theme.border)
-                PointMark(x: .value("Date", focused.day), y: .value(metricName, focused.metric))
+                PointMark(x: .value("Session", focusedIndex), y: .value(metricName, focused.metric))
                     .symbolSize(64)
                     .foregroundStyle(Theme.fg)
             }
         }
         .chartXSelection(value: $rawSelection)
-        .onChange(of: rawSelection) { _, new in if let new { pinnedDay = new } }
+        .onChange(of: rawSelection) { _, new in if let new { pinnedIndex = new } }
+        // An index means nothing once the series behind it changes length, so drop the pin rather
+        // than let it point at some unrelated session — the same bug the web hit reading chart
+        // indices against the wrong array.
+        .onChange(of: sessions.count) { _, _ in pinnedIndex = nil }
         .chartYScale(domain: yDomain)
         .chartXAxis {
-            AxisMarks(values: .automatic(desiredCount: 4)) { value in
+            AxisMarks(values: tickIndices) { value in
                 AxisGridLine().foregroundStyle(Theme.border.opacity(0.4))
                 AxisValueLabel {
-                    if let day = value.as(Date.self) {
-                        Text(Fmt.monthTick.string(from: day))
+                    if let index = value.as(Int.self), sessions.indices.contains(index) {
+                        Text(Fmt.tableDate.string(from: sessions[index].day))
                             .font(Typeface.mono(10))
                             .foregroundStyle(Theme.muted2)
                     }
@@ -136,12 +143,16 @@ struct ExercisePRChart: View {
                 }
             }
         }
-        // Days are UTC midnight. Without this the tick generator snaps to *local* calendar
-        // boundaries and labels a UTC "Aug 27" session "Aug 26" west of Greenwich — the
-        // off-by-one CLAUDE.md warns about, in its chart form.
-        .environment(\.timeZone, TimeZone(identifier: "UTC")!)
-        .environment(\.calendar, TimeRange.utc)
         .frame(height: 220)
+    }
+
+    /// Four evenly spaced ticks by position. An index axis has no natural tick stride, and one
+    /// label per session would be unreadable at this width.
+    private var tickIndices: [Int] {
+        guard sessions.count > 1 else { return sessions.isEmpty ? [] : [0] }
+        let count = Swift.min(4, sessions.count)
+        let step = Double(sessions.count - 1) / Double(count - 1)
+        return (0..<count).map { Int((Double($0) * step).rounded()) }
     }
 }
 
