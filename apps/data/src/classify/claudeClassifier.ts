@@ -28,9 +28,11 @@ Exercise to classify: "{{EXERCISE_NAME}}"
 Response format: Return only the JSON object, no markdown, no code blocks, no explanations.`;
 
 const ClaudeResponseSchema = z.object({
+    // Thinking is on by default on current models, so the text block is not necessarily first.
     content: z.array(
         z.object({
-            text: z.string(),
+            type: z.string(),
+            text: z.string().optional(),
         })
     ),
     model: z.string(),
@@ -46,14 +48,17 @@ export async function runClassifyExercise(exerciseName: string): Promise<Classif
             'x-api-key': process.env.ANTHROPIC_API_KEY!,
         },
         body: JSON.stringify({
-            model: 'claude-opus-4-1-20250805',
+            model: 'claude-opus-5',
             messages: [
                 {
                     role: 'user',
                     content: CLASSIFICATION_PROMPT_TEMPLATE.replace('{{EXERCISE_NAME}}', exerciseName),
                 },
             ],
-            max_tokens: 1024,
+            max_tokens: 4096,
+            // Naming the muscle group for one exercise title is not deep work, and the default
+            // effort would spend thinking tokens on it.
+            output_config: { effort: 'low' },
         }),
     });
 
@@ -64,15 +69,16 @@ export async function runClassifyExercise(exerciseName: string): Promise<Classif
 
     const rawResponse = await response.json();
     const data = ClaudeResponseSchema.parse(rawResponse);
-    if (!data.content[0] || data.content.length === 0) {
+    const text = data.content.find((block) => block.type === 'text')?.text;
+    if (!text) {
         throw new Error(`No content in Claude's response for exercise "${exerciseName}"`);
     }
     try {
-        const parsedResult = JSON.parse(data.content[0].text);
+        const parsedResult = JSON.parse(text);
         return ClassificationResultSchema.parse(parsedResult);
     } catch (error) {
         if (error instanceof SyntaxError) {
-            throw new Error(`Invalid JSON in Claude's response: ${data.content[0].text}`);
+            throw new Error(`Invalid JSON in Claude's response: ${text}`);
         }
         throw error;
     }
