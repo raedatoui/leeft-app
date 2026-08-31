@@ -1,7 +1,10 @@
-import type { ColumnUnits, SetUnit } from '@leeft/types';
+// `isLoaded` is imported as well as re-exported: a re-export alone doesn't bring it into scope,
+// and `basisLabel` below needs it.
+import { type ColumnUnits, isLoaded, type SetUnit } from '@leeft/types';
 import type { DropdownV2Option } from '@/components/ui/v2/dropdownV2';
 
-export { DEFAULT_COLUMN_UNITS, isLoaded } from '@leeft/types';
+export { DEFAULT_COLUMN_UNITS } from '@leeft/types';
+export { isLoaded };
 export type { ColumnUnits, SetUnit };
 
 interface SetUnitDef {
@@ -55,6 +58,15 @@ export const parseSeconds = (text: string): number => {
 export const formatSetValue = (value: number | undefined, unit: SetUnit): string => {
     if (value === undefined) return '—';
     return unit === 'time' ? formatSeconds(value) : String(Math.round(value * 100) / 100);
+};
+
+/** How a measurement basis reads on the exercise page's basis switch. `none` becomes
+ *  "Bodyweight" rather than "None" — as a chart of sets it is bodyweight work, not an absence. */
+export const basisLabel = (units: ColumnUnits): string => {
+    if (isLoaded(units)) return 'Lb';
+    if (units.weight === 'bw+') return 'BW+';
+    if (units.weight === 'none' && units.reps === 'reps') return 'Bodyweight';
+    return unitLabel(units.reps);
 };
 
 /** A whole exercise on one line — "5,5,5 @ 135,225,225", "11:00 @ 135", "10,12,12". The leading

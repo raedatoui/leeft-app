@@ -12,6 +12,9 @@ export interface ExerciseSessionRow {
     workSetCount: number;
     workVolume: number;
     metric: number;
+    /** Stable key for the session's measurement basis, e.g. "reps x lb". Sessions only compare
+     *  within one basis, so this is what the exercise page groups and switches on. */
+    basis: string;
     /** False when the session wasn't measured in reps x lb — a plank, a sled push, or a chin-up
      *  logged as added plate. Such a session has no metric to plot and no rep range to filter on,
      *  but its sets are still worth listing, so it stays in the rows and leaves the chart. */
@@ -59,10 +62,13 @@ export function computeExerciseSessions(workouts: Workout[], exerciseId: number,
         if (!selected) continue;
         const loaded = isLoaded(selected.units);
         const mw: MappedWorkout = { ...w, selected, weight: 0 };
-        // Off the pounds basis there is no weight to run a 1RM formula over, so the metric becomes
-        // the top rep count — which is where the progression actually lives for a bodyweight
-        // movement. `loaded` tells the page which of the two it is holding.
-        const metric = loaded ? method.calculator(mw, repRange) : Math.max(0, ...selected.sets.map((s) => s.reps ?? 0));
+        // Each basis is progressed on a different number, so each plots its own:
+        //   reps x lb   the selected 1RM / volume / max method
+        //   reps x bw+  the plate hung off you — 5 to 25 lb is the whole progression
+        //   otherwise   the top value of the first column: reps, seconds, feet
+        const topWeight = Math.max(0, ...selected.sets.map((s) => s.weight));
+        const topLead = Math.max(0, ...selected.sets.map((s) => s.reps ?? 0));
+        const metric = loaded ? method.calculator(mw, repRange) : selected.units.weight === 'bw+' ? topWeight : topLead;
         if (loaded && metric <= 0) continue;
         mw.weight = metric;
 
@@ -80,6 +86,7 @@ export function computeExerciseSessions(workouts: Workout[], exerciseId: number,
             workout: mw,
             sets: selected.sets,
             topSet,
+            basis: `${selected.units.reps} x ${selected.units.weight}`,
             loaded,
             workSetCount,
             workVolume: selected.workVolume,

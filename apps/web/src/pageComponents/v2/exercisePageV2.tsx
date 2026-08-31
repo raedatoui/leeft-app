@@ -16,7 +16,7 @@ import { useWorkoutData } from '@/lib/contexts';
 import { CYCLE_TYPE_COLOR, CYCLE_TYPE_LABEL_SHORT } from '@/lib/cycleTypes';
 import { formatTableDate, MONTHS_SHORT } from '@/lib/dateFormatters';
 import { computeExerciseSessions, computeExerciseStats } from '@/lib/exerciseSessions';
-import { formatSetsLine, formatSetValue, unitLabel } from '@/lib/setUnits';
+import { basisLabel, formatSetsLine, formatSetValue, unitLabel } from '@/lib/setUnits';
 import { formatVolume } from '@/lib/statsUtils';
 import { resolveTimeRange, type TimeRangeValue } from '@/lib/timeRange';
 import type { RepRange } from '@/types';
@@ -78,19 +78,24 @@ export default function ExercisePageV2() {
 
     const stats = useMemo(() => computeExerciseStats(sessions), [sessions]);
 
-    // One chart, one basis. An exercise with any pounds sessions plots those and leaves the rest
-    // off, so a chin-up "@ 10" (a plate) can't share an axis with one "@ 210" (the whole system).
-    // An exercise with none — a stair calf raise, a plank — plots its rep counts instead, which is
-    // the only progression it has.
-    const chartSessions = useMemo(() => {
-        const loaded = sessions.filter((s) => s.loaded);
-        return loaded.length > 0 ? loaded : sessions;
+    // One chart, one basis — a chin-up "@ 10" (a plate) can't share an axis with one "@ 210" (the
+    // whole system). Most exercises only ever have one, but Chin-Up has three across six years, so
+    // the bases are offered as a switch rather than silently picking one and hiding 138 sessions.
+    // Ordered most-recently-used first, so the default view is what you are doing now.
+    const bases = useMemo(() => {
+        const lastUsed = new Map<string, number>();
+        for (const s of sessions) lastUsed.set(s.basis, s.workout.date.getTime());
+        return [...lastUsed.entries()].sort((a, b) => b[1] - a[1]).map(([basis]) => basis);
     }, [sessions]);
+    const [basis, setBasis] = useState<string | null>(null);
+    const activeBasis = basis && bases.includes(basis) ? basis : (bases[0] ?? null);
+    const chartSessions = useMemo(() => sessions.filter((s) => s.basis === activeBasis), [sessions, activeBasis]);
     // Off the pounds basis the metric is the first column's top value, so it takes that column's
     // name and formatting — "Top Time" reading 1:15, not "Top Reps" reading 75.
-    const chartUnit = chartSessions[chartSessions.length - 1]?.workout.selected.units.reps ?? 'reps';
+    const activeUnits = chartSessions[chartSessions.length - 1]?.workout.selected.units;
+    const chartUnit = activeUnits?.reps ?? 'reps';
     const plotsLoad = chartSessions.some((s) => s.loaded);
-    const metricName = plotsLoad ? selectedMethod.name : `Top ${unitLabel(chartUnit)}`;
+    const metricName = plotsLoad ? selectedMethod.name : activeUnits?.weight === 'bw+' ? 'Top Added Lb' : `Top ${unitLabel(chartUnit)}`;
 
     const reversed = useMemo(() => [...sessions].reverse(), [sessions]);
 
@@ -334,6 +339,27 @@ export default function ExercisePageV2() {
                     <div className="zone-2">
                         <div className="panel-label" style={{ margin: '0 0 12px' }}>
                             <span>{metricName} Over Time</span>
+                            {bases.length > 1 && (
+                                <div className="seg" role="group" aria-label="Measurement basis">
+                                    {bases.map((b) => {
+                                        const sample = sessions.find((s) => s.basis === b);
+                                        const count = sessions.filter((s) => s.basis === b).length;
+                                        return (
+                                            <button
+                                                key={b}
+                                                type="button"
+                                                className={`seg-btn${b === activeBasis ? ' active' : ''}`}
+                                                onClick={() => {
+                                                    setBasis(b);
+                                                    setTablePage(0);
+                                                }}
+                                            >
+                                                {sample ? basisLabel(sample.workout.selected.units) : b} <span className="hint">{count}</span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
                             <span className="hint">
                                 ★ = PR (gold all-time · green active · gray beaten) · hover to inspect · drag to filter range
                             </span>
