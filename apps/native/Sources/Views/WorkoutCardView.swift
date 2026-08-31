@@ -275,12 +275,14 @@ private struct ExerciseBlockView: View {
 
                 Spacer(minLength: 0)
 
-                HStack(spacing: 4) {
-                    Text(Fmt.number(exercise.volume)).foregroundStyle(Theme.muted)
-                    Text("LBS").foregroundStyle(Theme.muted2)
+                if exercise.columnUnits.isLoaded {
+                    HStack(spacing: 4) {
+                        Text(Fmt.number(exercise.volume)).foregroundStyle(Theme.muted)
+                        Text("LBS").foregroundStyle(Theme.muted2)
+                    }
+                    .font(Typeface.mono(11))
+                    .tracking(0.9)
                 }
-                .font(Typeface.mono(11))
-                .tracking(0.9)
             }
 
             if compact {
@@ -293,14 +295,15 @@ private struct ExerciseBlockView: View {
         }
     }
 
-    /// `.sets-table` — set / reps / lbs. Work sets take the foreground color with a yellow
-    /// index; warmups stay muted, which is how the web renders them when warmup is shown.
+    /// `.sets-table` — set / lead column / load column, both headed by whatever they are counting.
+    /// Work sets take the foreground color with a yellow index; warmups stay muted, which is how
+    /// the web renders them when warmup is shown.
     private var setsTable: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
                 cell("SET", width: Self.indexColumn)
-                cell("REPS")
-                cell("LBS")
+                cell(exercise.columnUnits.reps.chip.uppercased())
+                cell(exercise.columnUnits.weight == .blank ? "" : exercise.columnUnits.weight.chip.uppercased())
             }
             .font(Typeface.mono(10))
             .tracking(1.6)
@@ -314,11 +317,13 @@ private struct ExerciseBlockView: View {
                         // The index keeps its own colour except on a PR row, where the web tints
                         // every cell — otherwise a green `active` row would keep a yellow index.
                         .foregroundStyle(set.prTier.map(Self.tierColor) ?? (set.isWorkSet ? Theme.maint : Theme.muted))
-                    cell("\(set.reps)")
+                    cell(exercise.columnUnits.reps.format(set.reps))
                     HStack(spacing: 6) {
-                        Text(Fmt.weight(set.weight))
+                        if exercise.columnUnits.weight != .blank {
+                            Text(Fmt.weight(set.weight))
+                        }
                         if let tier = set.prTier {
-                            Text("★ \(set.reps)RM")
+                            Text("★ \(Int(set.reps))RM")
                                 .font(Typeface.mono(10))
                                 .foregroundStyle(Self.tierColor(tier))
                         }
@@ -344,8 +349,9 @@ private struct ExerciseBlockView: View {
         var strongest: [Int: LiftingWorkoutDoc.Exercise.Set.PrTier] = [:]
         for set in exercise.sets {
             guard let tier = set.prTier else { continue }
-            if let current = strongest[set.reps], current >= tier { continue }
-            strongest[set.reps] = tier
+            let reps = Int(set.reps)
+            if let current = strongest[reps], current >= tier { continue }
+            strongest[reps] = tier
         }
         return strongest.sorted { $0.key < $1.key }.map { PRChip(reps: $0.key, tier: $0.value) }
     }

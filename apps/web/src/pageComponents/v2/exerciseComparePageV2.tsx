@@ -205,7 +205,8 @@ export default function ExerciseComparePageV2() {
                         <ExerciseCompareChart
                             series={columns.map((c) => ({
                                 name: c.exercise.name,
-                                points: c.sessions.map((s) => ({ date: s.workout.date, metric: s.metric })),
+                                // Same as the detail chart: a session on another basis has no metric to plot.
+                                points: c.sessions.filter((s) => s.loaded).map((s) => ({ date: s.workout.date, metric: s.metric })),
                             }))}
                             methodName={selectedMethod.name}
                             onRangeSelect={(start, end) => setTimeRange({ preset: 'custom', start, end })}

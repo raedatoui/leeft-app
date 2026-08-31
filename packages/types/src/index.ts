@@ -1,5 +1,23 @@
 import { z } from "zod";
 
+/** TrainHeroic stores a column's per-set values as ten flat `param_N_data_M` keys rather than an
+ *  array; ten is its own per-exercise set cap. Unused slots come through as `""`. The mapped type
+ *  hands zod the literal key names, so the decoder can index them without a cast. */
+type ParamSlot = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+type ParamColumn<C extends 1 | 2> = {
+	[K in `param_${C}_data_${ParamSlot}`]: z.ZodOptional<
+		z.ZodUnion<readonly [z.ZodString, z.ZodNumber]>
+	>;
+};
+
+const paramColumn = <C extends 1 | 2>(col: C): ParamColumn<C> =>
+	Object.fromEntries(
+		Array.from({ length: 10 }, (_, i) => [
+			`param_${col}_data_${i + 1}`,
+			z.union([z.string(), z.number()]).optional(),
+		]),
+	) as ParamColumn<C>;
+
 export const RawWorkoutSchema = z.object({
 	saved_workout: z.object({
 		title: z.string(),
@@ -19,6 +37,15 @@ export const RawWorkoutSchema = z.object({
 						abr: z.string(),
 						video_url: z.string().optional(),
 						exercise_title: z.string(),
+						// The unit codes, and the only statement of them TrainHeroic makes. `abr` is a
+						// display string that renders them lossily — it omits the weights entirely for
+						// `param_2_type: 2`, and drops the ` lb` suffix on jumps — so these are the
+						// source of truth. Decoded in `paramUnit` (apps/data/src/compile/extractDay.ts).
+						param_count: z.number().optional(),
+						param_1_type: z.number().optional(),
+						param_2_type: z.number().optional(),
+						...paramColumn(1),
+						...paramColumn(2),
 					}),
 				),
 			}),
@@ -26,6 +53,48 @@ export const RawWorkoutSchema = z.object({
 	}),
 	date: z.string(),
 });
+
+/** What a set column holds. `reps`/`time` lead; `lb`/`bw+`/`none` load; distances take either.
+ *  Mirrored by hand in apps/web/src/lib/setUnits.ts and
+ *  apps/native/Sources/Views/UnitPickerSheet.swift. */
+export const SetUnitSchema = z.enum([
+	"reps",
+	"time",
+	"lb",
+	// Load added on top of bodyweight, rather than the total load moved. Kept apart from `lb`
+	// because the two are different scales: a chin-up "@ 10" and a chin-up "@ 210" are the same
+	// lift. Reconciling them would need a bodyweight for the date, which nothing records.
+	"bw+",
+	"none",
+	"feet",
+	"inches",
+	"meters",
+]);
+
+export const ColumnUnitsSchema = z.object({
+	reps: SetUnitSchema,
+	weight: SetUnitSchema,
+});
+
+export const DEFAULT_COLUMN_UNITS: ColumnUnits = { reps: "reps", weight: "lb" };
+
+/** Only reps-times-pounds is tonnage. Everything else — seconds, feet, box height, added-only
+ *  load — still renders, but contributes nothing to volume and holds no weight-ranked record. */
+export const isLoaded = (units: ColumnUnits): boolean =>
+	units.reps === "reps" && units.weight === "lb";
+
+/** Settle the load column against what was actually logged: a weight box left at zero for every
+ *  set is a bodyweight movement, not a lift at 0 lb. Without this, chin-ups and dead bugs sit on
+ *  the pounds ladder and take turns setting 0 lb records against each other. */
+export const resolveUnits = (
+	units: ColumnUnits,
+	sets: { weight: number }[],
+): ColumnUnits => {
+	const load = units.weight === "lb" || units.weight === "bw+";
+	return load && sets.length > 0 && sets.every((s) => s.weight === 0)
+		? { ...units, weight: "none" }
+		: units;
+};
 
 export const BaseExerciseMetadataSchema = z.object({
 	id: z.number(),
@@ -36,6 +105,9 @@ export const BaseExerciseMetadataSchema = z.object({
 	equipment: z.array(z.string()),
 	description: z.string().optional(),
 	originalMuscleGroup: z.string().optional(),
+	// Seeds the unit picker for a new logged exercise. A default only — what a past session
+	// actually measured lives on that session's exercise, so editing this never rewrites history.
+	measurement: ColumnUnitsSchema.optional(),
 });
 
 export const ExerciseMetadataSchema = BaseExerciseMetadataSchema.extend({
@@ -43,8 +115,12 @@ export const ExerciseMetadataSchema = BaseExerciseMetadataSchema.extend({
 });
 
 export const BaseSetSchema = z.object({
+	// The first column's value. What it counts is `units.reps` on the owning exercise: reps by
+	// default, otherwise whole seconds, feet or inches. (There was a separate `time: string`
+	// field holding "11:00"; nothing read it and its parser dropped comma-separated times, so
+	// durations now ride here as seconds.)
 	reps: z.number().optional(),
-	time: z.string().optional(),
+	// The second column's value, read through `units.weight`.
 	weight: z.number(),
 	order: z.number(),
 });
@@ -61,6 +137,15 @@ export const SetSchema = BaseSetSchema.extend({
 export const BaseExerciseSchema = z.object({
 	exerciseId: z.number(),
 	order: z.number(),
+	// What this session's two set columns were measuring. It sits here rather than on the catalog
+	// because one exercise changes basis across sessions — Chin-Up is logged bare, `bw+` and `lb`
+	// in different years.
+	//
+	// Defaulted rather than required: published CDN artifacts and Firestore documents written
+	// before the unit pickers existed carry no `units`, and the app parses those with this very
+	// schema. A bare `ColumnUnitsSchema` would reject every one of them. `.default()` keeps the
+	// field non-optional downstream, so no consumer needs a fallback.
+	units: ColumnUnitsSchema.default({ reps: "reps", weight: "lb" }),
 	sets: z.array(BaseSetSchema),
 	volume: z.number(),
 });
@@ -211,6 +296,8 @@ export const MobilityMovementSchema = z.object({
 	removedAt: z.string().optional(),
 });
 
+export type SetUnit = z.infer<typeof SetUnitSchema>;
+export type ColumnUnits = z.infer<typeof ColumnUnitsSchema>;
 export type RawWorkout = z.infer<typeof RawWorkoutSchema>;
 export type ExerciseMetadata = z.infer<typeof ExerciseMetadataSchema>;
 export type BaseSet = z.infer<typeof BaseSetSchema>;

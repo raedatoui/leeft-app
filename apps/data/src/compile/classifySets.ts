@@ -1,7 +1,8 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { logger } from '@leeft/utils';
-import type { BaseSet, BaseWorkout, SetDetail, Workout } from './types';
+import { isLoaded, resolveUnits } from '@leeft/types';
+import { logger, setsVolume } from '@leeft/utils';
+import type { BaseSet, BaseWorkout, ColumnUnits, SetDetail, Workout } from './types';
 
 interface ClassifyOptions {
     threshold: number; // 0-1, e.g., 0.85 for 85%
@@ -35,6 +36,7 @@ function isStillWarmingUp(sets: BaseSet[], currentIndex: number): boolean {
  * Classifies sets within an exercise as warmup or work sets.
  *
  * Algorithm:
+ * 0. If the exercise isn't measured in reps × lb → all work sets (no load to threshold against)
  * 1. If all weights are equal → all work sets
  * 2. If max weight is 0 (bodyweight) → all work sets
  * 3. Find max weight → calculate threshold (e.g., 85% of max)
@@ -43,9 +45,16 @@ function isStillWarmingUp(sets: BaseSet[], currentIndex: number): boolean {
  *    - If yes, this set is still a warmup (keep looking for real work sets)
  * 6. Sets before boundary = warmup, at/after = work
  */
-function classifyExerciseSets(sets: BaseSet[], options: ClassifyOptions): SetDetail[] {
+function classifyExerciseSets(sets: BaseSet[], units: ColumnUnits, options: ClassifyOptions): SetDetail[] {
     if (sets.length === 0) {
         return [];
+    }
+
+    // The whole warmup heuristic reads the second column as load ramping toward a top set. On any
+    // other basis that column is inches, or a plate on top of bodyweight, or absent — a threshold
+    // against it means nothing, so nothing is a warmup.
+    if (!isLoaded(units)) {
+        return sets.map((s) => ({ ...s, isWorkSet: true }));
     }
 
     // Single set = work set
@@ -92,12 +101,20 @@ function classifyExerciseSets(sets: BaseSet[], options: ClassifyOptions): SetDet
 
 function classifyWorkout(workout: BaseWorkout, options: ClassifyOptions): Workout {
     const classifiedExercises = workout.exercises.map((exercise) => {
-        const classifiedSets = classifyExerciseSets(exercise.sets, options);
-        const workVolume = classifiedSets.filter((set) => set.isWorkSet).reduce((total, set) => total + (set.reps || 0) * set.weight, 0);
+        // Every source lands here — TrainHeroic, both Google sheets, the app — so this is where an
+        // all-zero load column is settled as bodyweight, once, rather than in each parser. Volume
+        // is recomputed from the resolved units for the same reason.
+        const units = resolveUnits(exercise.units, exercise.sets);
+        const classifiedSets = classifyExerciseSets(exercise.sets, units, options);
         return {
             ...exercise,
+            units,
             sets: classifiedSets,
-            workVolume,
+            volume: setsVolume(classifiedSets, units),
+            workVolume: setsVolume(
+                classifiedSets.filter((set) => set.isWorkSet),
+                units
+            ),
         };
     });
 
@@ -115,7 +132,7 @@ export function classifyAllWorkouts(workouts: BaseWorkout[], options: ClassifyOp
 export function main(): void {
     // Parse threshold from CLI args (default 0.85)
     const thresholdArg = process.argv.find((arg) => arg.startsWith('--threshold='));
-    const threshold = thresholdArg ? parseFloat(thresholdArg.split('=')[1]) : 0.85;
+    const threshold = thresholdArg ? Number.parseFloat(thresholdArg.split('=')[1]) : 0.85;
 
     if (threshold < 0 || threshold > 1) {
         logger.error('Threshold must be between 0 and 1 (e.g., 0.85 for 85%)');
@@ -166,5 +183,5 @@ export function main(): void {
     const outputPath = join(__dirname, '../', '../', 'data', 'out', 'lifting-log-sets.json');
     writeFileSync(outputPath, JSON.stringify({ workouts: classifiedWorkouts }, null, 4));
 
-    logger.success(`Classified lifting log saved to: data/out/lifting-log-sets.json`);
+    logger.success('Classified lifting log saved to: data/out/lifting-log-sets.json');
 }

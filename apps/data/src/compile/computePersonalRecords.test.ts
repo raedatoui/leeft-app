@@ -1,10 +1,11 @@
 import { describe, expect, test } from 'bun:test';
+import { DEFAULT_COLUMN_UNITS } from '@leeft/types';
 import { annotatePersonalRecords } from './computePersonalRecords';
-import type { SetDetail, Workout } from './types';
+import type { ColumnUnits, SetDetail, Workout } from './types';
 
 const set = (order: number, reps: number | undefined, weight: number, isWorkSet = true): SetDetail => ({ order, reps, weight, isWorkSet });
 
-const wo = (uuid: string, dateISO: string, sets: SetDetail[], exerciseId = 1): Workout => ({
+const wo = (uuid: string, dateISO: string, sets: SetDetail[], exerciseId = 1, units: ColumnUnits = DEFAULT_COLUMN_UNITS): Workout => ({
     uuid,
     date: new Date(dateISO),
     title: dateISO,
@@ -12,7 +13,7 @@ const wo = (uuid: string, dateISO: string, sets: SetDetail[], exerciseId = 1): W
     rpe: null,
     volume: 0,
     workVolume: 0,
-    exercises: [{ exerciseId, order: 0, volume: 0, workVolume: 0, sets }],
+    exercises: [{ exerciseId, order: 0, units, volume: 0, workVolume: 0, sets }],
 });
 
 const tiers = (w: Workout, exIdx = 0) => w.exercises[exIdx].sets.map((s) => s.prTier);
@@ -61,13 +62,38 @@ describe('annotatePersonalRecords', () => {
         const w: Workout = {
             ...wo('u1', '2024-01-01', [set(0, 1, 100)], 1),
             exercises: [
-                { exerciseId: 1, order: 0, volume: 0, workVolume: 0, sets: [set(0, 1, 100)] },
-                { exerciseId: 2, order: 1, volume: 0, workVolume: 0, sets: [set(0, 1, 200)] },
+                { exerciseId: 1, order: 0, units: DEFAULT_COLUMN_UNITS, volume: 0, workVolume: 0, sets: [set(0, 1, 100)] },
+                { exerciseId: 2, order: 1, units: DEFAULT_COLUMN_UNITS, volume: 0, workVolume: 0, sets: [set(0, 1, 200)] },
             ],
         };
         const [out] = annotatePersonalRecords([w]);
         expect(out.exercises[0].sets[0].prTier).toBe('allTime'); // record for exercise 1
         expect(out.exercises[1].sets[0].prTier).toBe('allTime'); // record for exercise 2
+    });
+
+    test('a basis with no weight ladder never flags: seconds, feet and bodyweight rank nothing', () => {
+        const timed = wo('u1', '2024-01-01', [set(0, 60, 135), set(1, 90, 135)], 1, { reps: 'time', weight: 'lb' });
+        const bare = wo('u2', '2024-02-01', [set(0, 10, 0)], 1, { reps: 'reps', weight: 'none' });
+        const [a, b] = annotatePersonalRecords([timed, bare]);
+        expect(tiers(a)).toEqual([undefined, undefined]);
+        expect(tiers(b)).toEqual([undefined]);
+    });
+
+    test('bw+ and lb are separate ladders: a plate never ranks against the whole system', () => {
+        // Same exercise, same rep count. On one ladder the 10 lb set would be buried by the 210.
+        const added = wo('u1', '2024-01-01', [set(0, 6, 10)], 1, { reps: 'reps', weight: 'bw+' });
+        const heavier = wo('u2', '2024-02-01', [set(0, 6, 20)], 1, { reps: 'reps', weight: 'bw+' });
+        const system = wo('u3', '2024-03-01', [set(0, 6, 210)], 1);
+        const [a, b, c] = annotatePersonalRecords([added, heavier, system]);
+        expect(tiers(a)).toEqual(['beaten']); // beaten by the 20 lb plate, not by the 210
+        expect(tiers(b)).toEqual(['allTime']); // top of the bw+ ladder
+        expect(tiers(c)).toEqual(['allTime']); // top of the lb ladder, independently
+    });
+
+    test('a fractional rep count never mints a record — the columns were typed the wrong way round', () => {
+        const swapped = wo('u1', '2024-01-01', [set(0, 137.5, 5)]);
+        const [out] = annotatePersonalRecords([swapped]);
+        expect(tiers(out)).toEqual([undefined]);
     });
 
     test('is independent of input array order (sorts by date internally)', () => {

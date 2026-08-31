@@ -48,6 +48,9 @@ export interface LiftingWorkoutDoc {
     exercises: {
         exerciseId: number;
         order: number;
+        // What the two set columns count. Optional on the wire: documents written before the unit
+        // pickers existed carry none, and the pipeline reads those as reps x lb.
+        units?: { reps: string; weight: string };
         sets: { order: number; weight: number; reps: number; isWorkSet: boolean }[];
         volume: number;
         workVolume: number;

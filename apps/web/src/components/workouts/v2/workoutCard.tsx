@@ -9,6 +9,7 @@ import { READINESS_QUESTIONS, type ReadinessAnswers, SCALE_COLORS } from '@/lib/
 import { cardioColors, cardioIcons } from '@/lib/cardio-theme';
 import { startTime } from '@/lib/contexts';
 import { formatLongDate, formatShortDate, formatTimeOfDay } from '@/lib/dateFormatters';
+import { type ColumnUnits, formatSetsLine, formatSetValue, isLoaded, unitLabel } from '@/lib/setUnits';
 import type { CardioWorkout, DayWorkout, Exercise, ExerciseMap, ExerciseMetadata, Workout } from '@/types';
 
 interface WorkoutCardProps {
@@ -30,20 +31,16 @@ interface WorkoutCardProps {
     selectedExercise?: string | null;
 }
 
-const formatSetsSummary = (sets: { reps?: number; weight: number }[]): string => {
-    if (sets.length === 0) return '—';
-    const reps = sets.map((s) => s.reps ?? '?').join(',');
-    const weights = sets.map((s) => Math.round(s.weight)).join(',');
-    return `${reps} @ ${weights}`;
-};
+type SetLike = { reps?: number; weight: number };
 
 // Compact clipboard form, e.g. "5,5,5@225" (single weight when all sets share it, else positional list).
-const formatSetsForClipboard = (sets: { reps?: number; weight: number }[]): string => {
+const formatSetsForClipboard = (sets: SetLike[], units: ColumnUnits): string => {
     if (sets.length === 0) return '—';
-    const reps = sets.map((s) => s.reps ?? '?').join(',');
+    const lead = sets.map((s) => formatSetValue(s.reps, units.reps)).join(',');
+    if (units.weight === 'none') return lead;
     const weights = sets.map((s) => Math.round(s.weight));
     const uniqueWeights = [...new Set(weights)];
-    return `${reps}@${uniqueWeights.length === 1 ? uniqueWeights[0] : weights.join(',')}`;
+    return `${lead}@${uniqueWeights.length === 1 ? uniqueWeights[0] : weights.join(',')}`;
 };
 
 interface ExerciseBlockProps {
@@ -113,6 +110,8 @@ const ReadinessStrip: FC<{ readiness: Record<string, number> }> = ({ readiness }
 export const ExerciseBlock: FC<ExerciseBlockProps> = ({ exercise, metadata, includeWarmup, compact, cycleId, onExerciseClick, muscleGroupColor }) => {
     const sets = includeWarmup ? exercise.sets : exercise.sets.filter((s) => s.isWorkSet);
     const volume = includeWarmup ? exercise.volume : exercise.workVolume;
+    const units = exercise.units;
+    const loaded = isLoaded(units);
     const mgColor = muscleGroupColor?.(metadata?.primaryMuscleGroup);
     const exerciseName = metadata?.name ?? `Exercise ${exercise.exerciseId}`;
 
@@ -151,20 +150,22 @@ export const ExerciseBlock: FC<ExerciseBlockProps> = ({ exercise, metadata, incl
         <div className="ex-block">
             <div className="ex-head">
                 {nameNode}
-                <span className="ex-vol">
-                    <b>{volume.toLocaleString()}</b>lbs
-                </span>
+                {loaded && (
+                    <span className="ex-vol">
+                        <b>{volume.toLocaleString()}</b>lbs
+                    </span>
+                )}
             </div>
             {compact ? (
-                <div className="ex-summary">{formatSetsSummary(sets)}</div>
+                <div className="ex-summary">{formatSetsLine(sets, units)}</div>
             ) : (
                 sets.length > 0 && (
                     <table className="sets-table">
                         <thead>
                             <tr>
                                 <th>set</th>
-                                <th>reps</th>
-                                <th>lbs</th>
+                                <th>{unitLabel(units.reps).toLowerCase()}</th>
+                                <th>{units.weight === 'none' ? '' : unitLabel(units.weight).toLowerCase()}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -173,9 +174,9 @@ export const ExerciseBlock: FC<ExerciseBlockProps> = ({ exercise, metadata, incl
                                 return (
                                     <tr key={set.order} className={`${set.isWorkSet ? 'work' : ''}${isPRSet ? ` pr pr-${set.prTier}` : ''}`}>
                                         <td>{i + 1}</td>
-                                        <td>{set.reps ?? '—'}</td>
+                                        <td>{formatSetValue(set.reps, units.reps)}</td>
                                         <td>
-                                            {Math.round(set.weight)}
+                                            {units.weight === 'none' ? '' : Math.round(set.weight)}
                                             {isPRSet && (
                                                 <span className="pr-star" data-tier={set.prTier} title={`${set.reps ?? ''}RM PR`}>
                                                     ★ {set.reps}RM
@@ -250,7 +251,7 @@ const LiftingWorkoutBody: FC<LiftingBodyProps> = ({
         const lines = exercises.map((ex) => {
             const name = (exerciseMap.get(ex.exerciseId.toString())?.name ?? `Exercise ${ex.exerciseId}`).toLowerCase();
             const sets = includeWarmup ? ex.sets : ex.sets.filter((s) => s.isWorkSet);
-            return `${name}: ${formatSetsForClipboard(sets)}`;
+            return `${name}: ${formatSetsForClipboard(sets, ex.units)}`;
         });
         const time = workout.startedAt ? ` · ${formatTimeOfDay(workout.startedAt)}` : '';
         const text = `${formatLongDate(date)}${time} · ${Math.round(workout.duration)} min\n${lines.join('\n')}`;

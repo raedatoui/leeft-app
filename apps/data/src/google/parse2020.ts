@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { DEFAULT_COLUMN_UNITS } from '@leeft/types';
 import { logger } from '@leeft/utils';
 import { v4 as uuidv4 } from 'uuid';
 import { type SetDetail, type Workout, WorkoutSchema } from '../compile/types';
@@ -524,6 +525,8 @@ const parseWorkoutRow = (row: ParsedRow2020, metadata?: MetadataFile): Workout =
         exercises: exercises.map((ex) => ({
             exerciseId: ex.exerciseId,
             order: ex.order,
+            // The 2020 sheet only ever held reps and pounds — it had no other column.
+            units: DEFAULT_COLUMN_UNITS,
             sets: ex.sets,
             volume: ex.volume,
         })),

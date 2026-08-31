@@ -1,236 +1,136 @@
 /**
- * Exercise Measurement-Unit Analyzer
+ * Exercise Measurement-Unit Auditor
  *
- * Flags exercises whose logged set numbers are likely NOT reps × weight-in-lbs:
- * jumps store a height/distance in the weight column, sleds and carries store a
- * distance in the reps column or a duration in the time field, planks are pure
- * duration, and bodyweight movements have no load at all (volume is always 0).
+ * Now that every logged exercise carries its own `units`, this is a check on that data rather
+ * than the guesswork it started as. Three passes, all reporting the *session* that is wrong
+ * rather than the exercise it belongs to — Tricep Pushdown has one bad session out of 76, and
+ * naming the exercise buried it under 484 healthy sets.
  *
- * Two passes:
- *   1. Identity — keyword rules over the exercise name predict the real measurement.
- *   2. Data — per-exercise set signals (time strings, missing/fractional reps,
- *      all-zero weights, a single constant high rep count) corroborate or surface
- *      exercises the name rules missed.
+ *   1. Name vs units — keyword rules over the exercise name predict a measurement. A sled or a
+ *      plank still logged as reps x lb means a session the decoder didn't reach.
+ *   2. Transposed columns — a fractional rep count is the columns typed the wrong way round.
+ *   3. Assistance basis — on an assisted machine the load must rise with the warmup ramp. A
+ *      session where it falls is recording the assistance stack instead of the load moved.
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { isLoaded } from '@leeft/types';
 import { logger } from '@leeft/utils';
-import { readExerciseMap, readLog } from '../compile/readFiles';
+import { readLog } from '../compile/readFiles';
+import type { ColumnUnits } from '../compile/types';
 
 interface IdentityRule {
     pattern: RegExp;
-    measurement: string;
+    expects: string;
 }
 
 // Ordered: first match wins. Word-bounded to avoid machine names like "HS Iso Lateral Row".
 const IDENTITY_RULES: IdentityRule[] = [
-    { pattern: /\bbox jump\b/i, measurement: 'reps × box height — weight column holds inches' },
-    { pattern: /\bbroad jump\b/i, measurement: 'reps × jump distance — weight column holds feet' },
-    { pattern: /\bjump\b|\bhop\b|\bbound\b/i, measurement: 'jump — height/distance, not load' },
-    { pattern: /\bsled\b/i, measurement: 'sled load × distance or duration — reps column holds distance, or time field holds minutes' },
-    { pattern: /\bcarry\b|\bfarmer/i, measurement: 'carried load × distance/duration — reps column holds yards or seconds' },
-    { pattern: /\brun\b|\bsprint\b|\bjog\b/i, measurement: 'distance/duration cardio — reps column holds miles or minutes' },
-    { pattern: /\bplank\b|\bhold\b|\bhang\b|\bwall sit\b|\bl-sit\b/i, measurement: 'duration — time field holds min:sec, no reps' },
-    { pattern: /\bassisted\b/i, measurement: 'reps × assistance — weight column is machine assistance, so volume overstates work' },
+    { pattern: /\bbox jump\b/i, expects: 'a height in the load column' },
+    { pattern: /\bbroad jump\b/i, expects: 'a distance in the load column' },
+    { pattern: /\bjump\b|\bhop\b|\bbound\b/i, expects: 'a height or distance, not load' },
+    { pattern: /\bsled\b/i, expects: 'a distance or duration in the lead column' },
+    { pattern: /\bcarry\b|\bfarmer/i, expects: 'a distance or duration in the lead column' },
+    { pattern: /\brun\b|\bsprint\b|\bjog\b/i, expects: 'a distance or duration, not reps' },
+    { pattern: /\bplank\b|\bhold\b|\bhang\b|\bwall sit\b|\bl-sit\b/i, expects: 'a duration in the lead column' },
 ];
 
-interface SetLike {
-    reps?: number;
-    time?: string;
-    weight: number;
+interface Finding {
+    day: string;
+    exercise: string;
+    detail: string;
 }
 
-interface ExerciseEvidence {
-    setCount: number;
-    timedSets: number;
-    replessSets: number;
-    fractionalReps: number[];
-    zeroWeightSets: number;
-    repValues: number[];
-    weightValues: number[];
-    timeSamples: string[];
-}
-
-function collectEvidence(sets: SetLike[]): ExerciseEvidence {
-    const repValues = new Set<number>();
-    const weightValues = new Set<number>();
-    const fractionalReps = new Set<number>();
-    const timeSamples: string[] = [];
-    let timedSets = 0;
-    let replessSets = 0;
-    let zeroWeightSets = 0;
-
-    for (const s of sets) {
-        if (s.time) {
-            timedSets++;
-            if (timeSamples.length < 5) timeSamples.push(s.time);
-        }
-        if (s.reps === undefined) {
-            replessSets++;
-        } else {
-            repValues.add(s.reps);
-            if (!Number.isInteger(s.reps)) fractionalReps.add(s.reps);
-        }
-        if (s.weight === 0) zeroWeightSets++;
-        weightValues.add(s.weight);
-    }
-
-    return {
-        setCount: sets.length,
-        timedSets,
-        replessSets,
-        fractionalReps: [...fractionalReps].sort((a, b) => a - b),
-        zeroWeightSets,
-        repValues: [...repValues].sort((a, b) => a - b),
-        weightValues: [...weightValues].sort((a, b) => a - b),
-        timeSamples,
-    };
-}
-
-function dataSignals(ev: ExerciseEvidence): string[] {
-    const signals: string[] = [];
-    if (ev.timedSets > 0) signals.push(`${ev.timedSets}/${ev.setCount} sets carry a time string (${ev.timeSamples.join(', ')})`);
-    if (ev.replessSets > 0) signals.push(`${ev.replessSets}/${ev.setCount} sets have no reps`);
-    if (ev.fractionalReps.length > 0) signals.push(`fractional reps: ${ev.fractionalReps.join(', ')}`);
-    if (ev.repValues.length === 1 && ev.repValues[0] !== undefined && ev.repValues[0] >= 25) {
-        signals.push(`every set logs exactly ${ev.repValues[0]} "reps" — reads like a distance`);
-    }
-    return signals;
-}
-
-function fmtValues(values: number[], max = 10): string {
-    const shown = values.slice(0, max).join(', ');
-    return values.length > max ? `${shown}, … (${values.length} distinct)` : shown;
-}
+const fmtSets = (sets: { reps?: number; weight: number }[]) => sets.map((s) => `${s.reps ?? '?'}@${s.weight}`).join(' ');
 
 export function main() {
     const workouts = readLog('../../data/out/lifting-log.json');
-    const exerciseMap = readExerciseMap();
 
-    // Full catalog for names — the classified file lags behind and misses some logged ids.
     const catalogPath = join(__dirname, '../', '../', 'data', 'out', 'exercise-metadata.json');
     const catalog = JSON.parse(readFileSync(catalogPath, 'utf8')) as { exercises: { id: number; name: string }[] };
     const nameById = new Map(catalog.exercises.map((e) => [e.id, e.name]));
 
-    // Every occurrence of an exercise, so findings can point back at the workouts they came from.
-    interface Instance {
-        uuid: string;
-        date: string;
-        title: string;
-        position: number;
-        exerciseCount: number;
-    }
+    const mislabelled: Finding[] = [];
+    const transposed: Finding[] = [];
+    const assistance: Finding[] = [];
+    const basisCounts = new Map<string, number>();
 
-    const setsByExercise = new Map<number, SetLike[]>();
-    const instancesByExercise = new Map<number, Instance[]>();
     for (const w of workouts) {
-        for (const [i, ex] of w.exercises.entries()) {
-            const bucket = setsByExercise.get(ex.exerciseId) ?? [];
-            bucket.push(...ex.sets);
-            setsByExercise.set(ex.exerciseId, bucket);
+        const day = w.date.toISOString().slice(0, 10);
+        for (const ex of w.exercises) {
+            const name = nameById.get(ex.exerciseId) ?? `#${ex.exerciseId}`;
+            const units = ex.units as ColumnUnits;
+            const basis = `${units.reps} x ${units.weight}`;
+            basisCounts.set(basis, (basisCounts.get(basis) ?? 0) + 1);
 
-            const instances = instancesByExercise.get(ex.exerciseId) ?? [];
-            instances.push({
-                uuid: w.uuid,
-                date: w.date.toISOString().slice(0, 10),
-                title: w.title,
-                position: i + 1,
-                exerciseCount: w.exercises.length,
-            });
-            instancesByExercise.set(ex.exerciseId, instances);
+            // 1. The name says this isn't reps x lb, but the units say it is.
+            const rule = IDENTITY_RULES.find((r) => r.pattern.test(name));
+            if (rule && isLoaded(units)) {
+                mislabelled.push({ day, exercise: name, detail: `logged as reps x lb; the name implies ${rule.expects}` });
+            }
+
+            // 2. A rep count is a count. A fraction means the two columns were swapped at entry.
+            const fractional = ex.sets.filter((s) => s.reps !== undefined && !Number.isInteger(s.reps));
+            if (units.reps === 'reps' && fractional.length > 0) {
+                transposed.push({ day, exercise: name, detail: fmtSets(ex.sets) });
+            }
+
+            // 3. On an assisted machine the number must rise as the ramp gets harder. Falling
+            //    across three or more sets means the assistance stack was logged, not the load.
+            const loads = ex.sets.map((s) => s.weight);
+            const reps = ex.sets.map((s) => s.reps ?? 0);
+            const first = loads[0];
+            const last = loads[loads.length - 1];
+            const firstReps = reps[0];
+            const lastReps = reps[reps.length - 1];
+            if (
+                /\bassisted\b/i.test(name) &&
+                loads.length >= 3 &&
+                first !== undefined &&
+                last !== undefined &&
+                firstReps !== undefined &&
+                lastReps !== undefined &&
+                last < first &&
+                lastReps < firstReps
+            ) {
+                assistance.push({ day, exercise: name, detail: `${fmtSets(ex.sets)} — load falls as the ramp gets harder` });
+            }
         }
     }
 
-    interface Finding {
-        exerciseId: number;
-        name: string;
-        category: string;
-        measurement?: string;
-        signals: string[];
-        evidence: ExerciseEvidence;
-        instances: Instance[];
-    }
-
-    const confirmed: Finding[] = [];
-    const likelyByName: Finding[] = [];
-    const dataFlagged: Finding[] = [];
-    const bodyweight: Finding[] = [];
-
-    for (const [exerciseId, sets] of setsByExercise) {
-        const name = nameById.get(exerciseId) ?? `#${exerciseId}`;
-        const category = exerciseMap.get(exerciseId.toString())?.category ?? '?';
-        const evidence = collectEvidence(sets);
-        const signals = dataSignals(evidence);
-        const rule = IDENTITY_RULES.find((r) => r.pattern.test(name));
-        const instances = instancesByExercise.get(exerciseId) ?? [];
-        const finding: Finding = { exerciseId, name, category, measurement: rule?.measurement, signals, evidence, instances };
-
-        if (rule) {
-            (signals.length > 0 ? confirmed : likelyByName).push(finding);
-        } else if (signals.length > 0) {
-            dataFlagged.push(finding);
-        } else if (evidence.zeroWeightSets === evidence.setCount) {
-            bodyweight.push(finding);
+    const report = (title: string, findings: Finding[]) => {
+        console.log(`\n=== ${title} — ${findings.length} ===`);
+        for (const f of findings.sort((a, b) => a.day.localeCompare(b.day))) {
+            console.log(`  ${f.day}  ${f.exercise.padEnd(24)} ${f.detail}`);
         }
-    }
-
-    const byName = (a: Finding, b: Finding) => a.name.localeCompare(b.name);
-    confirmed.sort(byName);
-    likelyByName.sort(byName);
-    dataFlagged.sort(byName);
-    bodyweight.sort(byName);
-
-    const printFinding = (f: Finding) => {
-        console.log(`\n  ${f.name} [${f.category}] — ${f.evidence.setCount} sets`);
-        if (f.measurement) console.log(`    measurement: ${f.measurement}`);
-        console.log(`    weights: ${fmtValues(f.evidence.weightValues)}`);
-        if (f.evidence.repValues.length > 0) console.log(`    reps: ${fmtValues(f.evidence.repValues)}`);
-        for (const s of f.signals) console.log(`    ⚠ ${s}`);
-        console.log(`    instances (${f.instances.length}):`);
-        for (const i of f.instances) console.log(`      ${i.date} · ${i.title} · #${i.position}/${i.exerciseCount} · ${i.uuid}`);
     };
 
-    console.log(`\nAnalyzed ${setsByExercise.size} exercises across ${workouts.length} workouts.`);
+    console.log(`\nAudited ${workouts.length} workouts.\n`);
+    console.log('=== measurement bases in use ===');
+    for (const [basis, count] of [...basisCounts].sort((a, b) => b[1] - a[1])) {
+        console.log(`  ${basis.padEnd(18)} ${count}`);
+    }
 
-    console.log('\n=== Non reps×weight — name match confirmed by set data ===');
-    confirmed.forEach(printFinding);
+    report('Name implies a measurement the units contradict', mislabelled);
+    report('Transposed columns (a fractional rep count)', transposed);
+    report('Assistance stack logged instead of the load moved', assistance);
 
-    console.log('\n=== Non reps×weight — flagged by name only (sets look conventional) ===');
-    likelyByName.forEach(printFinding);
-
-    console.log('\n=== Data anomalies without a name match (likely reps/weight entry swaps) ===');
-    dataFlagged.forEach(printFinding);
-
-    console.log('\n=== Bodyweight, reps-only (every set weight 0 — volume is always 0) ===');
-    bodyweight.forEach(printFinding);
-
-    // The same findings flattened to one row per instance, for spreadsheet triage.
     const csvEscape = (v: string | number) => {
         const str = String(v);
         return /[",\n]/.test(str) ? `"${str.replaceAll('"', '""')}"` : str;
     };
-    const rows: (string | number)[][] = [
-        ['bucket', 'exercise_id', 'exercise', 'category', 'measurement', 'date', 'workout', 'position', 'exercise_count', 'workout_uuid'],
-    ];
-    const buckets: [string, Finding[]][] = [
-        ['confirmed', confirmed],
-        ['name-only', likelyByName],
-        ['data-flagged', dataFlagged],
-        ['bodyweight', bodyweight],
-    ];
-    for (const [bucket, findings] of buckets) {
-        for (const f of findings) {
-            for (const i of f.instances) {
-                rows.push([bucket, f.exerciseId, f.name, f.category, f.measurement ?? '', i.date, i.title, i.position, i.exerciseCount, i.uuid]);
-            }
-        }
+    const rows: (string | number)[][] = [['bucket', 'date', 'exercise', 'detail']];
+    for (const [bucket, findings] of [
+        ['mislabelled', mislabelled],
+        ['transposed', transposed],
+        ['assistance', assistance],
+    ] as [string, Finding[]][]) {
+        for (const f of findings) rows.push([bucket, f.day, f.exercise, f.detail]);
     }
     const csvPath = join(__dirname, '../', '../', 'data', 'out', 'exercise-units.csv');
     writeFileSync(csvPath, rows.map((r) => r.map(csvEscape).join(',')).join('\n'));
     console.log(`\nCSV: ${csvPath} (${rows.length - 1} rows)`);
 
-    logger.info(
-        `\n${confirmed.length} confirmed, ${likelyByName.length} name-only, ${dataFlagged.length} data-flagged, ${bodyweight.length} bodyweight-only`
-    );
+    logger.info(`\n${mislabelled.length} mislabelled, ${transposed.length} transposed, ${assistance.length} on an assistance basis`);
 }

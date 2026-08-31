@@ -1,3 +1,4 @@
+import { DEFAULT_COLUMN_UNITS } from '@leeft/types';
 import { logger } from '@leeft/utils';
 import { type SetDetail, type Workout, WorkoutSchema } from '../compile/types';
 import { type CsvRow, type ParsedRow, ParsedRowSchema } from './types';
@@ -111,6 +112,8 @@ const parseWorkout = (row: ParsedRow): Workout => {
                     exerciseId,
                     order: index,
                     name,
+                    // The 2021+ sheet only ever held reps and pounds — it had no other column.
+                    units: DEFAULT_COLUMN_UNITS,
                     sets,
                     volume: sets.reduce((total, set) => total + (set.reps || 0) * set.weight, 0),
                 };

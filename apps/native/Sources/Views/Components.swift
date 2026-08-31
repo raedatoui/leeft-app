@@ -79,6 +79,8 @@ struct NumBox<Field: Hashable>: View {
     @Binding var value: Double
     let field: Field
     var focus: FocusState<Field?>.Binding
+    /// What the column counts, which decides how the value reads and which pad it needs.
+    var unit: SetUnit = .lb
 
     @State private var text = ""
 
@@ -91,7 +93,9 @@ struct NumBox<Field: Hashable>: View {
             // view between a numberPad and a decimalPad as focus walks a row is what leaves
             // you on a pad with no "." when you reach the weight — so the decimal pad serves
             // both, and a decimal typed into reps is truncated by its binding.
-            .keyboardType(.decimalPad)
+            // One pad for both boxes, except a duration — "1:30" needs a colon the decimal pad
+            // doesn't carry.
+            .keyboardType(unit == .time ? .numbersAndPunctuation : .decimalPad)
             .focused(focus, equals: field)
             .frame(height: 54)
             .frame(maxWidth: .infinity)
@@ -101,7 +105,7 @@ struct NumBox<Field: Hashable>: View {
                     .strokeBorder(focus.wrappedValue == field ? Theme.muted2 : Theme.border, lineWidth: 1)
             )
             .onChange(of: text) { _, new in
-                value = Double(new.replacingOccurrences(of: ",", with: ".")) ?? 0
+                value = unit.parse(new.replacingOccurrences(of: ",", with: "."))
             }
             .onChange(of: value) { _, new in
                 // Only re-render from the model while the box isn't being typed into.
@@ -112,7 +116,7 @@ struct NumBox<Field: Hashable>: View {
     }
 
     private func display(_ v: Double) -> String {
-        v == 0 ? "" : Fmt.weight(v)
+        v == 0 ? "" : (unit == .time ? unit.format(v) : Fmt.weight(v))
     }
 }
 

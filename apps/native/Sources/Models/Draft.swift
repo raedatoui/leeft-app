@@ -7,9 +7,13 @@ enum Phase: String, Codable {
 
 /// One logged set. `done` is a UI-only "checked off" affordance and is deliberately
 /// excluded from the Firestore payload, exactly as on the web.
+///
+/// `reps` is a Double rather than an Int because the column doesn't always hold reps: under
+/// `units.reps == .time` it holds whole seconds, and under `.feet` a distance that can be
+/// fractional. The name stays `reps` to match the wire field, which is shared with the web.
 struct DraftSet: Codable, Identifiable, Equatable {
     var id = UUID()
-    var reps: Int = 0
+    var reps: Double = 0
     var weight: Double = 0
     var isWorkSet: Bool = true
     var done: Bool = false
@@ -21,30 +25,38 @@ struct DraftExercise: Codable, Identifiable, Equatable {
     /// Copied off the catalog when picked, so a restored draft can label its rows
     /// before the CDN dataset lands (or at all, offline).
     var name: String?
+    /// What the two set columns are counting. Seeded from the catalog's `measurement` when the
+    /// exercise is picked, then whatever the pickers say. Optional so drafts written before the
+    /// pickers existed still decode — always read through `units`.
+    var columnUnits: ColumnUnits?
     var sets: [DraftSet] = []
 
     var id: Int { exerciseId }
 
-    /// Only checked-off sets count — an entered but unchecked set is a plan, not work done.
+    var units: ColumnUnits { columnUnits ?? ColumnUnits() }
+
+    /// Only checked-off sets count — an entered but unchecked set is a plan, not work done — and
+    /// only reps-times-pounds is tonnage at all: a plank or a sled push has none.
     func volume(workOnly: Bool) -> Double {
-        sets.reduce(0) { sum, s in
+        guard units.isLoaded else { return 0 }
+        return sets.reduce(0) { sum, s in
             guard s.done, !(workOnly && !s.isWorkSet) else { return sum }
-            return sum + s.weight * Double(s.reps)
+            return sum + s.weight * s.reps
         }
     }
 
     /// TrainHeroic-style line: "3 x 12 @ 135lb" when uniform, else "10,14,14 @ 50,65,65lb".
+    /// The unit suffix follows the load column, and drops away when there is no load.
     var summaryText: String {
         guard let first = sets.first else { return "no sets yet" }
-        let reps = sets.map(\.reps)
+        let leads = sets.map { units.reps.format($0.reps) }
         let weights = sets.map(\.weight)
-        let uniform = reps.allSatisfy { $0 == first.reps } && weights.allSatisfy { $0 == first.weight }
-        if uniform {
-            return "\(sets.count) x \(first.reps) @ \(Fmt.weight(first.weight))lb"
-        }
-        let r = reps.map(String.init).joined(separator: ",")
-        let w = weights.map(Fmt.weight).joined(separator: ",")
-        return "\(r) @ \(w)lb"
+        let uniform = leads.allSatisfy { $0 == leads[0] } && weights.allSatisfy { $0 == first.weight }
+        let lead = uniform ? "\(sets.count) x \(leads[0])" : leads.joined(separator: ",")
+        guard units.weight != .blank else { return lead }
+        let suffix = units.weight.chip.lowercased()
+        if uniform { return "\(lead) @ \(Fmt.weight(first.weight))\(suffix)" }
+        return "\(lead) @ \(weights.map(Fmt.weight).joined(separator: ","))\(suffix)"
     }
 }
 

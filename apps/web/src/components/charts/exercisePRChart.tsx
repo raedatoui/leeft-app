@@ -45,6 +45,9 @@ export interface ChartSession {
 interface ExercisePRChartProps {
     sessions: ChartSession[];
     methodName: string;
+    /** How a y value reads. Only a duration needs one — 660 seconds has to show as 11:00 on the
+     *  axis and in the tooltip. Everything else is a plain number and takes the default. */
+    formatValue?: (value: number) => string;
     onHover: (index: number) => void;
     /**
      * When set, drag-selecting on the x-axis reports the selected session index range
@@ -53,7 +56,7 @@ interface ExercisePRChartProps {
     onRangeSelect?: (startIndex: number, endIndex: number) => void;
 }
 
-export default function ExercisePRChart({ sessions, methodName, onHover, onRangeSelect }: ExercisePRChartProps) {
+export default function ExercisePRChart({ sessions, methodName, formatValue, onHover, onRangeSelect }: ExercisePRChartProps) {
     const { resolvedTheme } = useTheme();
     const v2 = V2_PALETTES[resolvedTheme === 'light' ? 'light' : 'dark'];
     const TIER_COLOR: Record<PrTier, string> = {
@@ -119,6 +122,11 @@ export default function ExercisePRChart({ sessions, methodName, onHover, onRange
             title: { text: undefined },
             labels: {
                 style: { color: v2.muted2, fontFamily: fonts.mono, fontSize: '10px' },
+                ...(formatValue && {
+                    formatter(this: { value: number | string }) {
+                        return formatValue(Number(this.value));
+                    },
+                }),
             },
             gridLineColor: v2.border,
             gridLineDashStyle: 'Dash',
@@ -130,7 +138,15 @@ export default function ExercisePRChart({ sessions, methodName, onHover, onRange
             shadow: false,
             useHTML: true,
             headerFormat: `<div style="font-family:${fonts.mono};font-size:10px;color:${v2.muted2};letter-spacing:.08em;text-transform:uppercase">{point.key}</div>`,
-            pointFormat: `<div style="font-family:${fonts.mono};font-size:13px;color:${v2.fg};margin-top:4px"><b style="color:${v2.maint};font-weight:500">{point.y:,.0f}</b> ${methodName}</div>`,
+            ...(formatValue
+                ? {
+                      pointFormatter(this: { y?: number }) {
+                          return `<div style="font-family:${fonts.mono};font-size:13px;color:${v2.fg};margin-top:4px"><b style="color:${v2.maint};font-weight:500">${formatValue(this.y ?? 0)}</b> ${methodName}</div>`;
+                      },
+                  }
+                : {
+                      pointFormat: `<div style="font-family:${fonts.mono};font-size:13px;color:${v2.fg};margin-top:4px"><b style="color:${v2.maint};font-weight:500">{point.y:,.0f}</b> ${methodName}</div>`,
+                  }),
             style: { color: v2.fg },
         },
         plotOptions: {

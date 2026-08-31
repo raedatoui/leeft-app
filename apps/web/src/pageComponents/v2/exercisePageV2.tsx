@@ -16,6 +16,7 @@ import { useWorkoutData } from '@/lib/contexts';
 import { CYCLE_TYPE_COLOR, CYCLE_TYPE_LABEL_SHORT } from '@/lib/cycleTypes';
 import { formatTableDate, MONTHS_SHORT } from '@/lib/dateFormatters';
 import { computeExerciseSessions, computeExerciseStats } from '@/lib/exerciseSessions';
+import { formatSetsLine, formatSetValue, unitLabel } from '@/lib/setUnits';
 import { formatVolume } from '@/lib/statsUtils';
 import { resolveTimeRange, type TimeRangeValue } from '@/lib/timeRange';
 import type { RepRange } from '@/types';
@@ -76,6 +77,20 @@ export default function ExercisePageV2() {
     }, [workouts, exercise, cycleId, cycles, repRange, selectedMethod, resolvedRange]);
 
     const stats = useMemo(() => computeExerciseStats(sessions), [sessions]);
+
+    // One chart, one basis. An exercise with any pounds sessions plots those and leaves the rest
+    // off, so a chin-up "@ 10" (a plate) can't share an axis with one "@ 210" (the whole system).
+    // An exercise with none — a stair calf raise, a plank — plots its rep counts instead, which is
+    // the only progression it has.
+    const chartSessions = useMemo(() => {
+        const loaded = sessions.filter((s) => s.loaded);
+        return loaded.length > 0 ? loaded : sessions;
+    }, [sessions]);
+    // Off the pounds basis the metric is the first column's top value, so it takes that column's
+    // name and formatting — "Top Time" reading 1:15, not "Top Reps" reading 75.
+    const chartUnit = chartSessions[chartSessions.length - 1]?.workout.selected.units.reps ?? 'reps';
+    const plotsLoad = chartSessions.some((s) => s.loaded);
+    const metricName = plotsLoad ? selectedMethod.name : `Top ${unitLabel(chartUnit)}`;
 
     const reversed = useMemo(() => [...sessions].reverse(), [sessions]);
 
@@ -318,15 +333,17 @@ export default function ExercisePageV2() {
                 <section className="zones-2">
                     <div className="zone-2">
                         <div className="panel-label" style={{ margin: '0 0 12px' }}>
-                            <span>{selectedMethod.name} Over Time</span>
+                            <span>{metricName} Over Time</span>
                             <span className="hint">
                                 ★ = PR (gold all-time · green active · gray beaten) · hover to inspect · drag to filter range
                             </span>
                         </div>
 
                         <ExercisePRChart
-                            sessions={sessions.map((s) => ({ date: s.workout.date, metric: s.metric, prTier: s.prTier }))}
-                            methodName={selectedMethod.name}
+                            sessions={chartSessions.map((s) => ({ date: s.workout.date, metric: s.metric, prTier: s.prTier }))}
+                            methodName={metricName}
+                            // A duration metric plots seconds; render them as mm:ss.
+                            formatValue={chartUnit === 'time' ? (v) => formatSetValue(v, 'time') : undefined}
                             onHover={setHoveredIndex}
                             onRangeSelect={(startIndex, endIndex) => {
                                 const start = sessions[startIndex]?.workout.date;
@@ -356,7 +373,7 @@ export default function ExercisePageV2() {
                         >
                             <div className="pr-row head">
                                 <div>Date</div>
-                                <div>{selectedMethod.name}</div>
+                                <div>{metricName}</div>
                                 <div>Top Set</div>
                                 <div>PR?</div>
                             </div>
@@ -364,13 +381,16 @@ export default function ExercisePageV2() {
                                 <div key={s.workout.uuid} className="pr-row">
                                     <div className="date">{formatTableDate(s.workout.date)}</div>
                                     <div className="weight">
-                                        {formatWeight(s.metric)}
-                                        {selectedMethod === defaultMaxCalculator ? ' lbs' : ''}
+                                        {/* Same metric the chart plots: pounds where there are any, else the top rep count. */}
+                                        {s.loaded
+                                            ? `${formatWeight(s.metric)}${selectedMethod === defaultMaxCalculator ? ' lbs' : ''}`
+                                            : formatSetValue(s.metric, s.workout.selected.units.reps)}
                                     </div>
                                     <div className="sets-detail">
-                                        {s.topSet
+                                        {/* Off the pounds basis there is no "top set" to name, so the sets speak for themselves. */}
+                                        {s.loaded && s.topSet
                                             ? `${formatWeight(s.topSet.weight)} × ${s.topSet.reps ?? 0} · ${s.workSetCount} work sets`
-                                            : `${s.sets.length} sets`}
+                                            : formatSetsLine(s.sets, s.workout.selected.units)}
                                     </div>
                                     <div className="pr-flag">
                                         {s.prTier && (

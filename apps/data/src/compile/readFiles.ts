@@ -76,6 +76,7 @@ export function readFirestoreLog(): BaseWorkout[] {
             // Unlike readLog, the uuid comes from the doc and is never re-minted — the app keeps it
             // stable across re-saves so downstream artifacts don't see a re-save as a new workout.
             // `date` is a strict z.date(); `startedAt` is z.coerce.date() and takes the ISO string.
+            // A document written before the unit pickers carries no `units`; the schema defaults it.
             BaseWorkoutSchema.parse({ ...w, date: new Date(w.date) })
         );
 }

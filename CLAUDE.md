@@ -89,8 +89,10 @@ bun firestore:backfill      # Publish lifting-log.json to `lifting-history` (--o
 receiving data, and its raw archive under `data/download/trainheroic/workouts` is now enriched in
 place by `bun trainheroic:hydrate`: the readiness survey (which exists only in the account export
 at `data/download/trainheroic/export/`, never in any API response), four workout titles corrected
-to the day they were actually trained, and one session reconstructed that the API cannot serve
-because it belongs to a coached team. **A download overwrites those files and silently drops all of
+to the day they were actually trained, one session reconstructed that the API cannot serve because
+it belongs to a coached team, and nine set-level corrections (`SET_CORRECTIONS`) — four sessions
+that logged an assist stack instead of the load moved, three with the columns transposed, one with
+a misplaced decimal point, and one run that isn't a lifting exercise. **A download overwrites those files and silently drops all of
 it** — so if you ever do run `bun trainheroic:download`, follow it with `bun trainheroic:hydrate`.
 The hydrate pass is idempotent and reports what it changed, plus duplicate day keys and title drift.
 
@@ -195,7 +197,23 @@ Never duplicate types between apps. Add shared types to `packages/types`.
 - **Data files gitignored**: All `apps/data/data/` contents are gitignored
 - **Date grouping is UTC**: `groupWorkoutsByDay` in `lib/contexts.ts` keys by `toISOString().slice(0, 10)` (UTC). UI must format dates with `getUTC*` methods or off-by-one bugs appear in non-UTC timezones. v2 components do this; v1 uses `toLocaleDateString` (mostly fine because v1 doesn't show full dates in places that would expose the offset). The same trap bites on iOS: any `DatePicker` bound to a date key needs `.environment(\.timeZone, TimeZone(identifier: "UTC")!)`, or it renders UTC midnight in local time and shows the previous day west of Greenwich.
 - **Lifting `Workout.duration` is in minutes** (computed in `extractDay.ts` from TrainHeroic's unix-seconds `timestamp_started`/`timestamp_completed`, capped at 100 when 0 or >200). Cardio instead uses both `durationMs` and `durationMin` explicitly — don't assume lifting follows the same convention.
+- **A set is two numbers, and `units` on its exercise says what they count.** `BaseExerciseSchema.units`
+  is `{ reps, weight }` drawn from `SetUnitSchema` (`reps | time | lb | bw+ | none | feet | inches |
+  meters`). The first column holds reps by default, otherwise **whole seconds**, feet or inches; the
+  second holds pounds, a plate added on top of bodyweight (`bw+`), or nothing. **Only `reps x lb`
+  is tonnage** — `isLoaded()` gates every volume sum, and `computePersonalRecords` keys its ladder
+  by basis so a chin-up "@ 10" (a plate) never ranks against one "@ 210" (the whole system).
+  `resolveUnits()` settles an all-zero load column as bodyweight, once, in `classifySets`.
+- **TrainHeroic's `param_*_type` codes are the unit source of truth**, not the `abr` display string:
+  `3`=reps, `1`/`2`=lb, `4`=seconds, `5`/`11`=distance, `7`=inches, `10`=miles. `abr` renders them
+  lossily — it omits the weights entirely for `param_2_type: 2` and drops the ` lb` suffix on jumps —
+  so `extractDay.parseParams` reads the columns and `parseAbr` is only the fallback for the four
+  archive entries carrying no params at all.
 - **All weights are in lbs**, not kg — mixed sources (TrainHeroic, Google Fit) are normalized to lbs in the data pipeline. v1 mostly displays the bare number; v2 labels columns `lbs`.
+- **Bodyweight movements log as `reps x none`** and carry no volume and no record. Chin-ups, dips
+  and assisted pull-ups since late 2024 log **effective load** — bodyweight (~218, sometimes 215 or
+  220) minus the assist stack, which moves in 5 lb steps, or plus a plate — so those are ordinary
+  `lb` and count normally.
 - **The Swift side duplicates contracts by hand** — nothing generates them, so a change on one side silently rots the other. When you touch any of these, touch both:
 
   | `apps/native` | Source of truth |
@@ -206,8 +224,13 @@ Never duplicate types between apps. Add shared types to `packages/types`.
   | `AuthService.ownerEmail` | `isOwner()` in `apps/web/firestore.rules` |
   | `ReadinessQuestion.all` in `Models/Draft.swift` | `READINESS_QUESTIONS` in `apps/web/src/lib/addWorkoutConstants.ts` — the key set is also the Firestore `readiness` map's keys and the labels `trainheroic:hydrate` maps from |
   | `readinessSymbols` / PR tier colours in `Views/WorkoutCardView.swift` | `READINESS_ICONS` and the `.pr-badge` / `.readiness-*` rules in `workoutCard.tsx` + `v2.css` |
+  | `SetUnit` / `ColumnUnits` in `Views/UnitPickerSheet.swift` | `SetUnitSchema` / `ColumnUnitsSchema` in `packages/types/src/index.ts`, surfaced to the web through `apps/web/src/lib/setUnits.ts`. The raw values are the Firestore wire format — `bw+` and `none` especially |
 - **Firestore temporal fields are ISO strings, never Timestamps** — the pipeline's REST decoder deliberately has no Timestamp handling. Both writers (web `/add`, iOS) must keep sending strings.
 - **Re-saving a day preserves its `uuid`** — both writers read the existing doc before `setData`, so downstream artifacts (PRs, cycles) don't see a re-logged day as a new workout.
+- **`units` is optional on the Firestore wire** — documents written before the unit pickers existed
+  carry none, and `readFirestoreLog` reads those as `reps x lb`. It is deliberately *not* filled in
+  from the catalog's `measurement`: that field is a picker default and is edited freely, so letting
+  it reach into stored sessions would let a catalog edit rewrite what a past session meant.
 
 ## v2 design system
 

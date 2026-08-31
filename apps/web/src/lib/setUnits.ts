@@ -1,8 +1,8 @@
+import type { ColumnUnits, SetUnit } from '@leeft/types';
 import type { DropdownV2Option } from '@/components/ui/v2/dropdownV2';
 
-/** What a set column holds. Kept in step with `SetUnit` in apps/native/Sources/Views/UnitPickerSheet.swift.
- *  Prototype vocabulary only — nothing writes these to the draft or to Firestore yet. */
-export type SetUnit = 'reps' | 'lb' | 'time' | 'feet' | 'meters' | 'none';
+export { DEFAULT_COLUMN_UNITS, isLoaded } from '@leeft/types';
+export type { ColumnUnits, SetUnit };
 
 interface SetUnitDef {
     /** Shown on the column header and on the dropdown trigger, so it has to stay short —
@@ -14,26 +14,55 @@ interface SetUnitDef {
 
 const UNITS: Record<SetUnit, SetUnitDef> = {
     reps: { label: 'Reps', sublabel: 'count' },
-    lb: { label: 'Lb', sublabel: 'pounds' },
     time: { label: 'Time', sublabel: 'mm:ss' },
-    feet: { label: 'Feet', sublabel: 'distance' },
-    meters: { label: 'Meters', sublabel: 'distance' },
+    lb: { label: 'Lb', sublabel: 'load moved' },
+    'bw+': { label: 'BW+', sublabel: 'added to bodyweight' },
     none: { label: 'None', sublabel: 'no second value' },
+    feet: { label: 'Feet', sublabel: 'distance' },
+    inches: { label: 'Inches', sublabel: 'height' },
+    meters: { label: 'Meters', sublabel: 'distance' },
 };
 
 /** The first column can't be 'none' — a set with no leading value isn't a set. */
 export const REPS_UNIT_OPTIONS: SetUnit[] = ['reps', 'time', 'feet', 'meters'];
 
-/** The second column keeps 'lb' so switching away from pounds is reversible, and adds
- *  'none' for movements that carry no load at all. */
-export const WEIGHT_UNIT_OPTIONS: SetUnit[] = ['lb', 'reps', 'time', 'feet', 'meters', 'none'];
+/** The second column keeps 'lb' first, since almost everything is pounds. 'bw+' is for the load
+ *  hung off you rather than the whole system — the two don't share a records ladder, so the
+ *  choice matters. 'none' is for movements that carry nothing at all. */
+export const WEIGHT_UNIT_OPTIONS: SetUnit[] = ['lb', 'bw+', 'none', 'inches', 'feet', 'meters', 'time', 'reps'];
 
-export interface ColumnUnits {
-    reps: SetUnit;
-    weight: SetUnit;
-}
-
-export const DEFAULT_COLUMN_UNITS: ColumnUnits = { reps: 'reps', weight: 'lb' };
+export const unitLabel = (unit: SetUnit): string => UNITS[unit].label;
 
 export const unitDropdownOptions = (units: SetUnit[]): DropdownV2Option[] =>
     units.map((value) => ({ value, label: UNITS[value].label, sublabel: UNITS[value].sublabel }));
+
+/** Whole seconds as mm:ss. Durations ride in the first column as a plain number of seconds, so
+ *  this is the only place that shape becomes a clock reading. */
+export const formatSeconds = (seconds: number): string => {
+    const whole = Math.max(0, Math.round(seconds));
+    return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
+};
+
+/** The inverse, lenient about what gets typed: "90" is ninety seconds, "1:30" is the same. */
+export const parseSeconds = (text: string): number => {
+    const parts = text.split(':');
+    if (parts.length < 2) return Number.parseFloat(text) || 0;
+    const [minutes, seconds] = parts.map((p) => Number.parseFloat(p.trim()) || 0);
+    return (minutes ?? 0) * 60 + (seconds ?? 0);
+};
+
+/** How one set's leading value reads, given what its column is counting. */
+export const formatSetValue = (value: number | undefined, unit: SetUnit): string => {
+    if (value === undefined) return '—';
+    return unit === 'time' ? formatSeconds(value) : String(Math.round(value * 100) / 100);
+};
+
+/** A whole exercise on one line — "5,5,5 @ 135,225,225", "11:00 @ 135", "10,12,12". The leading
+ *  column reads through its unit, and a movement carrying no load prints the lead alone rather
+ *  than a column of zeroes. */
+export const formatSetsLine = (sets: { reps?: number; weight: number }[], units: ColumnUnits): string => {
+    if (sets.length === 0) return '—';
+    const lead = sets.map((s) => formatSetValue(s.reps, units.reps)).join(',');
+    if (units.weight === 'none') return lead;
+    return `${lead} @ ${sets.map((s) => Math.round(s.weight)).join(',')}`;
+};

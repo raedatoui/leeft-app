@@ -9,6 +9,10 @@ struct ExerciseMetadata: Codable, Identifiable, Equatable {
     let category: String
     let equipment: [String]
     let primaryMuscleGroup: String
+    /// How this movement was last measured, used to seed the unit pickers when it's picked — so a
+    /// sled push opens on feet rather than needing both columns set every time. Optional because
+    /// the catalog artifact predates the field for anything not yet reclassified.
+    let measurement: ColumnUnits?
 
     /// "chest · barbell" — the picker's secondary line.
     var subtitle: String {

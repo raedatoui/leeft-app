@@ -5,6 +5,8 @@ import {
     BaseSetSchema,
     type BaseWorkout,
     BaseWorkoutSchema,
+    type ColumnUnits,
+    ColumnUnitsSchema,
     type Exercise,
     type ExerciseMetadata,
     ExerciseMetadataSchema,
@@ -21,6 +23,8 @@ import { z } from 'zod';
 export {
     RawWorkoutSchema,
     ExerciseMetadataSchema,
+    ColumnUnitsSchema,
+    type ColumnUnits,
     BaseExerciseSchema,
     BaseSetSchema,
     BaseWorkoutSchema,

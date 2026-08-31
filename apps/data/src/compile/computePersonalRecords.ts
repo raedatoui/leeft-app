@@ -1,6 +1,13 @@
-import type { Workout } from './types';
+import type { ColumnUnits, Workout } from './types';
 
 type PrTier = 'allTime' | 'active' | 'beaten';
+
+/** A ladder exists only where a heavier number means a harder set at a fixed rep count. That is
+ *  `lb` and `bw+` — and they are separate ladders, because a chin-up "@ 10" (a plate) and one
+ *  "@ 210" (the whole system) describe the same lift on two scales. Seconds, feet and box height
+ *  rank nothing; `none` has no number to rank. */
+const ladderOf = (units: ColumnUnits): string | undefined =>
+    units.reps === 'reps' && (units.weight === 'lb' || units.weight === 'bw+') ? units.weight : undefined;
 
 /**
  * Annotates each set with `isPR` / `prTier` using "PR-at-the-time", per exact rep count.
@@ -14,36 +21,43 @@ type PrTier = 'allTime' | 'active' | 'beaten';
  *   - active:  currently the standing record for its rep count
  *   - beaten:  was a record when performed, since surpassed for that rep count
  *
- * Flags are emitted ONLY on PR sets; every other set keeps its existing shape. Warmups and
- * sets without `reps` are never PRs. The pass sorts a copy by date internally, so it does not
- * depend on the order of the input array.
+ * Flags are emitted ONLY on PR sets; every other set keeps its existing shape. Warmups, sets
+ * without `reps`, and sets whose exercise isn't on a weight-ranked basis are never PRs — a sled
+ * dragged 50 feet and a 24-inch box jump have no record to hold here. The pass sorts a copy by
+ * date internally, so it does not depend on the order of the input array.
  */
 export function annotatePersonalRecords(workouts: Workout[]): Workout[] {
     const keyOf = (uuid: string, exId: number, order: number) => `${uuid}:${exId}:${order}`;
-    const curMax = new Map<number, Map<number, number>>(); // exId -> reps -> max weight
-    const holder = new Map<number, Map<number, string>>(); // exId -> reps -> current-record setKey
-    const prs: { key: string; exId: number; reps: number; weight: number; date: Date }[] = [];
+    // Keyed by exercise AND ladder, so the two bodyweight scales never rank against each other.
+    const curMax = new Map<string, Map<number, number>>(); // exId|ladder -> reps -> max weight
+    const holder = new Map<string, Map<number, string>>(); // exId|ladder -> reps -> record setKey
+    const prs: { key: string; ladderKey: string; reps: number; weight: number; date: Date }[] = [];
 
     // Phase 1: walk in true chronological order (self-contained; no reliance on input order).
     const ordered = [...workouts].sort((a, b) => a.date.getTime() - b.date.getTime());
     for (const w of ordered) {
         for (const ex of w.exercises) {
-            let rm = curMax.get(ex.exerciseId);
-            let hm = holder.get(ex.exerciseId);
+            const ladder = ladderOf(ex.units);
+            if (!ladder) continue;
+            const ladderKey = `${ex.exerciseId}|${ladder}`;
+            let rm = curMax.get(ladderKey);
+            let hm = holder.get(ladderKey);
             if (!rm || !hm) {
                 rm = new Map();
                 hm = new Map();
-                curMax.set(ex.exerciseId, rm);
-                holder.set(ex.exerciseId, hm);
+                curMax.set(ladderKey, rm);
+                holder.set(ladderKey, hm);
             }
             for (const s of ex.sets) {
-                if (!s.isWorkSet || s.reps === undefined) continue;
+                // A rep count is a count. A fractional one means the columns were typed the wrong
+                // way round at entry (a 137.5-rep front squat), and it must not mint a record.
+                if (!s.isWorkSet || s.reps === undefined || !Number.isInteger(s.reps)) continue;
                 const prev = rm.get(s.reps);
                 if (prev === undefined || s.weight > prev) {
                     const key = keyOf(w.uuid, ex.exerciseId, s.order);
                     rm.set(s.reps, s.weight);
                     hm.set(s.reps, key);
-                    prs.push({ key, exId: ex.exerciseId, reps: s.reps, weight: s.weight, date: w.date });
+                    prs.push({ key, ladderKey, reps: s.reps, weight: s.weight, date: w.date });
                 }
             }
         }
@@ -58,17 +72,17 @@ export function annotatePersonalRecords(workouts: Workout[]): Workout[] {
     for (const hm of holder.values()) for (const key of hm.values()) activeKeys.add(key);
     for (const key of activeKeys) tier.set(key, 'active');
 
-    const best = new Map<number, { key: string; weight: number; reps: number; date: Date }>();
+    const best = new Map<string, { key: string; weight: number; reps: number; date: Date }>();
     for (const p of prs) {
         if (!activeKeys.has(p.key)) continue;
-        const b = best.get(p.exId);
+        const b = best.get(p.ladderKey);
         if (
             !b ||
             p.weight > b.weight ||
             (p.weight === b.weight && p.reps > b.reps) ||
             (p.weight === b.weight && p.reps === b.reps && p.date < b.date)
         ) {
-            best.set(p.exId, { key: p.key, weight: p.weight, reps: p.reps, date: p.date });
+            best.set(p.ladderKey, { key: p.key, weight: p.weight, reps: p.reps, date: p.date });
         }
     }
     for (const b of best.values()) tier.set(b.key, 'allTime');

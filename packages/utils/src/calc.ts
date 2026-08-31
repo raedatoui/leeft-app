@@ -1,4 +1,19 @@
-import type { MappedWorkout, RepRange, SetDetail } from "@leeft/types";
+import {
+	type BaseSet,
+	type ColumnUnits,
+	isLoaded,
+	type MappedWorkout,
+	type RepRange,
+	type SetDetail,
+} from "@leeft/types";
+
+/** Tonnage for one exercise's sets. Only reps-times-pounds counts: a sled dragged for 11 minutes
+ *  or a 24-inch box jump has no tonnage to add, and `bw+` load is on a different scale from `lb`.
+ *  The numbers still render — they just don't sum. */
+export const setsVolume = (sets: BaseSet[], units: ColumnUnits): number =>
+	isLoaded(units)
+		? sets.reduce((total, s) => total + (s.reps ?? 0) * s.weight, 0)
+		: 0;
 
 type OneRepMaxCalc = (weight: number, reps: number) => number;
 type Calculator = (workout: MappedWorkout, repRange?: RepRange) => number;

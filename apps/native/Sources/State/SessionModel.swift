@@ -42,11 +42,6 @@ final class SessionModel {
     /// evicted mid-set, so it doesn't persist.
     var detailIndex: Int?
 
-    /// The units each exercise's two set columns are keeping, keyed by exerciseId so the
-    /// choice survives reordering. Prototype-only, and deliberately outside `draft`: nothing
-    /// here reaches the disk blob or the Firestore payload.
-    var columnUnits: [Int: ColumnUnits] = [:]
-
     /// Post-save recap, or nil when the summary screen is closed.
     var summary: Summary?
     var toast: String?
@@ -109,7 +104,9 @@ final class SessionModel {
     // MARK: - exercises
 
     func addExercise(_ metadata: ExerciseMetadata) {
-        draft.exercises.append(.init(exerciseId: metadata.id, name: metadata.name))
+        draft.exercises.append(
+            .init(exerciseId: metadata.id, name: metadata.name, columnUnits: metadata.measurement ?? ColumnUnits())
+        )
     }
 
     func removeExercise(at index: Int) {
@@ -168,15 +165,21 @@ final class SessionModel {
 
     // MARK: - column units
 
-    func units(for exerciseId: Int) -> ColumnUnits { columnUnits[exerciseId] ?? ColumnUnits() }
+    /// Read by exerciseId rather than by index because the exercise-detail page is a swipe pager
+    /// and only knows which exercise it is showing. The units live on the draft exercise, so the
+    /// choice survives reordering, goes to disk with the rest of the draft, and reaches Firestore.
+    func units(for exerciseId: Int) -> ColumnUnits {
+        draft.exercises.first { $0.exerciseId == exerciseId }?.units ?? ColumnUnits()
+    }
 
     func setUnit(_ unit: SetUnit, column: SetField, for exerciseId: Int) {
-        var updated = units(for: exerciseId)
+        guard let index = draft.exercises.firstIndex(where: { $0.exerciseId == exerciseId }) else { return }
+        var updated = draft.exercises[index].units
         switch column {
         case .reps: updated.reps = unit
         case .weight: updated.weight = unit
         }
-        columnUnits[exerciseId] = updated
+        draft.exercises[index].columnUnits = updated
     }
 
     // MARK: - saving
@@ -213,6 +216,7 @@ final class SessionModel {
                 .init(
                     exerciseId: ex.exerciseId,
                     order: i + 1,
+                    units: ex.units,
                     sets: ex.sets.enumerated().map { j, s in
                         .init(order: j + 1, weight: s.weight, reps: s.reps, isWorkSet: s.isWorkSet)
                     },
@@ -238,7 +242,7 @@ final class SessionModel {
             volume: draft.volume,
             exerciseCount: draft.exercises.count,
             setCount: doneSets.count,
-            repCount: doneSets.reduce(0) { $0 + $1.reps },
+            repCount: Int(draft.exercises.filter { $0.units.reps == .reps }.flatMap { $0.sets.filter(\.done) }.reduce(0) { $0 + $1.reps }),
             completedExercises: draft.exercises.filter { !$0.sets.isEmpty && $0.sets.allSatisfy(\.done) }.count,
             readinessAvg: answered.isEmpty ? nil : Double(answered.reduce(0, +)) / Double(answered.count),
             minutes: resolvedMinutes,

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReadinessAnswers } from '@/lib/addWorkoutConstants';
-import { type DraftExercise, type DraftSet, exerciseSummary, exerciseVolume, sessionRecords } from '@/lib/addWorkoutFormat';
+import { type DraftExercise, type DraftSet, exerciseSummary, exerciseVolume, sessionRecords, unitsOf } from '@/lib/addWorkoutFormat';
 import { type AddWorkoutPhase, useAddWorkoutSession } from '@/lib/addWorkoutSession';
 import { useWorkoutData } from '@/lib/contexts';
 import { saveErrorMessage, saveLiftingWorkout } from '@/lib/firebase';
@@ -103,8 +103,8 @@ export interface AddWorkoutState {
     removeSet: (exerciseIndex: number) => void;
     updateSetField: (exerciseIndex: number, setIndex: number, field: 'reps' | 'weight', value: number) => void;
     fillDownSetField: (exerciseIndex: number, setIndex: number, field: 'reps' | 'weight') => void;
-    /** The units the two set columns are keeping for an exercise. Prototype-only: transient,
-     *  outside the stored session, and not part of the Firestore payload. */
+    /** The units the two set columns are keeping for an exercise. Stored on the draft, so it
+     *  survives a reload and reaches the Firestore payload. */
     exerciseUnits: (exerciseId: number) => ColumnUnits;
     setExerciseUnit: (exerciseId: number, column: keyof ColumnUnits, unit: SetUnit) => void;
     toggleSetDone: (exerciseIndex: number, setIndex: number) => void;
@@ -240,7 +240,13 @@ export function useAddWorkoutState(): AddWorkoutState {
     };
 
     const addExercise = (exerciseId: number) => {
-        setExercises((prev) => [...prev, { exerciseId, sets: [], name: exerciseMap.get(String(exerciseId))?.name }]);
+        const metadata = exerciseMap.get(String(exerciseId));
+        setExercises((prev) => [
+            ...prev,
+            // `measurement` is the catalog's record of how this movement was last measured, so a
+            // sled push opens on feet rather than needing the pickers set every time.
+            { exerciseId, sets: [], name: metadata?.name, units: metadata?.measurement ?? DEFAULT_COLUMN_UNITS },
+        ]);
         setPickerOpen(false);
         setPageIndex(0); // the exercise list is what shows behind the sheet (and after closing it)
         setExerciseModalIndex(exercises.length); // straight into the new exercise's editor sheet
@@ -293,14 +299,15 @@ export function useAddWorkoutState(): AddWorkoutState {
             return source ? { ...ex, sets: ex.sets.map((s, i) => (i > setIndex ? { ...s, [field]: source[field] } : s)) } : ex;
         });
 
-    // Keyed by exerciseId rather than by index so the choice survives reordering — and so the
-    // exercise-detail sheet, which remounts on every page of its swipe pager, reads it back.
-    const [columnUnits, setColumnUnits] = useState<Record<number, ColumnUnits>>({});
-
-    const exerciseUnits = (exerciseId: number): ColumnUnits => columnUnits[exerciseId] ?? DEFAULT_COLUMN_UNITS;
+    // Read by exerciseId rather than by index because the exercise-detail sheet remounts on every
+    // page of its swipe pager and only knows which exercise it is showing.
+    const exerciseUnits = (exerciseId: number): ColumnUnits => {
+        const ex = exercises.find((e) => e.exerciseId === exerciseId);
+        return ex ? unitsOf(ex) : DEFAULT_COLUMN_UNITS;
+    };
 
     const setExerciseUnit = (exerciseId: number, column: keyof ColumnUnits, unit: SetUnit) =>
-        setColumnUnits((prev) => ({ ...prev, [exerciseId]: { ...(prev[exerciseId] ?? DEFAULT_COLUMN_UNITS), [column]: unit } }));
+        setExercises((prev) => prev.map((ex) => (ex.exerciseId === exerciseId ? { ...ex, units: { ...unitsOf(ex), [column]: unit } } : ex)));
 
     const toggleSetDone = (exerciseIndex: number, setIndex: number) => updateSetAt(exerciseIndex, setIndex, (s) => ({ ...s, done: !s.done }));
 
@@ -357,6 +364,7 @@ export function useAddWorkoutState(): AddWorkoutState {
             exercises: exercises.map((ex, i) => ({
                 exerciseId: ex.exerciseId,
                 order: i + 1,
+                units: unitsOf(ex),
                 sets: ex.sets.map((s, j) => ({ order: j + 1, weight: s.weight, reps: s.reps, isWorkSet: s.isWorkSet })),
                 volume: exerciseVolume(ex, false),
                 workVolume: exerciseVolume(ex, true),

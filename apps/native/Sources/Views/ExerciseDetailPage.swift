@@ -55,7 +55,11 @@ struct ExerciseDetailPage: View {
 
                 titleRow(exercise)
 
-                Text("\(Fmt.number(exercise.volume(workOnly: true))) lbs work volume · \(exercise.sets.count) sets")
+                Text(
+                    exercise.units.isLoaded
+                        ? "\(Fmt.number(exercise.volume(workOnly: true))) lbs work volume · \(exercise.sets.count) sets"
+                        : "\(exercise.sets.count) sets"
+                )
                     .font(Typeface.mono(11))
                     .foregroundStyle(Theme.maint)
                     .padding(.top, 6)
@@ -165,14 +169,26 @@ struct ExerciseDetailPage: View {
             NumBox(
                 value: repsBinding(setIndex),
                 field: Field.reps(setIndex),
-                focus: $focused
+                focus: $focused,
+                unit: exercise.units.reps
             )
 
-            NumBox(
-                value: weightBinding(setIndex),
-                field: Field.weight(setIndex),
-                focus: $focused
-            )
+            // A movement carrying no load has nothing to type here, but the cell stays to hold
+            // the row's alignment with the header.
+            if exercise.units.weight == .blank {
+                Text("—")
+                    .font(Typeface.mono(20, .semibold))
+                    .foregroundStyle(Theme.muted2)
+                    .frame(height: 54)
+                    .frame(maxWidth: .infinity)
+            } else {
+                NumBox(
+                    value: weightBinding(setIndex),
+                    field: Field.weight(setIndex),
+                    focus: $focused,
+                    unit: exercise.units.weight
+                )
+            }
 
             CheckCircle(isOn: set.done, size: checkColumn - 2) {
                 session.toggleSetDone(exercise: exerciseIndex, set: setIndex)
@@ -192,7 +208,7 @@ struct ExerciseDetailPage: View {
             case .reps(let i) where i == setIndex:
                 let value = exercise.sets[setIndex].reps
                 return exercise.sets.dropFirst(setIndex + 1).contains { $0.reps != value }
-                    ? (.reps, "\(value)") : nil
+                    ? (.reps, exercise.units.reps.format(value)) : nil
             case .weight(let i) where i == setIndex:
                 let value = exercise.sets[setIndex].weight
                 return exercise.sets.dropFirst(setIndex + 1).contains { $0.weight != value }
@@ -262,15 +278,14 @@ struct ExerciseDetailPage: View {
 
     private func repsBinding(_ setIndex: Int) -> Binding<Double> {
         Binding(
-            get: {
-                guard let set = set(at: setIndex) else { return 0 }
-                return Double(set.reps)
-            },
+            get: { set(at: setIndex)?.reps ?? 0 },
             set: { newValue in
                 guard set(at: setIndex) != nil else { return }
-                // Reps are whole, and they share the weight box's decimal pad — so drop any
-                // fraction, and let a value Int can't hold fall to 0 rather than trap.
-                session.draft.exercises[exerciseIndex].sets[setIndex].reps = Int(exactly: newValue.rounded(.towardZero)) ?? 0
+                // A rep count is whole — the column shares the weight box's decimal pad, so a
+                // stray fraction is dropped. Seconds, feet and inches keep theirs.
+                let unit = (exercise?.units ?? ColumnUnits()).reps
+                session.draft.exercises[exerciseIndex].sets[setIndex].reps =
+                    unit == .reps ? newValue.rounded(.towardZero) : newValue
             }
         )
     }

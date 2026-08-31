@@ -1,16 +1,21 @@
 import SwiftUI
 
-/// What a set column holds. Hand-kept in step with `SetUnit` in apps/web/src/lib/setUnits.ts —
-/// prototype vocabulary only, so nothing writes it to the draft or to Firestore yet.
-enum SetUnit: String, Identifiable, CaseIterable {
+/// What a set column holds. Hand-kept in step with `SetUnitSchema` in packages/types/src/index.ts,
+/// which is also what the Firestore `units` map carries — the raw values are the wire format.
+enum SetUnit: String, Identifiable, Codable, CaseIterable {
     case reps
-    case lb
     case time
-    case feet
-    case meters
+    case lb
+    /// Load added on top of bodyweight rather than the total moved. Kept apart from `lb` because
+    /// the two are different scales: a chin-up "@ 10" and one "@ 210" are the same lift, and
+    /// letting them share a records ladder makes the ladder 20x wide.
+    case bodyweightPlus = "bw+"
     /// Spelled `blank` rather than `none` so it can never be read as `Optional.none`;
     /// the raw value stays "none" to match the web.
     case blank = "none"
+    case feet
+    case inches
+    case meters
 
     var id: String { rawValue }
 
@@ -18,11 +23,13 @@ enum SetUnit: String, Identifiable, CaseIterable {
     var chip: String {
         switch self {
         case .reps: "Reps"
-        case .lb: "Lb"
         case .time: "Time"
-        case .feet: "Feet"
-        case .meters: "Meters"
+        case .lb: "Lb"
+        case .bodyweightPlus: "BW+"
         case .blank: "None"
+        case .feet: "Feet"
+        case .inches: "Inches"
+        case .meters: "Meters"
         }
     }
 
@@ -30,26 +37,50 @@ enum SetUnit: String, Identifiable, CaseIterable {
     var label: String {
         switch self {
         case .reps: "Reps"
-        case .lb: "Weight (lb)"
         case .time: "Time (mm:ss)"
-        case .feet: "Feet"
-        case .meters: "Meters"
+        case .lb: "Weight (lb)"
+        case .bodyweightPlus: "Added to bodyweight"
         case .blank: "None"
+        case .feet: "Feet"
+        case .inches: "Inches"
+        case .meters: "Meters"
         }
+    }
+
+    /// How a value in this column reads. Durations are held as whole seconds and shown as mm:ss;
+    /// everything else is a plain number, trimmed of a pointless ".0".
+    func format(_ value: Double) -> String {
+        if self == .time {
+            let whole = Int(value.rounded())
+            return String(format: "%d:%02d", whole / 60, whole % 60)
+        }
+        return value == value.rounded() ? String(Int(value)) : String(value)
+    }
+
+    /// The inverse, lenient about what gets typed: "90" and "1:30" are the same ninety seconds.
+    func parse(_ text: String) -> Double {
+        guard self == .time else { return Double(text) ?? 0 }
+        let parts = text.split(separator: ":", omittingEmptySubsequences: false)
+        guard parts.count >= 2 else { return Double(text) ?? 0 }
+        return (Double(parts[0]) ?? 0) * 60 + (Double(parts[1]) ?? 0)
     }
 
     /// The first column can't be `.blank` — a set with no leading value isn't a set.
     static let repsOptions: [SetUnit] = [.reps, .time, .feet, .meters]
 
-    /// The second column keeps `.lb` so switching away from pounds is reversible, and adds
-    /// `.blank` for movements that carry no load at all.
-    static let weightOptions: [SetUnit] = [.lb, .reps, .time, .feet, .meters, .blank]
+    /// The second column keeps `.lb` first, since almost everything is pounds.
+    static let weightOptions: [SetUnit] = [.lb, .bodyweightPlus, .blank, .inches, .feet, .meters, .time, .reps]
 }
 
-/// The units an exercise's two set columns are keeping.
-struct ColumnUnits: Equatable {
+/// The units an exercise's two set columns are keeping. Encoded straight into the Firestore
+/// document's `units` map, so the keys match `ColumnUnitsSchema` in packages/types.
+struct ColumnUnits: Codable, Equatable {
     var reps: SetUnit = .reps
     var weight: SetUnit = .lb
+
+    /// Only reps-times-pounds is tonnage. Everything else still renders, but contributes nothing
+    /// to volume and holds no weight-ranked record. Mirrors `isLoaded` in packages/types.
+    var isLoaded: Bool { reps == .reps && weight == .lb }
 }
 
 /// The column-unit picker: a wheel under a Cancel / Select bar. The wheel drives local state

@@ -26,6 +26,9 @@ struct LiftingWorkoutDoc: Identifiable {
     struct Exercise: Identifiable {
         let exerciseId: Int
         let order: Int
+        /// What the two set columns count. Optional on the wire: documents written before the unit
+        /// pickers existed carry none, and everything reads them as reps x lb.
+        var units: ColumnUnits?
         let sets: [Set]
         let volume: Double
         let workVolume: Double
@@ -33,10 +36,15 @@ struct LiftingWorkoutDoc: Identifiable {
         /// `order` is unique within the doc; `exerciseId` isn't guaranteed to be.
         var id: Int { order }
 
+        var columnUnits: ColumnUnits { units ?? ColumnUnits() }
+
         struct Set: Identifiable {
             let order: Int
             let weight: Double
-            let reps: Int
+            /// The first column's value — reps by default, otherwise whole seconds, feet or
+            /// inches, per the owning exercise's `units.reps`. A Double because a duration or a
+            /// distance need not be a whole rep count.
+            let reps: Double
             let isWorkSet: Bool
             /// PR-at-the-time, per exact rep count — computed by the pipeline
             /// (`computePersonalRecords.ts`), present only on `lifting-history` documents. `var`
@@ -82,6 +90,7 @@ struct LiftingWorkoutDoc: Identifiable {
                     "order": ex.order,
                     "volume": ex.volume,
                     "workVolume": ex.workVolume,
+                    "units": ["reps": ex.columnUnits.reps.rawValue, "weight": ex.columnUnits.weight.rawValue],
                     "sets": ex.sets.map { s in
                         [
                             "order": s.order,
@@ -150,29 +159,38 @@ extension LiftingWorkoutDoc.Exercise {
         order = (data["order"] as? NSNumber)?.intValue ?? 0
         volume = (data["volume"] as? NSNumber)?.doubleValue ?? 0
         workVolume = (data["workVolume"] as? NSNumber)?.doubleValue ?? 0
+        units = (data["units"] as? [String: Any]).map { raw in
+            ColumnUnits(
+                reps: (raw["reps"] as? String).flatMap(SetUnit.init(rawValue:)) ?? .reps,
+                weight: (raw["weight"] as? String).flatMap(SetUnit.init(rawValue:)) ?? .lb
+            )
+        }
         sets = ((data["sets"] as? [[String: Any]]) ?? [])
             .map(Set.init(data:))
             .sorted { $0.order < $1.order }
     }
 
-    /// "5,5,5 @ 135,225,225" — the compact one-liner, matching `formatSetsSummary` in
-    /// apps/web/src/components/workouts/v2/workoutCard.tsx.
+    /// "5,5,5 @ 135,225,225" — the compact one-liner, matching `formatSetsLine` in
+    /// apps/web/src/lib/setUnits.ts. The leading column reads through its unit, and a movement
+    /// carrying no load prints the lead alone rather than a column of zeroes.
     var setsSummary: String {
         guard !sets.isEmpty else { return "—" }
-        let reps = sets.map { String($0.reps) }.joined(separator: ",")
+        let lead = sets.map { columnUnits.reps.format($0.reps) }.joined(separator: ",")
+        guard columnUnits.weight != .blank else { return lead }
         let weights = sets.map { String(Int($0.weight.rounded())) }.joined(separator: ",")
-        return "\(reps) @ \(weights)"
+        return "\(lead) @ \(weights)"
     }
 
-    /// "5,5,5@225" — the compact clipboard form, matching `formatSetsForClipboard` in the same
-    /// web file: work sets only (what the web copies with warmup off), and a single weight when
-    /// every set shares it, else the positional list.
+    /// "5,5,5@225" — the compact clipboard form, matching `formatSetsForClipboard` in
+    /// workoutCard.tsx: work sets only (what the web copies with warmup off), and a single weight
+    /// when every set shares it, else the positional list.
     var setsClipboard: String {
         let work = sets.filter(\.isWorkSet)
         guard !work.isEmpty else { return "—" }
-        let reps = work.map { String($0.reps) }.joined(separator: ",")
+        let lead = work.map { columnUnits.reps.format($0.reps) }.joined(separator: ",")
+        guard columnUnits.weight != .blank else { return lead }
         let weights = work.map { String(Int($0.weight.rounded())) }
-        return "\(reps)@\(Swift.Set(weights).count == 1 ? weights[0] : weights.joined(separator: ","))"
+        return "\(lead)@\(Swift.Set(weights).count == 1 ? weights[0] : weights.joined(separator: ","))"
     }
 }
 
@@ -180,7 +198,7 @@ extension LiftingWorkoutDoc.Exercise.Set {
     init(data: [String: Any]) {
         order = (data["order"] as? NSNumber)?.intValue ?? 0
         weight = (data["weight"] as? NSNumber)?.doubleValue ?? 0
-        reps = (data["reps"] as? NSNumber)?.intValue ?? 0
+        reps = (data["reps"] as? NSNumber)?.doubleValue ?? 0
         isWorkSet = (data["isWorkSet"] as? NSNumber)?.boolValue ?? true
         // `isPR` rides along on the same sets but carries nothing `prTier` doesn't; the pipeline
         // writes them together, so the tier alone is the whole flag.

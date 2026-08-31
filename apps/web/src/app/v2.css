@@ -3805,6 +3805,14 @@
         border-color: var(--muted-2);
     }
     /* wraps the weight box so the rep-PR trophy can anchor inside it */
+    /* Placeholder for the load cell on a movement that carries none — keeps the set row's grid
+       columns aligned with the header without offering a box to type in. */
+    .num-box-empty {
+        display: grid;
+        place-items: center;
+        color: var(--muted-2);
+    }
+
     .num-box-wrap {
         position: relative;
     }

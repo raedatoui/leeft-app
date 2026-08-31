@@ -6,7 +6,7 @@ import DropdownV2 from '@/components/ui/v2/dropdownV2';
 import { defaultMaxCalculator } from '@/lib/calc';
 import { computeExerciseSessions, computeExerciseStats } from '@/lib/exerciseSessions';
 import type { AddWorkoutState } from '@/lib/hooks/useAddWorkoutState';
-import { REPS_UNIT_OPTIONS, type SetUnit, unitDropdownOptions, WEIGHT_UNIT_OPTIONS } from '@/lib/setUnits';
+import { formatSeconds, isLoaded, parseSeconds, REPS_UNIT_OPTIONS, type SetUnit, unitDropdownOptions, WEIGHT_UNIT_OPTIONS } from '@/lib/setUnits';
 import { formatNumber } from '@/lib/statsUtils';
 import { resolveTimeRange } from '@/lib/timeRange';
 
@@ -35,6 +35,9 @@ export default function ExerciseDetailV2({ state, muscleGroupColor, exerciseInde
     // Raw text of the focused weight box: the draft stores numbers, and rendering the parsed
     // number back would eat the trailing "." while typing a decimal like 132.5.
     const [weightText, setWeightText] = useState('');
+    // A duration is typed as "1:30" but held as 90, so the field needs its own text buffer while
+    // focused — the same trick the weight field uses to allow a half-typed "13." .
+    const [repsText, setRepsText] = useState('');
 
     const sessions = useMemo(
         () =>
@@ -51,13 +54,19 @@ export default function ExerciseDetailV2({ state, muscleGroupColor, exerciseInde
     const lastSession = sessions[sessions.length - 1];
     const stats = useMemo(() => computeExerciseStats(sessions), [sessions]);
 
+    // `draft` is guarded further down, but the units are needed by the memoised PR pass above it.
+    const units = state.exerciseUnits(exerciseId ?? -1);
+    const loaded = isLoaded(units);
+    const timed = units.reps === 'time';
+
     // Historical best weight per exact rep count (work sets only) — same per-rep-count
-    // semantics as the pipeline's PR pass (computePersonalRecords in apps/data).
+    // semantics as the pipeline's PR pass (computePersonalRecords in apps/data), including its
+    // refusal to rank anything but pounds: sessions on another basis are a different ladder.
     const repMaxes = useMemo(() => {
         const map = new Map<number, number>();
         for (const w of state.workouts) {
             for (const ex of w.exercises) {
-                if (ex.exerciseId !== exerciseId) continue;
+                if (ex.exerciseId !== exerciseId || !isLoaded(ex.units)) continue;
                 for (const s of ex.sets) {
                     if (!s.isWorkSet || !s.reps) continue;
                     const prev = map.get(s.reps);
@@ -73,7 +82,7 @@ export default function ExerciseDetailV2({ state, muscleGroupColor, exerciseInde
     // Rep counts with no history never flag: a first-ever attempt isn't a meaningful record.
     const runningMax = new Map(repMaxes);
     const setIsPR = (draft?.sets ?? []).map((s) => {
-        if (!s.reps || !s.weight) return false;
+        if (!loaded || !s.reps || !s.weight) return false;
         const prev = runningMax.get(s.reps);
         const isPR = prev !== undefined && s.weight > prev;
         if (isPR) runningMax.set(s.reps, s.weight);
@@ -81,8 +90,6 @@ export default function ExerciseDetailV2({ state, muscleGroupColor, exerciseInde
     });
 
     if (!draft || !summary) return null;
-
-    const units = state.exerciseUnits(draft.exerciseId);
 
     const lastText = lastSession
         ? `${lastSession.workSetCount} x ${lastSession.topSet?.reps ?? 0} @ ${Math.round(lastSession.topSet?.weight ?? 0)} lb`
@@ -103,7 +110,8 @@ export default function ExerciseDetailV2({ state, muscleGroupColor, exerciseInde
                 </button>
             </div>
             <div className="ex-vol-line">
-                {formatNumber(summary.workVolume)} lbs work volume · {draft.sets.length} sets
+                {loaded ? `${formatNumber(summary.workVolume)} lbs work volume · ` : ''}
+                {draft.sets.length} sets
             </div>
             <div className="last-card">
                 <span>
@@ -153,33 +161,55 @@ export default function ExerciseDetailV2({ state, muscleGroupColor, exerciseInde
                             <span className="set-num">{si + 1}</span>
                             <input
                                 className="num-box"
-                                inputMode="numeric"
-                                value={s.reps || ''}
-                                placeholder="0"
+                                inputMode={timed ? 'text' : 'numeric'}
+                                value={
+                                    focusedField?.setIndex === si && focusedField.field === 'reps'
+                                        ? repsText
+                                        : timed
+                                          ? s.reps
+                                              ? formatSeconds(s.reps)
+                                              : ''
+                                          : s.reps || ''
+                                }
+                                placeholder={timed ? '0:00' : '0'}
                                 onFocus={(e) => {
                                     e.target.select();
+                                    setRepsText(s.reps ? (timed ? formatSeconds(s.reps) : String(s.reps)) : '');
                                     setFocusedField({ setIndex: si, field: 'reps' });
                                 }}
                                 onBlur={() => setFocusedField(null)}
-                                onChange={(e) => state.updateSetField(exerciseIndex, si, 'reps', Number.parseFloat(e.target.value) || 0)}
+                                onChange={(e) => {
+                                    setRepsText(e.target.value);
+                                    state.updateSetField(
+                                        exerciseIndex,
+                                        si,
+                                        'reps',
+                                        timed ? parseSeconds(e.target.value) : Number.parseFloat(e.target.value) || 0
+                                    );
+                                }}
                             />
                             <div className="num-box-wrap">
-                                <input
-                                    className="num-box"
-                                    inputMode="decimal"
-                                    value={focusedField?.setIndex === si && focusedField.field === 'weight' ? weightText : s.weight || ''}
-                                    placeholder="0"
-                                    onFocus={(e) => {
-                                        e.target.select();
-                                        setWeightText(s.weight ? String(s.weight) : '');
-                                        setFocusedField({ setIndex: si, field: 'weight' });
-                                    }}
-                                    onBlur={() => setFocusedField(null)}
-                                    onChange={(e) => {
-                                        setWeightText(e.target.value);
-                                        state.updateSetField(exerciseIndex, si, 'weight', Number.parseFloat(e.target.value) || 0);
-                                    }}
-                                />
+                                {/* A movement carrying no load has nothing to type here, but the cell stays to hold the grid column. */}
+                                {units.weight === 'none' ? (
+                                    <span className="num-box num-box-empty">—</span>
+                                ) : (
+                                    <input
+                                        className="num-box"
+                                        inputMode="decimal"
+                                        value={focusedField?.setIndex === si && focusedField.field === 'weight' ? weightText : s.weight || ''}
+                                        placeholder="0"
+                                        onFocus={(e) => {
+                                            e.target.select();
+                                            setWeightText(s.weight ? String(s.weight) : '');
+                                            setFocusedField({ setIndex: si, field: 'weight' });
+                                        }}
+                                        onBlur={() => setFocusedField(null)}
+                                        onChange={(e) => {
+                                            setWeightText(e.target.value);
+                                            state.updateSetField(exerciseIndex, si, 'weight', Number.parseFloat(e.target.value) || 0);
+                                        }}
+                                    />
+                                )}
                                 {setIsPR[si] && (
                                     <span className="set-pr" title={`${s.reps}RM personal record`}>
                                         <span>{s.reps}RM</span>

@@ -1,6 +1,7 @@
 // Per-exercise session derivation shared by the exercise detail and compare pages.
 
 import { type CalculationMethod, defaultMaxCalculator, oneRepMaxCalculators } from '@/lib/calc';
+import { isLoaded } from '@/lib/setUnits';
 import { inTimeRange, type ResolvedTimeRange } from '@/lib/timeRange';
 import type { MappedWorkout, RepRange, SetDetail, Workout } from '@/types';
 
@@ -11,6 +12,10 @@ export interface ExerciseSessionRow {
     workSetCount: number;
     workVolume: number;
     metric: number;
+    /** False when the session wasn't measured in reps x lb — a plank, a sled push, or a chin-up
+     *  logged as added plate. Such a session has no metric to plot and no rep range to filter on,
+     *  but its sets are still worth listing, so it stays in the rows and leaves the chart. */
+    loaded: boolean;
     /** PR tier of this session's top set (from the data pipeline), or undefined if not a PR. */
     prTier: SetDetail['prTier'];
 }
@@ -40,7 +45,11 @@ export function computeExerciseSessions(workouts: Workout[], exerciseId: number,
         .filter((w) => !cycleWorkoutIds || cycleWorkoutIds.has(w.uuid))
         .filter((w) => {
             const sel = w.exercises.find((e) => e.exerciseId === exerciseId);
-            return sel?.sets.some((s) => s.reps && s.reps >= repRange.min && s.reps <= repRange.max);
+            if (!sel) return false;
+            // A rep range is meaningless against seconds or inches — filtering on it would empty
+            // the page for every movement that isn't reps x lb.
+            if (!isLoaded(sel.units)) return true;
+            return sel.sets.some((s) => s.reps && s.reps >= repRange.min && s.reps <= repRange.max);
         })
         .sort((a, b) => a.date.getTime() - b.date.getTime());
 
@@ -48,12 +57,16 @@ export function computeExerciseSessions(workouts: Workout[], exerciseId: number,
     for (const w of filtered) {
         const selected = w.exercises.find((e) => e.exerciseId === exerciseId);
         if (!selected) continue;
+        const loaded = isLoaded(selected.units);
         const mw: MappedWorkout = { ...w, selected, weight: 0 };
-        const metric = method.calculator(mw, repRange);
-        if (metric <= 0) continue;
+        // Off the pounds basis there is no weight to run a 1RM formula over, so the metric becomes
+        // the top rep count — which is where the progression actually lives for a bodyweight
+        // movement. `loaded` tells the page which of the two it is holding.
+        const metric = loaded ? method.calculator(mw, repRange) : Math.max(0, ...selected.sets.map((s) => s.reps ?? 0));
+        if (loaded && metric <= 0) continue;
         mw.weight = metric;
 
-        const filteredSets = selected.sets.filter((s) => s.reps && s.reps >= repRange.min && s.reps <= repRange.max);
+        const filteredSets = loaded ? selected.sets.filter((s) => s.reps && s.reps >= repRange.min && s.reps <= repRange.max) : selected.sets;
         let topSet: SetDetail | undefined;
         for (const s of filteredSets) {
             if (!topSet || s.weight > topSet.weight) topSet = s;
@@ -67,6 +80,7 @@ export function computeExerciseSessions(workouts: Workout[], exerciseId: number,
             workout: mw,
             sets: selected.sets,
             topSet,
+            loaded,
             workSetCount,
             workVolume: selected.workVolume,
             metric,
