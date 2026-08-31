@@ -323,7 +323,8 @@ private struct ExerciseBlockView: View {
                             Text(Fmt.weight(set.weight))
                         }
                         if let tier = set.prTier {
-                            Text("★ \(Int(set.reps))RM")
+                            // No rep count: the row's reps column already carries it two cells left.
+                            Text("★")
                                 .font(Typeface.mono(10))
                                 .foregroundStyle(Self.tierColor(tier))
                         }

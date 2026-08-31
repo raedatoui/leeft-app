@@ -212,7 +212,6 @@ export default function ExerciseDetailV2({ state, muscleGroupColor, exerciseInde
                                 )}
                                 {setIsPR[si] && (
                                     <span className="set-pr" title={`${s.reps}RM personal record`}>
-                                        <span>{s.reps}RM</span>
                                         <span>🏆</span>
                                     </span>
                                 )}

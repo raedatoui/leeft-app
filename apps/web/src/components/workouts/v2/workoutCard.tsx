@@ -178,8 +178,8 @@ export const ExerciseBlock: FC<ExerciseBlockProps> = ({ exercise, metadata, incl
                                         <td>
                                             {units.weight === 'none' ? '' : Math.round(set.weight)}
                                             {isPRSet && (
-                                                <span className="pr-star" data-tier={set.prTier} title={`${set.reps ?? ''}RM PR`}>
-                                                    ★ {set.reps}RM
+                                                <span className="pr-star" data-tier={set.prTier} title={`${set.reps ?? ''}RM personal record`}>
+                                                    ★
                                                 </span>
                                             )}
                                         </td>
