@@ -59,6 +59,39 @@ const BODYWEIGHT_IN_LOAD_COLUMN = new Set(['Stair Calves', 'Stair Calf Single Le
 /** Loads at or above this are bodyweight-scale rather than a plate someone is holding. */
 const BODYWEIGHT_FLOOR = 150;
 
+/**
+ * Raed's bodyweight over time, which is what separates an assisted chin-up from an unassisted one.
+ * Read out of the log itself rather than guessed: the 2024-10 to 2025-08 sessions log it directly
+ * (nothing added, nothing taken off), and every weighted session since carries a back-off set that
+ * lands exactly on it — `240, 240, 240, 215, 215` is bodyweight plus a 25 lb plate.
+ *
+ * Entries are effective-from dates, most recent last.
+ */
+const BODYWEIGHT_BY_DATE: { from: string; lb: number }[] = [
+    { from: '2020-01-01', lb: 210 },
+    { from: '2025-08-01', lb: 213 },
+    { from: '2025-12-01', lb: 215 },
+    { from: '2026-07-09', lb: 218 },
+    { from: '2026-07-21', lb: 220 },
+];
+
+function bodyweightOn(day: string): number {
+    let current = BODYWEIGHT_BY_DATE[0]?.lb ?? 0;
+    for (const entry of BODYWEIGHT_BY_DATE) if (entry.from <= day) current = entry.lb;
+    return current;
+}
+
+/**
+ * Movements done on a machine that can take weight off you as well as add it, where the load
+ * column is the pounds actually moved. Below bodyweight the machine was helping; at or above it
+ * you lifted yourself, with or without a plate. Hitting bodyweight exactly is zero assistance, so
+ * the boundary is inclusive.
+ *
+ * The comparison is against the session's heaviest set, because a day can straddle the line —
+ * `190, 215, 215` is a day that reached bodyweight, not an assisted one.
+ */
+const ASSISTED_BELOW_BODYWEIGHT = new Set(['Chin-Up']);
+
 /** Literal slots, so the `param_N_data_M` key builds to an exact key rather than a `${number}`
  *  template TypeScript can't match against the schema. */
 const PARAM_SLOTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
@@ -76,7 +109,7 @@ function paramUnit(code: number | undefined, column: 1 | 2): SetUnit | undefined
 /** Read one exercise's sets straight from the param columns, which state their own units, rather
  *  than re-deriving them from the `abr` display string. Returns undefined when the entry carries
  *  no params at all (four workouts in the archive), leaving `parseAbr` to handle it. */
-export function parseParams(exercise: RawExercise): { units: ColumnUnits; sets: ParsedSet[] } | undefined {
+export function parseParams(exercise: RawExercise, day: string): { units: ColumnUnits; sets: ParsedSet[] } | undefined {
     const reps = paramUnit(exercise.param_1_type, 1);
     if (!reps) return undefined;
     const weight = paramUnit(exercise.param_2_type, 2);
@@ -105,6 +138,11 @@ export function parseParams(exercise: RawExercise): { units: ColumnUnits; sets: 
     if (load === 'lb' && threshold !== undefined && loads.length > 0) {
         const heaviest = Math.max(...loads);
         if (heaviest > 0 && heaviest < threshold) load = 'bw+';
+    }
+
+    // Separate the sessions the machine was helping on from the ones it wasn't.
+    if (load === 'lb' && ASSISTED_BELOW_BODYWEIGHT.has(exercise.exercise_title) && loads.length > 0) {
+        if (Math.max(...loads) < bodyweightOn(day)) load = 'assisted';
     }
 
     // Strip a bodyweight placeholder back to what was actually held.
@@ -232,7 +270,7 @@ export function parseTrainHeroicWorkout(rawWorkout: RawWorkout): BaseWorkout {
                     .map((exercise, exerciseIndex) => {
                         // Prefer the params: they state their own units, and `abr` renders them
                         // lossily. Fall back to the string only where no params exist at all.
-                        const parsed = parseParams(exercise) ?? {
+                        const parsed = parseParams(exercise, titleDayKey) ?? {
                             units: DEFAULT_COLUMN_UNITS,
                             sets: parseAbr(exercise.abr, `${saved_workout.title} · ${exercise.exercise_title} (id ${exercise.exercise_id})`),
                         };

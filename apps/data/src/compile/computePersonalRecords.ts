@@ -2,12 +2,12 @@ import type { ColumnUnits, Workout } from './types';
 
 type PrTier = 'allTime' | 'active' | 'beaten';
 
-/** A ladder exists only where a heavier number means a harder set at a fixed rep count. That is
- *  `lb` and `bw+` — and they are separate ladders, because a chin-up "@ 10" (a plate) and one
- *  "@ 210" (the whole system) describe the same lift on two scales. Seconds, feet and box height
- *  rank nothing; `none` has no number to rank. */
-const ladderOf = (units: ColumnUnits): string | undefined =>
-    units.reps === 'reps' && (units.weight === 'lb' || units.weight === 'bw+') ? units.weight : undefined;
+/** A ladder exists only where a heavier number means a harder set at a fixed rep count, and each
+ *  basis gets its own — a chin-up "@ 10" (a plate), one "@ 165" (assisted) and one "@ 210" (your
+ *  whole bodyweight) are the same lift on three scales, and ranking them together makes the
+ *  ladder meaningless. Seconds, feet and box height rank nothing; `none` has no number. */
+const LADDERS = new Set(['lb', 'bw+', 'assisted']);
+const ladderOf = (units: ColumnUnits): string | undefined => (units.reps === 'reps' && LADDERS.has(units.weight) ? units.weight : undefined);
 
 /**
  * Annotates each set with `isPR` / `prTier` using "PR-at-the-time", per exact rep count.

@@ -300,11 +300,7 @@ Please respond in this JSON format:
     }
 
     // Search functionality using embeddings and semantic analysis
-    async searchSimilar(
-        query: string,
-        embeddingsFile: string,
-        topK: number = 5
-    ): Promise<Array<{ file: string; similarity: number; summary: string }>> {
+    async searchSimilar(query: string, embeddingsFile: string, topK = 5): Promise<Array<{ file: string; similarity: number; summary: string }>> {
         const data = JSON.parse(readFileSync(embeddingsFile, 'utf-8')) as EmbeddingCollection;
 
         // Create query embedding using same technique

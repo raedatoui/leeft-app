@@ -71,7 +71,7 @@ class JsonEmbeddingGenerator {
 
     private analyzeJsonStructure(
         data: any,
-        depth: number = 0
+        depth = 0
     ): {
         keyCount: number;
         maxDepth: number;
@@ -291,7 +291,7 @@ class JsonEmbeddingGenerator {
     }
 
     // Search functionality for JSON files
-    searchSimilar(query: string, embeddingsFile: string, topK: number = 5): Array<{ file: string; score: number; reason: string }> {
+    searchSimilar(query: string, embeddingsFile: string, topK = 5): Array<{ file: string; score: number; reason: string }> {
         const data = JSON.parse(readFileSync(embeddingsFile, 'utf-8')) as JsonEmbeddingCollection;
         const queryLower = query.toLowerCase();
 

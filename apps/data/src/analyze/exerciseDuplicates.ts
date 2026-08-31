@@ -266,7 +266,7 @@ export function semantic() {
                     const isJustEquipment = extraWords.every((w) => w === '' || equipmentList.some((eq) => eq.includes(w)));
 
                     if (isJustEquipment) {
-                        console.log(`[REDUNDANT] Name includes equipment explicitly`);
+                        console.log('[REDUNDANT] Name includes equipment explicitly');
                         console.log(`  1. "${ex1.name}"`);
                         console.log(`  2. "${ex2.name}"`);
                         foundIssues = true;

@@ -6,6 +6,10 @@ enum SetUnit: String, Identifiable, Codable, CaseIterable {
     case reps
     case time
     case lb
+    /// Pounds actually moved on a machine that is taking weight off you — 165 is you at 215 with
+    /// 50 lb of counterweight. Real tonnage, but held apart from `lb` so an assisted set never
+    /// ranks against one you hauled unaided.
+    case assisted
     /// Load added on top of bodyweight rather than the total moved. Kept apart from `lb` because
     /// the two are different scales: a chin-up "@ 10" and one "@ 210" are the same lift, and
     /// letting them share a records ladder makes the ladder 20x wide.
@@ -25,6 +29,7 @@ enum SetUnit: String, Identifiable, Codable, CaseIterable {
         case .reps: "Reps"
         case .time: "Time"
         case .lb: "Lb"
+        case .assisted: "Assist"
         case .bodyweightPlus: "BW+"
         case .blank: "None"
         case .feet: "Feet"
@@ -39,6 +44,7 @@ enum SetUnit: String, Identifiable, Codable, CaseIterable {
         case .reps: "Reps"
         case .time: "Time (mm:ss)"
         case .lb: "Weight (lb)"
+        case .assisted: "Assisted (lb moved)"
         case .bodyweightPlus: "Added to bodyweight"
         case .blank: "None"
         case .feet: "Feet"
@@ -69,7 +75,7 @@ enum SetUnit: String, Identifiable, Codable, CaseIterable {
     static let repsOptions: [SetUnit] = [.reps, .time, .feet, .meters]
 
     /// The second column keeps `.lb` first, since almost everything is pounds.
-    static let weightOptions: [SetUnit] = [.lb, .bodyweightPlus, .blank, .inches, .feet, .meters, .time, .reps]
+    static let weightOptions: [SetUnit] = [.lb, .assisted, .bodyweightPlus, .blank, .inches, .feet, .meters, .time, .reps]
 }
 
 /// The units an exercise's two set columns are keeping. Encoded straight into the Firestore
@@ -80,7 +86,7 @@ struct ColumnUnits: Codable, Equatable {
 
     /// Only reps-times-pounds is tonnage. Everything else still renders, but contributes nothing
     /// to volume and holds no weight-ranked record. Mirrors `isLoaded` in packages/types.
-    var isLoaded: Bool { reps == .reps && weight == .lb }
+    var isLoaded: Bool { reps == .reps && (weight == .lb || weight == .assisted) }
 }
 
 /// The column-unit picker: a wheel under a Cancel / Select bar. The wheel drives local state

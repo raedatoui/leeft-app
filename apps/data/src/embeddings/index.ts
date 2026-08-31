@@ -27,7 +27,7 @@ async function generate() {
 
 async function search() {
     const query = process.argv[2];
-    const topK = parseInt(process.argv[3], 10) || 5;
+    const topK = Number.parseInt(process.argv[3], 10) || 5;
 
     if (!query) {
         logger.error('Usage: bun src/embeddings/index.ts search "query text" [topK]');

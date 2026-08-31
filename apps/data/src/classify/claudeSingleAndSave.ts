@@ -60,7 +60,7 @@ export async function main() {
         process.exit(1);
     }
 
-    const exerciseId = parseInt(exerciseIdArg, 10);
+    const exerciseId = Number.parseInt(exerciseIdArg, 10);
     if (Number.isNaN(exerciseId)) {
         logger.error('Exercise ID must be a valid integer');
         process.exit(1);

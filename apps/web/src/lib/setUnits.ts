@@ -19,6 +19,7 @@ const UNITS: Record<SetUnit, SetUnitDef> = {
     reps: { label: 'Reps', sublabel: 'count' },
     time: { label: 'Time', sublabel: 'mm:ss' },
     lb: { label: 'Lb', sublabel: 'load moved' },
+    assisted: { label: 'Assisted', sublabel: 'load moved, machine helping' },
     'bw+': { label: 'BW+', sublabel: 'added to bodyweight' },
     none: { label: 'None', sublabel: 'no second value' },
     feet: { label: 'Feet', sublabel: 'distance' },
@@ -32,7 +33,7 @@ export const REPS_UNIT_OPTIONS: SetUnit[] = ['reps', 'time', 'feet', 'meters'];
 /** The second column keeps 'lb' first, since almost everything is pounds. 'bw+' is for the load
  *  hung off you rather than the whole system — the two don't share a records ladder, so the
  *  choice matters. 'none' is for movements that carry nothing at all. */
-export const WEIGHT_UNIT_OPTIONS: SetUnit[] = ['lb', 'bw+', 'none', 'inches', 'feet', 'meters', 'time', 'reps'];
+export const WEIGHT_UNIT_OPTIONS: SetUnit[] = ['lb', 'assisted', 'bw+', 'none', 'inches', 'feet', 'meters', 'time', 'reps'];
 
 export const unitLabel = (unit: SetUnit): string => UNITS[unit].label;
 
@@ -63,6 +64,8 @@ export const formatSetValue = (value: number | undefined, unit: SetUnit): string
 /** How a measurement basis reads on the exercise page's basis switch. `none` becomes
  *  "Bodyweight" rather than "None" — as a chart of sets it is bodyweight work, not an absence. */
 export const basisLabel = (units: ColumnUnits): string => {
+    // `assisted` is checked before isLoaded, which is true for both pounds bases.
+    if (units.weight === 'assisted') return 'Assisted';
     if (isLoaded(units)) return 'Lb';
     if (units.weight === 'bw+') return 'BW+';
     if (units.weight === 'none' && units.reps === 'reps') return 'Bodyweight';

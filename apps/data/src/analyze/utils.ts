@@ -88,7 +88,7 @@ export function analyze(workouts: WorkoutSummary[]) {
         console.log(`📅 ${new Date(analysis.year, analysis.month - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`);
         console.log(`   Workouts: ${analysis.workoutCount}`);
         console.log(`   Average exercises per workout: ${analysis.averageExercisesPerWorkout.toFixed(1)}`);
-        console.log(`   Most frequent exercises:`);
+        console.log('   Most frequent exercises:');
 
         // Show top 5 exercises
         const topExercises = analysis.exercises.slice(0, 5);

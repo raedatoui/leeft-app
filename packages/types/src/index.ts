@@ -61,6 +61,10 @@ export const SetUnitSchema = z.enum([
 	"reps",
 	"time",
 	"lb",
+	// Pounds actually moved on an assisted machine, i.e. below bodyweight — 165 is you at 215
+	// with 50 lb of counterweight. Numerically the same kind of thing as `lb`, and it counts as
+	// tonnage, but it is held apart so an assisted set never ranks against an unweighted one.
+	"assisted",
 	// Load added on top of bodyweight, rather than the total load moved. Kept apart from `lb`
 	// because the two are different scales: a chin-up "@ 10" and a chin-up "@ 210" are the same
 	// lift. Reconciling them would need a bodyweight for the date, which nothing records.
@@ -78,10 +82,14 @@ export const ColumnUnitsSchema = z.object({
 
 export const DEFAULT_COLUMN_UNITS: ColumnUnits = { reps: "reps", weight: "lb" };
 
-/** Only reps-times-pounds is tonnage. Everything else — seconds, feet, box height, added-only
- *  load — still renders, but contributes nothing to volume and holds no weight-ranked record. */
+/** Whether the load column is pounds actually moved, and so real tonnage. True for `lb` and for
+ *  `assisted` — 165 lb hauled with a counterweight is still 165 lb hauled. False for seconds,
+ *  feet, box height and `bw+`, which render but never sum.
+ *
+ *  This is not the same question as which record ladder a set belongs to: `lb` and `assisted` are
+ *  both tonnage yet rank separately (see `ladderOf` in computePersonalRecords). */
 export const isLoaded = (units: ColumnUnits): boolean =>
-	units.reps === "reps" && units.weight === "lb";
+	units.reps === "reps" && (units.weight === "lb" || units.weight === "assisted");
 
 /** Settle the load column against what was actually logged: a weight box left at zero for every
  *  set is a bodyweight movement, not a lift at 0 lb. Without this, chin-ups and dead bugs sit on
