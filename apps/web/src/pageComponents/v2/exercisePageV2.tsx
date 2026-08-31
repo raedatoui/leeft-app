@@ -97,7 +97,10 @@ export default function ExercisePageV2() {
     const plotsLoad = chartSessions.some((s) => s.loaded);
     const metricName = plotsLoad ? selectedMethod.name : activeUnits?.weight === 'bw+' ? 'Top Added Lb' : `Top ${unitLabel(chartUnit)}`;
 
-    const reversed = useMemo(() => [...sessions].reverse(), [sessions]);
+    // Newest first for the table, over the basis the chart is showing, so the page is coherent:
+    // the metric column can't mix pounds with rep counts, and a hovered point resolves to the row
+    // beneath it.
+    const reversed = useMemo(() => [...chartSessions].reverse(), [chartSessions]);
 
     const isOneRm = oneRepMaxCalculators.some((m) => m === selectedMethod);
 
@@ -127,7 +130,7 @@ export default function ExercisePageV2() {
         [isOneRm]
     );
 
-    const totalPages = Math.max(1, Math.ceil(sessions.length / PAGE_SIZE));
+    const totalPages = Math.max(1, Math.ceil(chartSessions.length / PAGE_SIZE));
     const currentPage = Math.min(tablePage, totalPages - 1);
     const pageStart = currentPage * PAGE_SIZE;
     const pageRows = reversed.slice(pageStart, pageStart + PAGE_SIZE);
@@ -145,8 +148,8 @@ export default function ExercisePageV2() {
         );
     }
 
-    const hoveredSession = hoveredIndex !== null && hoveredIndex >= 0 && hoveredIndex < sessions.length ? sessions[hoveredIndex] : null;
-    const detail = hoveredSession ?? sessions[sessions.length - 1];
+    const hoveredSession = hoveredIndex !== null && hoveredIndex >= 0 && hoveredIndex < chartSessions.length ? chartSessions[hoveredIndex] : null;
+    const detail = hoveredSession ?? chartSessions[chartSessions.length - 1];
     const detailCycle = detail ? cycleNameByWorkout.get(detail.workout.uuid) : undefined;
 
     const handleCycleChange = (newCycleId: string) => {
@@ -332,7 +335,7 @@ export default function ExercisePageV2() {
                 )}
             </div>
 
-            {sessions.length === 0 ? (
+            {chartSessions.length === 0 ? (
                 <div className="empty-state">No sessions match the current filters.</div>
             ) : (
                 <section className="zones-2">
@@ -372,8 +375,8 @@ export default function ExercisePageV2() {
                             formatValue={chartUnit === 'time' ? (v) => formatSetValue(v, 'time') : undefined}
                             onHover={setHoveredIndex}
                             onRangeSelect={(startIndex, endIndex) => {
-                                const start = sessions[startIndex]?.workout.date;
-                                const end = sessions[endIndex]?.workout.date;
+                                const start = chartSessions[startIndex]?.workout.date;
+                                const end = chartSessions[endIndex]?.workout.date;
                                 if (!start || !end) return;
                                 setTimeRange({ preset: 'custom', start, end });
                                 setTablePage(0);
