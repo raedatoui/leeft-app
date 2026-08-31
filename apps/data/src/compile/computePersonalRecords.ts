@@ -52,6 +52,10 @@ export function annotatePersonalRecords(workouts: Workout[]): Workout[] {
                 // A rep count is a count. A fractional one means the columns were typed the wrong
                 // way round at entry (a 137.5-rep front squat), and it must not mint a record.
                 if (!s.isWorkSet || s.reps === undefined || !Number.isInteger(s.reps)) continue;
+                // On the `bw+` ladder the number is what you added, so adding nothing is not a
+                // record — it is a bodyweight set that happens to sit in a session where other
+                // sets were loaded. Without this, any new rep count trivially sets a PR at 0.
+                if (ladder === 'bw+' && s.weight === 0) continue;
                 const prev = rm.get(s.reps);
                 if (prev === undefined || s.weight > prev) {
                     const key = keyOf(w.uuid, ex.exerciseId, s.order);

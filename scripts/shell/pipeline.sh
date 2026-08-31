@@ -9,7 +9,7 @@
 #   ./pipeline.sh --deploy         - Full pipeline + deploy (explicit)
 #   ./pipeline.sh --skip-download  - Skip the Fitbit download
 #
-# TrainHeroic is no longer downloaded here. That account stopped receiving data, and its archive
+# TrainHeroic is no longer downloaded here, but IS re-hydrated here. That account stopped receiving data, and its archive
 # under data/download/trainheroic/workouts is now enriched in place by `bun trainheroic:hydrate`
 # (the readiness survey from the account export, four corrected workout titles, one reconstructed
 # session). A download would overwrite those files with the API's version and silently drop all of
@@ -72,7 +72,7 @@ fi
 echo ""
 
 # Calculate total steps based on mode
-TOTAL=7
+TOTAL=8
 if [ "$SKIP_DOWNLOAD" = false ]; then
     TOTAL=$((TOTAL + 1))
 fi
@@ -87,6 +87,13 @@ cd apps/data
 # Unconditional (even with --skip-download): it's a cheap read, and skipping it would silently
 # drop workouts logged in the app.
 run_step "Firestore download" "bun firestore:download"
+
+# Re-applies the archive's enrichment before anything reads it: the readiness survey, four
+# retitled workouts, one reconstructed session and nine set-level corrections. All of that lives
+# on disk under data/download, which is gitignored — so without this step a restored or
+# re-downloaded archive would compile silently wrong. Idempotent and ~1s; it reports 0 changed on
+# a normal run.
+run_step "TrainHeroic hydrate" "bun trainheroic:hydrate"
 
 run_step "Compile lifting" "bun compile:lifting"
 run_step "Combine lifting" "bun combine:lifting"
