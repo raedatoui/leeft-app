@@ -37,8 +37,6 @@ struct RootView: View {
 /// A plain system tab bar rather than a transcription of the web's custom `.dock` — the
 /// dock exists because a PWA has no tab bar to use, and this app does.
 struct MainTabView: View {
-    @Environment(WorkoutHistoryStore.self) private var history
-
     private enum Tab { case session, history }
 
     @State private var tab = Tab.session
@@ -56,11 +54,6 @@ struct MainTabView: View {
                 .tag(Tab.history)
                 .toolbarBackground(Theme.surface, for: .tabBar)
                 .toolbarBackground(.visible, for: .tabBar)
-        }
-        // Coming back to a list that predates the session just saved. The cold first load
-        // is HistoryView's own `.task`; this only refreshes an already-fetched list.
-        .onChange(of: tab) { _, new in
-            if new == .history, history.hasLoaded { Task { await history.load() } }
         }
     }
 }
