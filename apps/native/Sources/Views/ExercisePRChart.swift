@@ -103,9 +103,9 @@ struct ExercisePRChart: View {
         }
         .chartYAxis {
             AxisMarks(position: .leading, values: .automatic(desiredCount: 4)) { value in
-                AxisGridLine()
+                // The dash goes in the initializer — AxisMark has no .lineStyle modifier.
+                AxisGridLine(stroke: StrokeStyle(lineWidth: 1, dash: [2, 4]))
                     .foregroundStyle(Theme.border)
-                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [2, 4]))
                 AxisValueLabel {
                     if let raw = value.as(Double.self) {
                         Text(unit == .time ? unit.format(raw) : Fmt.number(raw))
