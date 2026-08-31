@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 /// The Firestore doc shape at `lifting-workouts/{YYYY-MM-DD}` — and, read-only, at
 /// `lifting-history/{YYYY-MM-DD}`, which the pipeline publishes with `prTier` on PR sets.
@@ -151,6 +152,19 @@ extension LiftingWorkoutDoc {
     var startedAtDate: Date? { Fmt.parseISO(startedAt) }
 
     var setCount: Int { exercises.reduce(0) { $0 + $1.sets.count } }
+}
+
+extension LiftingWorkoutDoc.Exercise.Set.PrTier {
+    /// `.pr-badge` / `.pr-star` colours: all-time yellow, standing record green, surpassed grey.
+    /// Shared by the workout card's rep-max chips and the exercise chart's stars, so the two can't
+    /// drift. Mirrors the `.pr-badge` / `.pr-star` rules in apps/web/src/app/v2.css.
+    var color: Color {
+        switch self {
+        case .allTime: Theme.maint
+        case .active: Theme.strength
+        case .beaten: Theme.muted
+        }
+    }
 }
 
 extension LiftingWorkoutDoc.Exercise {

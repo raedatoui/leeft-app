@@ -177,6 +177,33 @@ enum Fmt {
         return f
     }()
 
+    /// "Jan 03 '24" — `formatTableDate` in apps/web/src/lib/dateFormatters.ts. The doubled
+    /// quote is DateFormatter's escape for a literal apostrophe.
+    static let tableDate: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMM dd ''yy"
+        f.timeZone = TimeZone(identifier: "UTC")
+        f.locale = Locale(identifier: "en_US_POSIX")
+        return f
+    }()
+
+    /// "Aug '25" — the exercise chart's x-axis tick, where a full date would never fit.
+    static let monthTick: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMM ''yy"
+        f.timeZone = TimeZone(identifier: "UTC")
+        f.locale = Locale(identifier: "en_US_POSIX")
+        return f
+    }()
+
+    /// "412.5k" — `formatVolume` in apps/web/src/lib/statsUtils.ts. Tonnage totals run to seven
+    /// figures, which no stat tile has room for.
+    static func volume(_ value: Double) -> String {
+        if value < 1000 { return number(value) }
+        if value < 1_000_000 { return String(format: "%.1fk", value / 1000) }
+        return String(format: "%.2fM", value / 1_000_000)
+    }
+
     /// "2024" — kept beside the day-and-month title, which carries no year of its own.
     static let year: DateFormatter = {
         let f = DateFormatter()

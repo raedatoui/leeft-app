@@ -146,6 +146,69 @@ struct ExerciseBadge: View {
     }
 }
 
+/// `.seg` / `.seg-btn` — the segmented control from v2.css. Binds an *optional* value on
+/// purpose: on the exercise page a one-rep-max formula is picked from a menu, and while one is
+/// active no metric segment is selected, which is what makes the menu read as the current choice.
+struct SegControl<Value: Hashable>: View {
+    let options: [Value]
+    let label: (Value) -> String
+    @Binding var selection: Value?
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(options, id: \.self) { option in
+                let active = option == selection
+                Button { selection = option } label: {
+                    Text(label(option))
+                        .font(Typeface.mono(11, active ? .semibold : .regular))
+                        .tracking(1.1)
+                        .textCase(.uppercase)
+                        .foregroundStyle(active ? Theme.maint : Theme.muted)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(active ? Theme.bg : .clear, in: .capsule)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(3)
+        .background(Theme.surface2, in: .capsule)
+        .overlay(Capsule().strokeBorder(Theme.borderSoft, lineWidth: 1))
+    }
+}
+
+/// The pill that fronts a menu or opens a sheet — the shape `.select.sm` takes in v2, with a
+/// trailing chevron so it reads as something that opens.
+struct PillButton: View {
+    let title: String
+    var tint: Color = Theme.breakBlue
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            label
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Exposed so a `Menu` can borrow the same chrome for its label.
+    var label: some View {
+        HStack(spacing: 5) {
+            Text(title)
+                .font(Typeface.mono(11, .semibold))
+                .tracking(1.1)
+                .textCase(.uppercase)
+            Image(systemName: "chevron.down")
+                .font(.system(size: 8, weight: .bold))
+        }
+        .foregroundStyle(tint)
+        .padding(.horizontal, 11)
+        .padding(.vertical, 7)
+        .background(Theme.surface2, in: .capsule)
+        .overlay(Capsule().strokeBorder(Theme.borderSoft, lineWidth: 1))
+    }
+}
+
 /// `.toast` — transient confirmation over the current screen.
 struct ToastView: View {
     let message: String

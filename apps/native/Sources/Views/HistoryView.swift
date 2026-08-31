@@ -1,7 +1,8 @@
 import SwiftUI
 
 /// The History tab: every day in `lifting-workouts`, newest first, one `WorkoutCardView`
-/// each. Read-only — tapping a card collapses or expands it, nothing more.
+/// each. Tapping a card's title collapses or expands it; tapping an exercise row opens that
+/// exercise's `ExerciseAnalyticsSheet`.
 ///
 /// Horizontal pager rather than a vertical feed, the same idiom the session editor uses:
 /// one workout fills the screen, swipe sideways for the next day, scroll down inside a card
@@ -11,6 +12,15 @@ struct HistoryView: View {
 
     /// The day key of the card currently on screen — drives the header's position readout.
     @State private var currentDay: String?
+
+    /// Presented above the pager rather than from inside it: a sheet owned by a `LazyHStack` row
+    /// goes away with the row.
+    @State private var analyticsTarget: ExerciseTarget?
+
+    private struct ExerciseTarget: Identifiable {
+        let exerciseId: Int
+        var id: Int { exerciseId }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -26,6 +36,11 @@ struct HistoryView: View {
         // The catalog refresh is kicked off at the root; a card whose names haven't landed
         // yet falls back to "Exercise {id}" and re-renders when they do.
         .task { if !history.hasLoaded { await history.load() } }
+        .sheet(item: $analyticsTarget) { target in
+            // The whole collection is already in memory, so the sheet derives synchronously off
+            // it and needs no fetch of its own.
+            ExerciseAnalyticsSheet(exerciseId: target.exerciseId, workouts: history.workouts)
+        }
     }
 
     /// Same chrome as `AppBar`: brand mark, a right-hand readout, bottom hairline. The
@@ -86,7 +101,7 @@ struct HistoryView: View {
             LazyHStack(spacing: 0) {
                 ForEach(history.workouts) { workout in
                     ScrollView {
-                        WorkoutCardView(workout: workout)
+                        WorkoutCardView(workout: workout) { analyticsTarget = ExerciseTarget(exerciseId: $0) }
                     }
                     .scrollBounceBehavior(.basedOnSize)
                     // One card per screen; `.viewAligned` below snaps to these edges.

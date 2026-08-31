@@ -15,6 +15,9 @@ struct WorkoutCardView: View {
     @Environment(ExerciseCatalog.self) private var catalog
 
     let workout: LiftingWorkoutDoc
+    /// Set by the History tab, which owns the analytics sheet. Left nil inside that sheet's own
+    /// day view, so drilling into an exercise can't stack another chart on top of itself.
+    var onSelectExercise: ((Int) -> Void)? = nil
 
     /// Starts collapsed — a page of one-line summaries reads as the shape of the session,
     /// with the sets tables a tap away. (The web card defaults the other way, but it isn't
@@ -229,8 +232,16 @@ struct WorkoutCardView: View {
     private var exercises: some View {
         VStack(spacing: 0) {
             ForEach(Array(workout.exercises.enumerated()), id: \.element.id) { index, exercise in
-                ExerciseBlockView(exercise: exercise, metadata: catalog.metadata(for: exercise.exerciseId), compact: compact)
+                ExerciseBlockView(
+                    exercise: exercise,
+                    metadata: catalog.metadata(for: exercise.exerciseId),
+                    compact: compact,
+                    showsDisclosure: onSelectExercise != nil
+                )
                     .padding(.vertical, 12)
+                    .contentShape(.rect)
+                    .onTapGesture { onSelectExercise?(exercise.exerciseId) }
+                    .accessibilityAddTraits(onSelectExercise == nil ? [] : .isButton)
                     .overlay(alignment: .bottom) {
                         if index < workout.exercises.count - 1 {
                             Rectangle().fill(Theme.borderSoft).frame(height: 1)
@@ -246,6 +257,8 @@ private struct ExerciseBlockView: View {
     let exercise: LiftingWorkoutDoc.Exercise
     let metadata: ExerciseMetadata?
     let compact: Bool
+    /// Whether this row leads anywhere — false inside the analytics sheet's own day view.
+    var showsDisclosure: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -268,12 +281,18 @@ private struct ExerciseBlockView: View {
                             .foregroundStyle(Theme.bg)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 1)
-                            .background(Self.tierColor(chip.tier), in: .rect(cornerRadius: 3))
+                            .background(chip.tier.color, in: .rect(cornerRadius: 3))
                             .accessibilityLabel("\(chip.reps) rep max personal record")
                     }
                 }
 
                 Spacer(minLength: 0)
+
+                if showsDisclosure {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundStyle(Theme.muted2)
+                }
 
                 if exercise.columnUnits.isLoaded {
                     HStack(spacing: 4) {
@@ -316,7 +335,7 @@ private struct ExerciseBlockView: View {
                     cell("\(index + 1)", width: Self.indexColumn)
                         // The index keeps its own colour except on a PR row, where the web tints
                         // every cell — otherwise a green `active` row would keep a yellow index.
-                        .foregroundStyle(set.prTier.map(Self.tierColor) ?? (set.isWorkSet ? Theme.maint : Theme.muted))
+                        .foregroundStyle(set.prTier?.color ?? (set.isWorkSet ? Theme.maint : Theme.muted))
                     cell(exercise.columnUnits.reps.format(set.reps))
                     HStack(spacing: 6) {
                         if exercise.columnUnits.weight != .blank {
@@ -326,14 +345,14 @@ private struct ExerciseBlockView: View {
                             // No rep count: the row's reps column already carries it two cells left.
                             Text("★")
                                 .font(Typeface.mono(10))
-                                .foregroundStyle(Self.tierColor(tier))
+                                .foregroundStyle(tier.color)
                         }
                     }
                     .frame(maxWidth: .infinity)
                 }
                 .font(Typeface.mono(12, set.isWorkSet ? .semibold : .regular))
                 // A PR row takes its tier colour whole, as `.sets-table tbody tr.pr td` does.
-                .foregroundStyle(set.prTier.map(Self.tierColor) ?? (set.isWorkSet ? Theme.fg : Theme.muted))
+                .foregroundStyle(set.prTier?.color ?? (set.isWorkSet ? Theme.fg : Theme.muted))
                 .padding(.vertical, 3)
                 .overlay(alignment: .bottom) {
                     if index < exercise.sets.count - 1 {
@@ -361,15 +380,6 @@ private struct ExerciseBlockView: View {
         let reps: Int
         let tier: LiftingWorkoutDoc.Exercise.Set.PrTier
         var id: Int { reps }
-    }
-
-    /// `.pr-badge` / `.pr-star` colours: all-time yellow, standing record green, surpassed grey.
-    private static func tierColor(_ tier: LiftingWorkoutDoc.Exercise.Set.PrTier) -> Color {
-        switch tier {
-        case .allTime: Theme.maint
-        case .active: Theme.strength
-        case .beaten: Theme.muted
-        }
     }
 
     /// The narrow set-number column; reps and lbs split what's left, as in the CSS widths.
