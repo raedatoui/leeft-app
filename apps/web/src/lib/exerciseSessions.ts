@@ -1,6 +1,6 @@
 // Per-exercise session derivation shared by the exercise detail and compare pages.
 
-import { type CalculationMethod, defaultMaxCalculator, oneRepMaxCalculators } from '@/lib/calc';
+import { type CalculationMethod, defaultMaxCalculator } from '@/lib/calc';
 import { isLoaded } from '@/lib/setUnits';
 import { inTimeRange, type ResolvedTimeRange } from '@/lib/timeRange';
 import type { MappedWorkout, RepRange, SetDetail, Workout } from '@/types';
@@ -40,7 +40,13 @@ export interface ExerciseSessionFilters {
 
 export function computeExerciseSessions(workouts: Workout[], exerciseId: number, filters: ExerciseSessionFilters): ExerciseSessionRow[] {
     const { method, repRange, range, cycleWorkoutIds } = filters;
-    const showPRSet = method === defaultMaxCalculator || oneRepMaxCalculators.some((m) => m === method);
+    // A PR is an all-time claim, so a star only renders where the view can back that claim up:
+    // the plain max-weight metric, over the unfiltered log. A 1RM formula reports a computed
+    // estimate rather than a set that was performed, and a time or cycle window shows an
+    // all-time star inside a period that need not even contain the best set. The rep range is
+    // deliberately not disqualifying — the ladder is keyed by exact rep count, so filtering to
+    // fives and starring the standing 5RM is still an all-time statement.
+    const showPRSet = method === defaultMaxCalculator && !range.start && !range.end && !cycleWorkoutIds;
 
     const filtered = workouts
         .filter((w) => w.exercises.some((e) => e.exerciseId === exerciseId))
@@ -78,7 +84,6 @@ export function computeExerciseSessions(workouts: Workout[], exerciseId: number,
             if (!topSet || s.weight > topSet.weight) topSet = s;
         }
         // PR markers come from the data pipeline (per-rep-count, tiered), not a per-filter running max.
-        // Shown for weight / 1RM methods, where the top set is the meaningful PR set.
         const prTier = showPRSet ? topSet?.prTier : undefined;
         const workSetCount = selected.sets.filter((s) => s.isWorkSet).length;
 

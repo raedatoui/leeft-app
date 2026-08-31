@@ -366,7 +366,10 @@ export default function ExercisePageV2() {
                                 )}
                             </div>
                             <span className="hint">
-                                ★ = PR (gold all-time · green active · gray beaten) · hover to inspect · drag to filter range
+                                {/* Derived from the chart rather than re-deriving `showPRSet`: if no star is on
+                                    the canvas, the legend shouldn't promise one. */}
+                                {chartSessions.some((s) => s.prTier) && '★ = PR (gold all-time · green active · gray beaten) · '}
+                                hover to inspect · drag to filter range
                             </span>
                         </div>
 
