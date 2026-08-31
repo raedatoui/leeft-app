@@ -340,29 +340,31 @@ export default function ExercisePageV2() {
             ) : (
                 <section className="zones-2">
                     <div className="zone-2">
-                        <div className="panel-label" style={{ margin: '0 0 12px' }}>
-                            <span>{metricName} Over Time</span>
-                            {bases.length > 1 && (
-                                <div className="seg" role="group" aria-label="Measurement basis">
-                                    {bases.map((b) => {
-                                        const sample = sessions.find((s) => s.basis === b);
-                                        const count = sessions.filter((s) => s.basis === b).length;
-                                        return (
-                                            <button
-                                                key={b}
-                                                type="button"
-                                                className={`seg-btn${b === activeBasis ? ' active' : ''}`}
-                                                onClick={() => {
-                                                    setBasis(b);
-                                                    setTablePage(0);
-                                                }}
-                                            >
-                                                {sample ? basisLabel(sample.workout.selected.units) : b} <span className="hint">{count}</span>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            )}
+                        <div className="panel-label stacked" style={{ margin: '0 0 12px' }}>
+                            <div className="label-row">
+                                <span>{metricName} Over Time</span>
+                                {bases.length > 1 && (
+                                    <div className="seg" role="group" aria-label="Measurement basis">
+                                        {bases.map((b) => {
+                                            const sample = sessions.find((s) => s.basis === b);
+                                            const count = sessions.filter((s) => s.basis === b).length;
+                                            return (
+                                                <button
+                                                    key={b}
+                                                    type="button"
+                                                    className={`seg-btn${b === activeBasis ? ' active' : ''}`}
+                                                    onClick={() => {
+                                                        setBasis(b);
+                                                        setTablePage(0);
+                                                    }}
+                                                >
+                                                    {sample ? basisLabel(sample.workout.selected.units) : b} <span className="hint">{count}</span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
                             <span className="hint">
                                 ★ = PR (gold all-time · green active · gray beaten) · hover to inspect · drag to filter range
                             </span>

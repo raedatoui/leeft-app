@@ -1383,6 +1383,27 @@
         justify-content: space-between;
         align-items: center;
     }
+    /* Three things compete for one row on the exercise chart's header — title, basis switch and
+       the PR legend — and the title's 0.2em tracking makes it wrap a word per line. Stacking drops
+       the legend to its own line and lets the title keep one. Opt-in, since most panel labels
+       carry only a title. */
+    .panel-label.stacked {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .panel-label .label-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .panel-label .label-row > span {
+        white-space: nowrap;
+    }
+
     .panel-label .hint {
         font-family: var(--mono);
         font-size: 12px;
