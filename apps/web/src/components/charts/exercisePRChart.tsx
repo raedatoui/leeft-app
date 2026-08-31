@@ -151,16 +151,19 @@ export default function ExercisePRChart({ sessions, methodName, formatValue, onH
         },
         plotOptions: {
             area: {
+                // Neutral line and fill: the only colour on this canvas is a PR star, so a gold
+                // point means something. (The tooltip's value stays gold — that's chrome, and
+                // matches the inline stat numbers everywhere else in v2.)
                 fillColor: {
                     linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
                     stops: [
-                        [0, `rgba(${v2.maintRgb}, 0.28)`],
-                        [1, `rgba(${v2.maintRgb}, 0.02)`],
+                        [0, `rgba(${v2.fgRgb}, 0.14)`],
+                        [1, `rgba(${v2.fgRgb}, 0.02)`],
                     ],
                 },
-                lineColor: v2.maint,
+                lineColor: v2.fg,
                 lineWidth: 1.5,
-                marker: { radius: 3, fillColor: v2.maint, lineWidth: 0, symbol: 'circle' },
+                marker: { radius: 3, fillColor: v2.muted, lineWidth: 0, symbol: 'circle' },
                 states: { hover: { lineWidth: 1.5, halo: { size: 8, opacity: 0.2 } } },
                 threshold: null,
             },

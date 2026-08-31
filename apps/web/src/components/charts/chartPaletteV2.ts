@@ -4,6 +4,7 @@ export const V2_PALETTES = {
     dark: {
         bg: '#0b0a08',
         fg: '#ecebe2',
+        fgRgb: '236, 235, 226',
         muted: '#807a6c',
         muted2: '#5a5448',
         border: '#2a2722',
@@ -16,6 +17,7 @@ export const V2_PALETTES = {
     light: {
         bg: '#ecebe2',
         fg: '#0b0a08',
+        fgRgb: '11, 10, 8',
         muted: '#6b6454',
         muted2: '#9a927d',
         border: '#cfc9b7',
