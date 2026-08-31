@@ -4,6 +4,7 @@ import { logger } from '@leeft/utils';
 import { z } from 'zod';
 import { classifyAllWorkouts } from './classifySets';
 import { annotatePersonalRecords } from './computePersonalRecords';
+import { applyExerciseAliases, EXERCISE_ID_ALIASES } from './exerciseAliases';
 import { parseTrainHeroicWorkout } from './extractDay';
 import { readFirestoreLog, readLog, readTrainHeroicFiles } from './readFiles';
 import { type BaseWorkout, type ExerciseMetadata, ExerciseMetadataSchema, RawWorkoutSchema } from './types';
@@ -57,7 +58,7 @@ function compileTrainHeroicWorkouts(): BaseWorkout[] {
 
             raw.saved_workout.workoutSets.forEach((ws) => {
                 const ex = ws.workoutSetExercises[0];
-                if (ex && !exerciseMap.has(ex.exercise_id)) {
+                if (ex && !(ex.exercise_id in EXERCISE_ID_ALIASES) && !exerciseMap.has(ex.exercise_id)) {
                     const metadata = ExerciseMetadataSchema.parse({
                         id: ex.exercise_id,
                         slug: ex.exercise_title.toLowerCase().replace(/[^a-z0-9]+/g, '_'),
@@ -102,7 +103,11 @@ export function main(): void {
     const trainHeroicWorkouts = compileTrainHeroicWorkouts();
     const googleWorkouts = readLog('../../data/download/google/google-log.json');
     const google2020Workouts = readLog('../../data/download/google/lifting-log-2020.json');
-    const allWorkouts = mergeFirestoreWorkouts(google2020Workouts.concat(mergeWorkouts(googleWorkouts, trainHeroicWorkouts)), readFirestoreLog());
+    // Aliases run over the *fully merged* list, Firestore included: the google-era logs and an
+    // app-logged day can both reference a retired id, so a per-source remap would miss them.
+    const allWorkouts = applyExerciseAliases(
+        mergeFirestoreWorkouts(google2020Workouts.concat(mergeWorkouts(googleWorkouts, trainHeroicWorkouts)), readFirestoreLog())
+    );
     // filtering the exercises that have time in them
     // return allExercises
     //     .map((w) => ({
