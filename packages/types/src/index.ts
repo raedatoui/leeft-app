@@ -89,7 +89,8 @@ export const DEFAULT_COLUMN_UNITS: ColumnUnits = { reps: "reps", weight: "lb" };
  *  This is not the same question as which record ladder a set belongs to: `lb` and `assisted` are
  *  both tonnage yet rank separately (see `ladderOf` in computePersonalRecords). */
 export const isLoaded = (units: ColumnUnits): boolean =>
-	units.reps === "reps" && (units.weight === "lb" || units.weight === "assisted");
+	units.reps === "reps" &&
+	(units.weight === "lb" || units.weight === "assisted");
 
 /** Settle the load column against what was actually logged: a weight box left at zero for every
  *  set is a bodyweight movement, not a lift at 0 lb. Without this, chin-ups and dead bugs sit on
