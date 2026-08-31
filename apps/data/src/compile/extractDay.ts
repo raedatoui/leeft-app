@@ -22,6 +22,9 @@ const PARAM_UNITS: Record<number, SetUnit> = {
 };
 
 /**
+ * Keyed by exercise id rather than name: exercise 903 is logged as both "Dip" and "Dips", and
+ * Chin-Up spans two ids, so a name rule would cover only part of each.
+ *
  * Movements where your own bodyweight is most of the load, and the second column has meant two
  * different things over the years: early on the plate hung off you, from late 2024 the whole
  * system (bodyweight minus the assist stack, or plus a plate). TrainHeroic records no difference —
@@ -35,9 +38,11 @@ const PARAM_UNITS: Record<number, SetUnit> = {
  * apart — sharing a ladder 20x wide. Reconciling them properly would need a bodyweight for the
  * date, which nothing in the repo records.
  */
-const ADDED_LOAD_BELOW: Record<string, number> = {
-    'Chin-Up': 100,
-    'Pull-Up': 100,
+const ADDED_LOAD_BELOW: Record<number, number> = {
+    191: 100, // Chin-Up (retired id)
+    688606: 100, // Chin-Up
+    7: 100, // Pull-Up
+    903: 25, // Dips — nothing that light has been logged yet, but a plate this small is a plate
 };
 
 /**
@@ -54,7 +59,7 @@ const ADDED_LOAD_BELOW: Record<string, number> = {
  * This is the opposite of `ADDED_LOAD_BELOW`. There the big numbers are *effective load* — a
  * chin-up at 210 is genuinely you, hauled over a bar, and counts as tonnage. Here they are not.
  */
-const BODYWEIGHT_IN_LOAD_COLUMN = new Set(['Stair Calves', 'Stair Calf Single Leg']);
+const BODYWEIGHT_IN_LOAD_COLUMN = new Set([4844196, 6336851]); // Stair Calves, Stair Calf Single Leg
 
 /** Loads at or above this are bodyweight-scale rather than a plate someone is holding. */
 const BODYWEIGHT_FLOOR = 150;
@@ -90,7 +95,7 @@ function bodyweightOn(day: string): number {
  * The comparison is against the session's heaviest set, because a day can straddle the line —
  * `190, 215, 215` is a day that reached bodyweight, not an assisted one.
  */
-const ASSISTED_BELOW_BODYWEIGHT = new Set(['Chin-Up']);
+const ASSISTED_BELOW_BODYWEIGHT = new Set([191, 688606, 903]); // Chin-Up (both ids), Dips
 
 /** Literal slots, so the `param_N_data_M` key builds to an exact key rather than a `${number}`
  *  template TypeScript can't match against the schema. */
@@ -134,20 +139,20 @@ export function parseParams(exercise: RawExercise, day: string): { units: Column
 
     // Distinguish a plate hung off you from the whole system, which TrainHeroic records alike.
     let load = weight ?? 'none';
-    const threshold = ADDED_LOAD_BELOW[exercise.exercise_title];
+    const threshold = ADDED_LOAD_BELOW[exercise.exercise_id];
     if (load === 'lb' && threshold !== undefined && loads.length > 0) {
         const heaviest = Math.max(...loads);
         if (heaviest > 0 && heaviest < threshold) load = 'bw+';
     }
 
     // Separate the sessions the machine was helping on from the ones it wasn't.
-    if (load === 'lb' && ASSISTED_BELOW_BODYWEIGHT.has(exercise.exercise_title) && loads.length > 0) {
+    if (load === 'lb' && ASSISTED_BELOW_BODYWEIGHT.has(exercise.exercise_id) && loads.length > 0) {
         if (Math.max(...loads) < bodyweightOn(day)) load = 'assisted';
     }
 
     // Strip a bodyweight placeholder back to what was actually held.
     let baseline = 0;
-    if (load === 'lb' && BODYWEIGHT_IN_LOAD_COLUMN.has(exercise.exercise_title)) {
+    if (load === 'lb' && BODYWEIGHT_IN_LOAD_COLUMN.has(exercise.exercise_id)) {
         const bodyweightScale = loads.filter((v) => v >= BODYWEIGHT_FLOOR);
         baseline = bodyweightScale.length > 0 ? Math.min(...bodyweightScale) : 0;
         load = 'bw+';
