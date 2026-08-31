@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { ColumnUnitsSchema } from '@leeft/types';
 import { logger } from '@leeft/utils';
 import { z } from 'zod';
 
@@ -21,6 +22,9 @@ export const ClassifiedExerciseSchema = z.object({
     primaryMuscleGroup: z.string(),
     equipment: z.array(z.string()),
     description: z.string(),
+    // Not set by classification, but load → save round-trips the whole file: without it here,
+    // Zod strips the unit-picker default off every previously classified exercise.
+    measurement: ColumnUnitsSchema.optional(),
 });
 
 export type ClassifiedExercise = z.infer<typeof ClassifiedExerciseSchema>;
