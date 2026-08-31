@@ -10,6 +10,7 @@
     "wt": "./scripts/shell/worktree.sh",
     "build:web": "pnpm --filter @leeft/web build",
     "build:desktop": "pnpm --filter @leeft/web-desktop build:desktop && ./scripts/shell/install-desktop.sh",
+    "build:native": "./scripts/shell/build-native.sh",
     "deploy:web": "pnpm build:web && cd apps/web && firebase deploy",
     "pipeline": "./scripts/shell/pipeline.sh",
     "refresh": "./scripts/shell/refresh.sh",

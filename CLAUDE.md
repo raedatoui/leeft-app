@@ -59,13 +59,19 @@ pnpm check              # Type check and lint all apps
 pnpm format             # Format code (Biome)
 ```
 
-### iOS app (run from apps/native)
+### iOS app
 ```bash
+pnpm build:native       # From root: xcodegen + compile for the simulator (scripts/shell/build-native.sh)
+```
+```bash
+# From apps/native:
 xcodegen                # Regenerate Leeft.xcodeproj from project.yml — REQUIRED after adding/moving/renaming any source file
 open Leeft.xcodeproj    # Build and run from Xcode (▶︎ with a simulator or device selected)
 ```
 `Leeft.xcodeproj` is generated and gitignored — never hand-edit it, and never commit it. Forgetting
-`xcodegen` after adding a file surfaces as `cannot find 'X' in scope` for a file that plainly exists.
+`xcodegen` after adding a file surfaces as `cannot find 'X' in scope` for a file that plainly exists —
+which is why `pnpm build:native` always regenerates before it compiles. It targets the simulator, so
+it needs no provisioning profile and no device; running on hardware is still Xcode's ▶︎.
 
 ### Data Pipeline (run from root)
 
