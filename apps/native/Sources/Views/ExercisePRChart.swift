@@ -18,33 +18,53 @@ struct ExercisePRChart: View {
     let nearest: (Date) -> ExerciseSession?
     let onOpen: (ExerciseSession) -> Void
 
+    /// Live only while a finger is down — chartXSelection clears it on release.
     @State private var rawSelection: Date?
+    /// Where the last scrub landed, so letting go inspects that session instead of snapping back
+    /// to the most recent one. Stored as a day rather than a session so it re-resolves through
+    /// `nearest` after a filter change, instead of pinning a row that no longer exists.
+    @State private var pinnedDay: Date?
 
-    /// The scrubbed session, or the most recent one when nothing is under the finger — the web's
-    /// `hoveredSession ?? chartSessions.at(-1)`.
+    /// The scrubbed session, the last one scrubbed to, else the most recent — the web's
+    /// `hoveredSession ?? chartSessions.at(-1)`, with the middle term added because a touch has
+    /// no equivalent of the cursor simply resting where you left it.
     private var focused: ExerciseSession? {
-        rawSelection.flatMap(nearest) ?? sessions.last
+        (rawSelection ?? pinnedDay).flatMap(nearest) ?? sessions.last
     }
+
+    /// The sheet's horizontal gutter, which the scrub card cancels out to run edge to edge.
+    static let bleed: CGFloat = 18
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             chart
-            if let focused { SessionScrubCard(session: focused, metricName: metricName, unit: unit, showsLbs: showsLbs, onOpen: onOpen) }
+            if let focused {
+                SessionScrubCard(session: focused, metricName: metricName, unit: unit, showsLbs: showsLbs, onOpen: onOpen)
+                    .padding(.horizontal, -Self.bleed)
+            }
         }
     }
 
     private var chart: some View {
         Chart {
             ForEach(sessions) { session in
-                AreaMark(x: .value("Date", session.day), y: .value(metricName, session.metric))
-                    .interpolationMethod(.monotone)
-                    .foregroundStyle(
-                        .linearGradient(
-                            Gradient(colors: [Theme.fg.opacity(0.16), Theme.fg.opacity(0.02)]),
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
+                // yStart pins the fill to the domain floor. A plain `y:` AreaMark fills down to
+                // zero, and this domain starts near the data — so the fill ran off the bottom of
+                // the plot and painted over everything beneath the chart. Highcharts avoids the
+                // same thing with `threshold: null`.
+                AreaMark(
+                    x: .value("Date", session.day),
+                    yStart: .value(metricName, yDomain.lowerBound),
+                    yEnd: .value(metricName, session.metric)
+                )
+                .interpolationMethod(.monotone)
+                .foregroundStyle(
+                    .linearGradient(
+                        Gradient(colors: [Theme.fg.opacity(0.16), Theme.fg.opacity(0.02)]),
+                        startPoint: .top,
+                        endPoint: .bottom
                     )
+                )
 
                 LineMark(x: .value("Date", session.day), y: .value(metricName, session.metric))
                     .interpolationMethod(.monotone)
@@ -88,6 +108,7 @@ struct ExercisePRChart: View {
             }
         }
         .chartXSelection(value: $rawSelection)
+        .onChange(of: rawSelection) { _, new in if let new { pinnedDay = new } }
         .chartYScale(domain: yDomain)
         .chartXAxis {
             AxisMarks(values: .automatic(desiredCount: 4)) { value in
@@ -136,11 +157,10 @@ private struct SessionScrubCard: View {
 
     var body: some View {
         Button { onOpen(session) } label: {
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
+            VStack(spacing: 6) {
+                HStack(spacing: 8) {
                     Text(Fmt.tableDate.string(from: session.day))
                         .tagLabel(size: 11, tracking: 1.2)
-                    Spacer(minLength: 0)
                     if let tier = session.prTier {
                         Image(systemName: "star.fill")
                             .font(.system(size: 10))
@@ -149,7 +169,7 @@ private struct SessionScrubCard: View {
                 }
 
                 Text(value)
-                    .font(Typeface.mono(22, .semibold))
+                    .font(Typeface.mono(26, .semibold))
                     .foregroundStyle(Theme.maint)
 
                 Text(metricName)
@@ -160,19 +180,19 @@ private struct SessionScrubCard: View {
                         .font(Typeface.mono(12))
                         .foregroundStyle(Theme.muted)
                         .lineLimit(1)
-                    Spacer(minLength: 0)
                     Image(systemName: "chevron.right")
                         .font(.system(size: 10, weight: .semibold))
                         .foregroundStyle(Theme.muted2)
                 }
+                .padding(.top, 2)
             }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.surface, in: .rect(cornerRadius: 12, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .strokeBorder(Theme.border, lineWidth: 1)
-            )
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 18)
+            .padding(.horizontal, 18)
+            .background(Theme.surface)
+            // Hairlines rather than a rounded border: the card has no side edges to round.
+            .overlay(alignment: .top) { Rectangle().fill(Theme.border).frame(height: 1) }
+            .overlay(alignment: .bottom) { Rectangle().fill(Theme.border).frame(height: 1) }
         }
         .buttonStyle(.plain)
         .accessibilityHint("Opens this day's sets")
